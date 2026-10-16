@@ -49,6 +49,8 @@ it, the screen shows Suggestions, navigated with ↑/↓, or "No definition foun
 candidates. Selecting a suggestion changes the search field and looks it up without closing the
 palette. A spelling candidate may have no definition in the enabled dictionaries; Copy Word still
 works directly from the suggestions list. The ⌘K menu exposes all three actions.
+An open Actions menu closes when a new lookup result arrives, so its displayed labels cannot
+outlive the result its actions address.
 
 `dictionary-session-test` guards filtering, debounce, cancellation and stale-result rejection.
 `PIPCAST_TEST_DICTIONARY_SYSTEM=1 ./Scripts/run-tests.sh dictionary-session-test` additionally checks

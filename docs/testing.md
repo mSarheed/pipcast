@@ -442,6 +442,9 @@ Opt into installed English spelling service checks with
 - Option-Return copies only the selected word and closes; on an exact definition it copies that term.
 - Return on a definition still copies the definition; Command-Return opens Dictionary.app.
 - The Actions menu exposes Define Word or Copy Definition, Copy Word, and Open in Dictionary.
+- With suggestions visible, type an exact word and immediately open ⌘K before the lookup finishes.
+  The menu closes when the definition arrives; reopening shows Copy Definition for the new word.
+  Repeat with another missing word and a no-result query; an old menu never acts on new results.
 - Rapid typing, clearing, leaving the screen and reopening never publish an obsolete lookup.
 - Empty input shows the prompt; nonsense with no candidates shows No definition found.
 - IME composition keeps Return and navigation keys; Option-Return does not copy during composition.
