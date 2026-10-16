@@ -17,8 +17,9 @@ final class MessageHUDController {
     /// `onClick` makes the pill a button that goes away once it has been acted on.
     func show(message: String, tone: DialogTone = .success, onClick: (() -> Void)? = nil) {
         let action = onClick.map { onClick in
-            { [presenter] in
-                presenter.dismiss()
+            // Weak: the presenter's panel hosts this closure, so a strong capture would be a cycle.
+            { [weak presenter] in
+                presenter?.dismiss()
                 onClick()
             }
         }
