@@ -13,5 +13,6 @@ case "$CHANNEL" in
     stable) ;;
     *) exit 1 ;;
 esac
-export DEVELOPER_DIR="$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -n1)/Contents/Developer"
+DEVELOPER_DIR="$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -n1)/Contents/Developer"
 test -d "$DEVELOPER_DIR"
+export DEVELOPER_DIR

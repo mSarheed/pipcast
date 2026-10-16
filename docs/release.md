@@ -7,8 +7,9 @@ Only run this after signing and Homebrew credentials are configured.
 The workflow compiles arm64 and x86_64 once each in parallel, then combines their main and helper
 executables into the universal app. Separate packaging jobs reuse the arm64 build, sign both apps
 with Developer ID Application, notarize and staple the app and DMG, and validate their signatures.
-Both architecture builds and both packaging jobs must succeed before anything is published. It publishes DMGs, updater ZIPs, and the matching
-AGPL source archive, then updates the cask in `mSarheed/homebrew-pipcast` with SHA-256 hashes.
+Both architecture builds and both packaging jobs must succeed before anything is published.
+It publishes DMGs, updater ZIPs, and the matching AGPL source archive, then updates the cask in
+`mSarheed/homebrew-pipcast` with SHA-256 hashes.
 Stable uses `pipcast`; beta uses `pipcast@beta`. Merging to main publishes nothing.
 
 Repository variable:
@@ -43,7 +44,6 @@ tap token and update the cask to that existing release; do not overwrite publish
 
 Compilation jobs carry no signing or notarization secrets. They transfer app bundles in tar archives
 so executable permissions and symlinks survive artifact storage. Packaging checks that both slices
-have matching bundle identities and versions, combines all four executables, then signs helpers
-before the enclosing app. The existing arm64 and `-Universal-` asset names stay unchanged so installed
-updaters and Homebrew keep selecting the correct download. No release is published until both
-packages pass signature verification and Apple notarization.
+have matching bundle identities, versions, signing teams and Xcode/SDK builds. The existing arm64
+and `-Universal-` asset names stay unchanged so installed updaters and Homebrew keep selecting the
+correct download.

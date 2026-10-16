@@ -15,7 +15,7 @@ concurrency:
   group: pipcast-release
   cancel-in-progress: false
 permissions:
-  contents: write
+  contents: read
 jobs:
   build:
     runs-on: macos-26
@@ -38,7 +38,7 @@ jobs:
           name: compiled-${{ matrix.architecture }}
           path: build/release-artifacts/${{ matrix.architecture }}.tar
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
   package:
     needs: build
     runs-on: macos-26
@@ -76,6 +76,8 @@ jobs:
           path: dist/
           if-no-files-found: error
   publish:
+    permissions:
+      contents: write
     needs: package
     runs-on: macos-26
     timeout-minutes: 15
