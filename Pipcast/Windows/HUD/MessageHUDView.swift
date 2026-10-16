@@ -13,6 +13,7 @@ struct MessageHUDView: View {
     let message: String
     let accessory: Accessory
     var onCancel: (() -> Void)? = nil
+    var onClick: (() -> Void)?
     @State private var hovered = false
     @Environment(\.metrics) private var metrics
 
@@ -24,12 +25,17 @@ struct MessageHUDView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Cancel \(message)")
+            } else if let onClick {
+                Button(action: onClick) {
+                    content
+                }
+                .buttonStyle(.plain)
             } else {
                 content
             }
         }
         .onHover { isHovered in
-            if onCancel != nil {
+            if onCancel != nil || onClick != nil {
                 withAnimation(.easeOut(duration: Theme.Duration.hover)) {
                     hovered = isHovered
                 }

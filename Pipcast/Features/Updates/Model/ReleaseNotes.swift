@@ -23,8 +23,13 @@ enum ReleaseNotes {
     static func blocks(from summary: String) -> [Block] {
         var blocks: [Block] = []
         var paragraph: [String] = []
+        var bullet: [String] = []
 
         func flush() {
+            if !bullet.isEmpty {
+                blocks.append(.bullet(linkified(bullet.joined(separator: " "))))
+                bullet.removeAll()
+            }
             guard !paragraph.isEmpty else { return }
             blocks.append(.paragraph(linkified(paragraph.joined(separator: "\n"))))
             paragraph.removeAll()
@@ -39,9 +44,12 @@ enum ReleaseNotes {
             } else if let heading = heading(in: line) {
                 flush()
                 blocks.append(heading)
-            } else if let bullet = bullet(in: line) {
+            } else if let text = Self.bullet(in: line) {
                 flush()
-                blocks.append(.bullet(linkified(bullet)))
+                bullet = [text]
+            } else if !bullet.isEmpty {
+                // Markdown continues a list item until a blank line, so a wrapped bullet stays one.
+                bullet.append(line)
             } else {
                 paragraph.append(line)
             }

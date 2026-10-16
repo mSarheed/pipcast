@@ -17,7 +17,18 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  # Fails in seconds, before the long build: a release without changelog notes never starts.
+  changelog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Require CHANGELOG.md notes for this version
+        run: python3 Scripts/changelog-notes.py "$BASE_VERSION"
+        env:
+          BASE_VERSION: ${{ inputs.version }}
   build:
+    needs: changelog
     runs-on: macos-26
     timeout-minutes: 90
     strategy:

@@ -25,7 +25,6 @@ struct RootPaletteView: View {
     @Environment(ExtensionManager.self) private var extensions
     @Environment(AppSettings.self) private var settings
     @Environment(\.metrics) private var metrics
-    @Environment(\.openURL) private var openURL
     @FocusState private var searchFocused: Bool
     /// Kept apart from the search field's own focus. See docs/features/palette.md.
     @FocusState private var argumentFocused: String?
@@ -127,6 +126,8 @@ struct RootPaletteView: View {
             return CalculatorHistoryScreen(
                 history: calcHistory, currencyRates: currencyRates, core: core, vm: vm,
                 openActions: openActions)
+        case .changelog:
+            return ChangelogScreen(store: core.changelog, core: core, vm: vm, metrics: metrics)
         case .extensionCommand:
             return ExtensionCommandScreen(
                 screen: extensionScreen, extensions: extensions, vm: vm, openActions: openActions)
@@ -209,12 +210,10 @@ struct RootPaletteView: View {
             header: title,
             items: [
                 PopoverMenuItem(
-                    title: "Changelog",
-                    systemImage: "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
+                    title: CommandID.whatsNew.name, systemImage: CommandID.whatsNew.sfSymbol,
+                    showsBadge: core.changelog.hasNews
                 ) {
-                    if let url = URL(string: "https://github.com/mSarheed/pipcast/releases") {
-                        openURL(url)
-                    }
+                    core.changelogCoordinator.showChangelog()
                 },
                 PopoverMenuItem(title: "About Pipcast", systemImage: "info.circle") {
                     core.settingsCoordinator.showAbout()
@@ -923,7 +922,7 @@ struct RootPaletteView: View {
     }
 
     private var appMenuButton: some View {
-        MenuCircleButton {
+        MenuCircleButton(showsBadge: core.changelog.hasNews) {
             if openMenu == .app { closeMenus() } else { open(.app, highlighting: 0) }
         }
     }
@@ -1511,6 +1510,8 @@ private struct SearchFieldHiding: ViewModifier {
 
 /// The footer's menu circle; hover lives here, so a sweep never re-renders the body.
 private struct MenuCircleButton: View {
+    /// Something in the app menu is unread; the dot goes once it has been opened.
+    let showsBadge: Bool
     let action: () -> Void
     @State private var hovered = false
     @Environment(\.metrics) private var metrics
@@ -1523,6 +1524,10 @@ private struct MenuCircleButton: View {
             }
             .foregroundStyle(Theme.Colors.textSecondary)
             .frame(width: metrics.size.menuButton, height: metrics.size.menuButton)
+            // Inside the label: glass draws over anything layered on the button after it.
+            .overlay(alignment: .topTrailing) {
+                if showsBadge { UnreadDot().padding(metrics.spacing.xs) }
+            }
             .background(Circle().fill(hovered ? Theme.Colors.rowHover : Color.clear))
             .contentShape(.circle)
         }

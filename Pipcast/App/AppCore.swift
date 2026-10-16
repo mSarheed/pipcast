@@ -54,6 +54,7 @@ final class AppCore {
     let meetingClock = MeetingClock()
     let updateChecker = UpdateCheckStore()
     let supportReminders: SupportReminderStore
+    let changelog: ChangelogStore
     let emojiIndex = EmojiIndex()
     let frequentEmoji = FrequentEmojiStore()
     let pinnedEmoji = PinnedEmojiStore()
@@ -218,6 +219,8 @@ final class AppCore {
         store: updateChecker, core: self)
     @ObservationIgnored private(set) lazy var supportCoordinator = SupportCoordinator(
         store: supportReminders, core: self)
+    @ObservationIgnored private(set) lazy var changelogCoordinator = ChangelogCoordinator(
+        store: changelog, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var quickActionCoordinator = QuickActionCoordinator(
         settings: settings, store: quickActionSettings, customActions: customQuickActions,
         injector: textInjector, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
@@ -254,6 +257,8 @@ final class AppCore {
         self.settings = settings
         self.chatHistory = chatHistory
         supportReminders = SupportReminderStore(settings: settings)
+        // Before `start()`, whose onboarding marker would make a fresh install look updated.
+        changelog = ChangelogStore(isFirstLaunch: !OnboardingState.hasOnboarded)
         aiChats = AIChatSurfacesState(history: chatHistory)
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
@@ -349,6 +354,7 @@ final class AppCore {
             updateCoordinator.applyAutomaticChecking()
             supportReminders.onDue = { [weak self] in self?.supportCoordinator.presentIfDue() }
             supportReminders.start()
+            changelogCoordinator.announceIfUpdated()
 
             hyperKey.healthTicker = healthTicker
             hotKeys.modifierTapMonitor.healthTicker = healthTicker
@@ -909,8 +915,10 @@ final class AppCore {
     }
 
     /// The transient success/info pill, so `messageHUD` stays single-owned alongside `dialogs`.
-    func showMessage(_ message: String, tone: DialogTone = .success) {
-        messageHUD.show(message: message, tone: tone)
+    func showMessage(
+        _ message: String, tone: DialogTone = .success, onClick: (() -> Void)? = nil
+    ) {
+        messageHUD.show(message: message, tone: tone, onClick: onClick)
     }
 
     /// The same pill with a spinner, for work the reader started and cannot otherwise see running.

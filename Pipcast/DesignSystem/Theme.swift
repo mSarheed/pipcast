@@ -300,6 +300,8 @@ enum Theme {
     enum Duration {
         /// How long each HUD stays up; a sentence needs longer than a level does.
         static let messageHUD: TimeInterval = 2.4
+        /// A pill that can be clicked has to be read and then aimed at.
+        static let actionHUD: TimeInterval = 6
         static let volumeHUD: TimeInterval = 1.6
         /// How a borderless surface arrives and leaves; the exit is shorter, so it feels quick.
         static let enter: TimeInterval = 0.18

@@ -47,8 +47,9 @@ end
 subprocess.run(['ruby', '-c'], input=cask.encode(), check=True)
 source = f'dist/Pipcast-{version}-source.tar.gz'
 subprocess.run(['git', 'archive', '--format=tar.gz', f'--prefix=Pipcast-{version}/', '--output='+source, sha], check=True)
+changelog = subprocess.check_output(['python3', 'Scripts/changelog-notes.py', os.environ['BASE_VERSION']], text=True).strip()
 notes = Path(os.environ['RUNNER_TEMP']) / 'release-notes.md'
-notes.write_text(f'{app} {version}\n\n<!-- pipcast:install -->\n\nSigned with Developer ID and notarized by Apple.\n\nInstall: `brew install --cask mSarheed/pipcast/{token}`\n\nSource: https://github.com/{repo}/tree/{sha}\nMatching source archive included under AGPL-3.0-or-later.\n')
+notes.write_text(f'{changelog}\n\n<!-- pipcast:install -->\n\nSigned with Developer ID and notarized by Apple.\n\nInstall: `brew install --cask mSarheed/pipcast/{token}`\n\nSource: https://github.com/{repo}/tree/{sha}\nMatching source archive included under AGPL-3.0-or-later.\n')
 args = ['gh', 'release', 'create', tag, *map(str, sorted(Path('dist').glob('*'))), '--repo', repo, '--target', sha, '--title', app+' '+version, '--notes-file', str(notes)]
 if channel == 'beta': args += ['--prerelease', '--latest=false']
 subprocess.run(args, check=True)

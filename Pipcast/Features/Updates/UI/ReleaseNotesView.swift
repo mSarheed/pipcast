@@ -1,19 +1,23 @@
+import AppKit
 import SwiftUI
 
 /// `AttributedString` only does inline styling, so headings and bullets are placed here.
 struct ReleaseNotesView: View {
     let text: String
 
+    /// Standard in the update window; the palette's What's New scales with its interface size.
+    @Environment(\.metrics) private var metrics
+
     private var blocks: [ReleaseNotes.Block] { ReleaseNotes.blocks(from: text) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: metrics.spacing.sm) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
                 view(for: block)
-                    .padding(.top, isHeading(block) && index > 0 ? Theme.Spacing.md : 0)
+                    .padding(.top, isHeading(block) && index > 0 ? metrics.spacing.md : 0)
             }
         }
-        .font(.callout)
+        .font(font(.callout))
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -22,10 +26,10 @@ struct ReleaseNotesView: View {
         switch block {
         case .heading(let level, let text):
             Text(text)
-                .font(level <= 2 ? .headline : .subheadline.weight(.semibold))
+                .font(level <= 2 ? font(.headline) : font(.subheadline, weight: .semibold))
                 .frame(maxWidth: .infinity, alignment: .leading)
         case .bullet(let text):
-            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+            HStack(alignment: .firstTextBaseline, spacing: metrics.spacing.sm) {
                 Text("•").foregroundStyle(Theme.Colors.textSecondary)
                 Text(markdown(text))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -34,6 +38,10 @@ struct ReleaseNotesView: View {
             Text(markdown(text))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private func font(_ style: NSFont.TextStyle, weight: NSFont.Weight? = nil) -> Font {
+        Font(metrics.typography.textNSFont(style, weight: weight))
     }
 
     private func isHeading(_ block: ReleaseNotes.Block) -> Bool {

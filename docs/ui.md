@@ -590,9 +590,14 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   The spinner is **`progress.indicator` with
   `.symbolEffect(.variableColor)`, never a `ProgressView`**: AppKit draws that one itself and ignores
   every tint given to it, so a blue spinner is only reachable as a symbol. Progress has no natural
-  dwell, so it is shown with `dwells: false` and stays up until something replaces it or
+  dwell, so it is shown with `dwell: .none` and stays up until something replaces it or
   `HUDPresenter.dismiss()` runs — the caller owns that, and `QuickActionCoordinator.produce` pairs the
   two with a `defer` so a throw or a cancellation cannot strand it.
+- **A pill can lead somewhere**, through `show(message:tone:onClick:)`: the update announcement is
+  the one user, and clicking it opens What's New. The panel takes the pointer only for that showing,
+  hovering lights the pill without swapping its glyph, a click dismisses it before running the
+  action, and it dwells `Duration.actionHUD` (6s) rather than 2.4s, since it has to be read and then
+  aimed at.
 - **`HUDPresenter`** is what keeps those two controllers from duplicating each other: one panel at a
   time, replace rather than stack, fade in, sit out its dwell, fade away, centred horizontally on
   a screen. The two HUDs differ only in their content, their anchor (`edgeInset(hudEdgeOffset 48)` for

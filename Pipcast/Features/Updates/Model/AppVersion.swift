@@ -35,7 +35,17 @@ struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
         self.patch = patch
     }
 
+    private init(major: Int, minor: Int, patch: Int, beta: Int?) {
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+        self.beta = beta
+    }
+
     var isPrerelease: Bool { beta != nil }
+
+    /// The stable version a prerelease leads to; a stable version is its own.
+    var release: AppVersion { AppVersion(major: major, minor: minor, patch: patch, beta: nil) }
 
     var description: String {
         let triple = "\(major).\(minor).\(patch)"

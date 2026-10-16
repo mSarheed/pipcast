@@ -26,6 +26,8 @@ struct PopoverMenuItem {
     /// A value the row states rather than a chord it runs — what a "Copy as" row copies.
     var detail: String?
     var isDestructive: Bool = false
+    /// Marks the row as holding something unread, beside its title.
+    var showsBadge: Bool = false
     let action: () -> Void
 
     /// What the keyboard and pointer may land on; a loading or disabled row only states itself.
@@ -51,12 +53,13 @@ struct PopoverMenuItem {
     init(
         title: String, systemImage: String, isLoading: Bool = false, isEnabled: Bool = true,
         sectionTitle: String? = nil, startsSection: Bool = false, shortcut: String? = nil,
-        isDestructive: Bool = false, action: @escaping () -> Void
+        isDestructive: Bool = false, showsBadge: Bool = false, action: @escaping () -> Void
     ) {
         self.init(
             title: title, icon: .symbol(systemImage), isLoading: isLoading, isEnabled: isEnabled,
             sectionTitle: sectionTitle, startsSection: startsSection, shortcut: shortcut,
             isDestructive: isDestructive, action: action)
+        self.showsBadge = showsBadge
     }
 }
 
@@ -386,6 +389,7 @@ private struct PopoverMenuRow: View {
                     .font(metrics.typography.menuRow)
                     .foregroundStyle(item.isDestructive ? Color.red : Color.primary)
                     .lineLimit(1)
+                if item.showsBadge { UnreadDot() }
                 Spacer(minLength: metrics.spacing.sm)
                 if let detail = item.detail {
                     Text(detail)

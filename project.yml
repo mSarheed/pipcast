@@ -54,6 +54,9 @@ targets:
         buildPhase: resources
       - path: LICENSE
         buildPhase: resources
+      # The one changelog: the app reads it, and the release workflow publishes each section.
+      - path: CHANGELOG.md
+        buildPhase: resources
     dependencies:
       - target: DictationHelper
         link: false

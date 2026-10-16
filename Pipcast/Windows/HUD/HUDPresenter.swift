@@ -9,6 +9,13 @@ final class HUDPresenter {
         case heightFraction(CGFloat)
     }
 
+    /// How long one showing stays up; `.none` waits to be replaced, as progress does.
+    enum Dwell {
+        case standard
+        case seconds(TimeInterval)
+        case none
+    }
+
     private let anchor: Anchor
     private let dwell: TimeInterval
     private let screen: () -> NSScreen?
@@ -21,8 +28,10 @@ final class HUDPresenter {
         self.screen = screen
     }
 
-    /// A nil `size` lets SwiftUI measure; progress has no dwell, so it waits to be replaced.
-    func show(_ view: some View, size: CGSize? = nil, dwells: Bool = true, interactive: Bool = false) {
+    /// A nil `size` lets SwiftUI measure.
+    func show(
+        _ view: some View, size: CGSize? = nil, dwell: Dwell = .standard, interactive: Bool = false
+    ) {
         let panel = panel ?? make(acceptsMouseEvents: interactive)
         panel.ignoresMouseEvents = !interactive
         let host = NSHostingView(rootView: view)
@@ -38,7 +47,11 @@ final class HUDPresenter {
         } else {
             panel.fadeIn(duration: Theme.Duration.enter) { panel.orderFrontRegardless() }
         }
-        if dwells { scheduleDismissal() } else { dismissal?.cancel() }
+        switch dwell {
+        case .standard: scheduleDismissal(after: self.dwell)
+        case .seconds(let seconds): scheduleDismissal(after: seconds)
+        case .none: dismissal?.cancel()
+        }
     }
 
     func dismiss() {
@@ -51,14 +64,14 @@ final class HUDPresenter {
     func extend() {
         guard let panel, panel.isVisible else { return }
         panel.cancelFade()
-        scheduleDismissal()
+        scheduleDismissal(after: dwell)
     }
 
     var isShowing: Bool { panel?.isVisible ?? false }
 
-    private func scheduleDismissal() {
+    private func scheduleDismissal(after dwell: TimeInterval) {
         dismissal?.cancel()
-        dismissal = Task { [weak self, dwell] in
+        dismissal = Task { [weak self] in
             try? await Task.sleep(for: .seconds(dwell))
             guard !Task.isCancelled else { return }
             self?.panel?.fadeOut(duration: Theme.Duration.exit)

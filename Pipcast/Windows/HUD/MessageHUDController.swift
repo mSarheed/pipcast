@@ -14,9 +14,19 @@ final class MessageHUDController {
             screen: { settings.openOnCursorScreen ? .underCursor : .primary })
     }
 
-    func show(message: String, tone: DialogTone = .success) {
+    /// `onClick` makes the pill a button that goes away once it has been acted on.
+    func show(message: String, tone: DialogTone = .success, onClick: (() -> Void)? = nil) {
+        let action = onClick.map { onClick in
+            { [presenter] in
+                presenter.dismiss()
+                onClick()
+            }
+        }
         presenter.show(
-            MessageHUDView(message: message, accessory: .tone(tone)).environment(\.metrics, metrics))
+            MessageHUDView(message: message, accessory: .tone(tone), onClick: action)
+                .environment(\.metrics, metrics),
+            dwell: onClick == nil ? .standard : .seconds(Theme.Duration.actionHUD),
+            interactive: onClick != nil)
     }
 
     /// Stays up until the work it reports ends and something replaces it, or `dismiss()` runs.
@@ -24,7 +34,7 @@ final class MessageHUDController {
         presenter.show(
             MessageHUDView(message: message, accessory: .progress, onCancel: onCancel)
                 .environment(\.metrics, metrics),
-            dwells: false,
+            dwell: .none,
             interactive: onCancel != nil)
     }
 

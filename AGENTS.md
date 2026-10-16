@@ -137,6 +137,16 @@ feature's doc, under its own `## Invariants`.
 - **XcodeGen owns the project.** `Pipcast.xcodeproj` is committed but generated from `project.yml`;
   after editing it, run `xcodegen generate` and commit both. No SwiftPM, and never `Bundle.module`.
 
+## Before you trigger a release
+
+- **`CHANGELOG.md` gets the version's section first.** The Release workflow refuses to start
+  without a `## <version>` heading, publishes the section as the GitHub release notes, and the app
+  shows it in What's New. A beta shows the section of the version it leads to.
+- **Write the big picture, for users.** A one-line headline, then a few bullets under `### New`,
+  `### Improved` and `### Fixed`, each led by a bold feature name — the most important changes
+  summarized, never a list of every commit or PR. Date the heading (`## 0.2.0 — 2026-11-20`) when
+  cutting the stable release. Format and checks: [release.md](docs/release.md#changelog).
+
 ## Before you finish
 
 Each item is explained in [testing.md](docs/testing.md#definition-of-done).

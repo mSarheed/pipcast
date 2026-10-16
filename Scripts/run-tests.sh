@@ -668,6 +668,9 @@ run update-check-test      Pipcast/Features/Updates/Model/*.swift \
                            Pipcast/Features/Updates/Service/UpdateCheckStore.swift \
                            Pipcast/Platform/AppPaths.swift
 run support-test           Pipcast/Features/Support/Model/*.swift
+run changelog-test         Pipcast/Features/Updates/Model/*.swift \
+                           Pipcast/Features/Updates/Service/ChangelogStore.swift \
+                           Pipcast/Platform/AppPaths.swift
 run ai-provider-test       Pipcast/Features/Settings/AppSettingsKey.swift \
                            Pipcast/Features/AI/Model/*.swift \
                            Pipcast/Features/AI/Settings/AISettingsStore.swift

@@ -260,6 +260,8 @@ final class LauncherCoordinator {
         case .checkForUpdates:
             dismissPalette()
             core.updateCoordinator.checkForUpdates()
+        case .whatsNew:
+            core.changelogCoordinator.toggleChangelog()
         case .settings:
             dismissPalette()
             settingsCoordinator.showSettings()

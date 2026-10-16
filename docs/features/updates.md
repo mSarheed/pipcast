@@ -61,6 +61,34 @@ no appcast: GitHub Releases is the only feed.
   plain and `ReleaseNotes` spells them as Markdown links on the way to the window. Both point at
   `ReleaseFeed.repository`, the one place the repo is named.
 
+## What's New
+
+`CHANGELOG.md` is copied into the app bundle, and `ChangelogStore` parses it once at launch into
+`Changelog` entries. The palette's What's New screen (`.changelog`, `ChangelogScreen`) lists the
+versions this build has reached beside the selected one's notes, laid out by `ReleaseNotesView`;
+↵ opens that release on GitHub. It opens from the What's New launcher command and the palette's
+app menu, which replaced a link to the GitHub releases page.
+
+- **What's New reads the build's own file, never the network.** The notes a user reads are the ones
+  this build shipped with, offline, and the release body on GitHub is published from the same section
+  ([release.md](../release.md#changelog)), so the two cannot disagree.
+- **A beta reads the section of the release it leads to.** `AppVersion.release` maps
+  `0.4.0-beta.3` to `0.4.0`; a beta never has a section of its own, and its row links to the release
+  list because the tag does not exist yet. A section for a version this build has not reached is
+  hidden.
+- **An update is announced once, with a HUD and a dot.** After a launch on a newer version than the
+  last one read, the palette's menu button and its What's New row carry an `UnreadDot`, and four
+  seconds in a clickable HUD says what the app updated to. The HUD is recorded as `lastAnnounced` the
+  moment it shows, so it is said once per version, never once per launch; a busy user
+  (`canInterruptUser`) is not interrupted, and gets it on the next launch instead. Opening What's New
+  is what clears the dot, recorded as `lastSeen`.
+- **The HUD and the menu row open What's New; only the command toggles it.** `showChangelog` uses
+  `showPalette`, so a second click never closes the screen it just opened; `toggleChangelog` keeps
+  the launcher command's hotkey behaving like every other screen's.
+- **A fresh install has nothing to catch up on.** `isFirstLaunch` is read before `start()` writes
+  the onboarding marker; a fresh install records its version silently, and a copy that predates the
+  record counts as updated. Both versions live in Application Support as `changelog.json`.
+
 ## Channel and version
 
 `ReleaseChannel` is derived from the bundle id, and nothing else:

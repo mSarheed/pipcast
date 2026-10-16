@@ -184,6 +184,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `backup-archive-test` | all of `Backup/Model/`, plus `Backup/Service/BackupStaging.swift` |
 | `updates-test` | `Updates/Model/` — version precedence, channel filtering, install route, readiness |
 | `update-check-test` | `UpdateCheckStore` — stopping, in-flight cancellation, cached prompt suppression, restart and independent manual checking |
+| `changelog-test` | `Updates/Model/` — `CHANGELOG.md` split into versions, the beta-to-release mapping, when an update is news, wrapped bullets, the shipped file covering `MARKETING_VERSION`, and parse time |
 | `support-test` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
 | `ai-provider-test` | `AI/Model/` and `AISettingsStore` — instruction composition, provider requests and streams, route settings, protocol framing and CLI launch encodings |
 | `apple-intelligence-test` | On-device status, snapshot deltas, transcript assembly and error mapping; real generation is opt-in |
@@ -859,6 +860,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 
 ### Settings and backup
 
+- What's New: after launching a newer version than the last one read, a HUD says what Pipcast
+  updated to and a dot marks the palette's menu button and its What's New row. Clicking the HUD, the
+  row or the What's New command opens the screen, and the dot is gone; relaunching shows neither. A
+  fresh install shows neither.
 - General → Automatically check for updates defaults on; turn it off and relaunch: it stays off,
   no background check or update prompt occurs, and Check for Updates still works. Re-enable it:
   checks resume. Settings search for "updates" reveals the toggle; settings.json edits and a backup
