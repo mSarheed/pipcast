@@ -227,6 +227,19 @@ when touching a pure file:
 - `Quicklinks/Model/` is still handed the home directory rather than reading it
 - `FileSearch/Model/` is still handed the home directory rather than reading it
 
+## Release assembly
+
+After changing release build or packaging scripts, run:
+
+```sh
+python3 Scripts/test-release-merge.py
+```
+
+This compiles small real arm64 and x86_64 executables, combines the app and all helpers, checks
+bundle metadata rejection, and verifies signatures, executable permissions and symlinks through
+the tar handoff. It uses ad-hoc signatures; Developer ID signing and Apple notarization are checked
+by the release workflow with its configured credentials.
+
 ## Build and size checks
 
 A clean build is part of the bar; nothing builds the app for you, so this is on you.

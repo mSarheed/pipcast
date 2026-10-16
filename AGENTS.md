@@ -128,6 +128,12 @@ feature's doc, under its own `## Invariants`.
 - **Debug builds are their own channel** — `Pipcast Dev.app` / `io.github.msarheed.pipcast.app.dev` — so a local run
   never shares prefs, caches, TCC grants or the login item with an installed copy. Anything newly
   persisted must stay keyed by `Bundle.main.bundleIdentifier`.
+- **Commit subjects, PR titles and squash merges follow [Conventional Commits](https://www.conventionalcommits.org/)**:
+  `<type>[optional scope]: <description>`, e.g. `fix(extensions): fall back after a missing executable`.
+  Types are `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` and
+  `revert`; the scope is the feature or area touched. Keep the description lowercase and imperative,
+  with no trailing period. Mark a breaking change with `!` after the type or scope, or with a
+  `BREAKING CHANGE:` footer.
 - **XcodeGen owns the project.** `Pipcast.xcodeproj` is committed but generated from `project.yml`;
   after editing it, run `xcodegen generate` and commit both. No SwiftPM, and never `Bundle.module`.
 

@@ -459,6 +459,36 @@ export default async function Command() {
 }
 `;
 
+const missingExecutableSource = `
+import { execFile, execFileSync, spawn } from "node:child_process";
+import { promisify } from "node:util";
+const missing = "/pipcast-fixture-missing/executable";
+const shape = (error, syscall = "spawn") => error.message === syscall + " " + missing + " ENOENT"
+  && error.code === "ENOENT" && error.errno === -2
+  && error.syscall === syscall + " " + missing && error.path === missing
+  && JSON.stringify(error.spawnargs) === '["hello"]';
+export default async function Command() {
+  const results = [];
+  await new Promise(resolve => execFile(missing, ["hello"], (error, stdout, stderr) => {
+    results.push(shape(error) && stdout === "" && stderr === "");
+    resolve();
+  }));
+  try { await promisify(execFile)(missing, ["hello"]); results.push(false); }
+  catch (error) { results.push(shape(error) && error.stdout === "" && error.stderr === ""); }
+  try { execFileSync(missing, ["hello"]); results.push(false); }
+  catch (error) { results.push(shape(error, "spawnSync")); }
+  await new Promise(resolve => {
+    const child = spawn(missing, ["hello"]);
+    let output = "", failure;
+    child.stdout.on("data", chunk => output += chunk);
+    child.stderr.on("data", chunk => output += chunk);
+    child.on("error", error => { failure = error; });
+    child.on("close", () => { results.push(shape(failure) && output === ""); resolve(); });
+  });
+  globalThis.__missingExecutable = results;
+}
+`;
+
 // A child's output arrives in one go once the process has already exited, so both ways of reading a
 // stream have to work after the fact: `execa` async-iterates stdout, others attach a `data` listener.
 const spawnSource = `
@@ -1183,6 +1213,14 @@ export async function runFixtures() {
       },
     },
   );
+
+  await run("missing executable errors cross the host bridge", missingExecutableSource, "no-view", async (harness) => {
+    const result = harness.call("globalThis.__missingExecutable");
+    check("execFile callback has Node metadata and empty output", result?.[0] === true, JSON.stringify(result));
+    check("promisified execFile has empty strings for output", result?.[1] === true, JSON.stringify(result));
+    check("execFileSync preserves missing executable metadata", result?.[2] === true, JSON.stringify(result));
+    check("spawn emits metadata without diagnostic stream output", result?.[3] === true, JSON.stringify(result));
+  });
 
   await run("spawn's stdout survives a late reader", spawnSource, "no-view", async (harness) => {
     const result = harness.call("globalThis.__spawn");

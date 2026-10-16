@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="234 230 556 540" fill="none" role="img" aria-labelledby="title">
-  <title id="title">Pipcast</title>
-  <style>@media(prefers-color-scheme:dark){path{stroke:#eeeeee}}</style>
-  <path d="M604 306H326C304 306 288 322 288 344V678C288 700 304 716 326 716H674C696 716 712 700 712 678V420" stroke="#303030" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="662" y="254" width="104" height="104" rx="22" fill="#5488CA"/>
-</svg>

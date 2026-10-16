@@ -1018,7 +1018,7 @@ class ChildProcess extends EventEmitter {
         this.exitCode = 1;
         this.stdin.emit("finish");
         this.stdout.end();
-        this.stderr.end(Buffer.from(String(error?.message ?? error), "utf8"));
+        this.stderr.end();
         this.emit("error", error);
         queueMicrotask(() => this.emit("close", 1, null));
       },
@@ -1071,13 +1071,10 @@ function pickRunOptions(options = {}) {
   return { cwd: options.cwd, env: childEnv(options.env), timeout: options.timeout, input: options.input ? bytesToBase64(Buffer.from(options.input)) : null };
 }
 
-/// Node guarantees `stdout` / `stderr` on a failed exec's error, and extensions inspect them (an
-/// `error.stderr.match(…)` is the usual way to tell "no such table" from a real failure). A host call
-/// that rejects outright has neither, so fill them in.
 function decorateProcessError(error, label) {
   const decorated = error instanceof Error ? error : new Error(String(error));
   if (decorated.stdout === undefined) decorated.stdout = "";
-  if (decorated.stderr === undefined) decorated.stderr = decorated.message;
+  if (decorated.stderr === undefined) decorated.stderr = "";
   if (decorated.status === undefined) decorated.status = 1;
   if (decorated.code === undefined) decorated.code = 1;
   decorated.cmd = decorated.cmd ?? label;

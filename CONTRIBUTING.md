@@ -30,8 +30,8 @@ Check existing [issues](https://github.com/mSarheed/pipcast/issues) and
 - **A linked issue marked `approved`.** Put `Closes #<number>` in the PR description. A PR that
   doesn't close an `approved` issue is closed automatically the moment it opens. It reopens on its
   own when the linked issue is approved; if the link was missing, fix it and reopen the PR.
-  Anyone may open the PR, not only the issue's author. Docs-only changes (`*.md`, `docs/`,
-  `website/`) skip the check.
+  Anyone may open the PR, not only the issue's author. Docs-only changes (`*.md`, `docs/`) skip
+  the check.
 - The whole bar in [`docs/testing.md`](docs/testing.md#definition-of-done) passes — harnesses, lint,
   purity, a clean build. Engine changes come with new cases. There is no CI, so **run
   `./Scripts/run-tests.sh`, `./Scripts/lint.sh` and a build locally**. CodeRabbit reviews every PR

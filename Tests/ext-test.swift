@@ -1420,6 +1420,7 @@ struct ExtensionTests {
             failingRecorder.failures.joined(separator: "|"))
         await failing.stop(session: "s3")
 
+        await missingExecutableChecks()
         await swiftHelperChecks()
         await processKillChecks()
         zlibChecks()
@@ -1793,6 +1794,92 @@ struct ExtensionTests {
             check("state inside an async command still updates", false, "no dispatchable action")
         }
         await runtime.stop(session: "sAsync")
+    }
+
+    @MainActor
+    static func missingExecutableChecks() async {
+        let missing = "pipcast-missing-\(UUID().uuidString)"
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(missing)
+        let fallbackName = "\(missing)-fallback"
+        defer { try? FileManager.default.removeItem(at: directory) }
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            for name in [fallbackName, "echo"] {
+                let helper = directory.appendingPathComponent(name)
+                try Data("#!/bin/sh\necho custom-path\n".utf8).write(to: helper)
+                try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: helper.path)
+            }
+        } catch {
+            check("create executable lookup fixtures", false, error.localizedDescription)
+            return
+        }
+        let (runtime, _, recorder) = makeRuntime()
+        try? await runtime.boot(
+            config: .current(supportDirectory: FileManager.default.temporaryDirectory))
+        let command = """
+            const { Detail } = require("@raycast/api");
+            const React = require("react");
+            const { execFile, execFileSync, spawn } = require("child_process");
+            const { promisify } = require("util");
+            const missing = "\(missing)";
+            const options = { env: { ...process.env, PATH: "\(directory.path)" } };
+            function shape(error, syscall = "spawn") {
+              return error.message === syscall + " " + missing + " ENOENT"
+                && error.code === "ENOENT" && error.errno === -2
+                && error.syscall === syscall + " " + missing && error.path === missing
+                && JSON.stringify(error.spawnargs) === '["hello"]';
+            }
+            module.exports.default = function Command() {
+              const [state, setState] = React.useState("pending");
+              React.useEffect(() => {
+                (async () => {
+                  const results = [];
+                  await new Promise(resolve => execFile(missing, ["hello"], (error, out, err) => {
+                    results.push(shape(error) && out === "" && err === "");
+                    resolve();
+                  }));
+                  try { await promisify(execFile)(missing, ["hello"]); }
+                  catch (error) {
+                    if (shape(error) && error.stdout === "" && error.stderr === "") {
+                      const fallback = await promisify(execFile)("\(fallbackName)", [], options);
+                      results.push(fallback.stdout.trim() === "custom-path");
+                    } else results.push(false);
+                  }
+                  await new Promise(resolve => {
+                    const child = spawn(missing, ["hello"]);
+                    let output = "", failure;
+                    child.stdout.on("data", chunk => output += chunk);
+                    child.stderr.on("data", chunk => output += chunk);
+                    child.on("error", error => { failure = error; });
+                    child.on("close", () => { results.push(shape(failure) && output === ""); resolve(); });
+                  });
+                  const failed = await new Promise(resolve => {
+                    execFile("/bin/sh", ["-c", "echo diagnostic >&2; exit 7"], (error, out, err) => {
+                      resolve(error.code === 7 && out === "" && err === "diagnostic\\n");
+                    });
+                  });
+                  results.push(failed);
+                  try { execFileSync(missing, ["hello"]); results.push(false); }
+                  catch (error) { results.push(shape(error, "spawnSync")); }
+                  results.push(execFileSync("echo", [], { ...options, encoding: "utf8" }).trim() === "custom-path");
+                  setState(JSON.stringify(results));
+                })().catch(error => setState(error.message));
+              }, []);
+              return React.createElement(Detail, { markdown: state });
+            };
+            """
+        await runtime.start(
+            session: "sMissing", code: command, file: URL(fileURLWithPath: "/tmp/missing-executable.js"),
+            mode: .view, context: launchContext())
+        await settle(until: {
+            guard let value = recorder.trees.last?.activeRoot?.string("markdown") else { return false }
+            return value != "pending"
+        })
+        check(
+            "missing executables preserve Node errors and permit output-free fallback",
+            recorder.trees.last?.activeRoot?.string("markdown") == "[true,true,true,true,true,true]",
+            recorder.trees.last?.activeRoot?.string("markdown") ?? "no tree")
+        await runtime.stop(session: "sMissing")
     }
 
     /// Raycast's `swift:` wrapper chmods its bundled helper before spawning it: store zips ship it 644.

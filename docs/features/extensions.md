@@ -804,6 +804,12 @@ downloads and some store zips lose their executable mode, so installation preser
 both generated wrappers and extensions that call a helper directly with `execFile`. `spawn` covers
 the rest of a Swift wrapper. Color Picker is the reference case.
 
+Missing executables report Node's `spawn <command> ENOENT` error (`spawnSync` for synchronous calls)
+with `code`, `errno`, `syscall`, `path` and `spawnargs`. Failed launches leave stdout and stderr empty,
+allowing extensions to try another binary; a process that starts and exits unsuccessfully retains its actual output.
+Bare executable names search the child's `env.PATH` first, then Pipcast's inherited PATH and standard
+system/Homebrew folders. This lets extensions supply nvm directories when falling back to `npx`.
+
 **Command modes** — `view` renders into the palette; `no-view` runs headless with the palette closed.
 Both receive `props.arguments` and `props.launchType`. A `no-view` command declaring `interval`
 (`"1m"`, `"12h"`, `"1d"`) also refreshes in the background — see [Background refresh](#background-refresh).

@@ -2,7 +2,7 @@
 
 By default, Pipcast checks `mSarheed/pipcast` GitHub Releases once a day and offers the newest release for its own
 channel in a native window with its release notes, installs it and relaunches. There is no Sparkle and
-no appcast: the release feed the website already reads is the feed the app reads.
+no appcast: GitHub Releases is the only feed.
 
 ## Invariants
 
