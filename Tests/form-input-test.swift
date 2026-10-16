@@ -15,6 +15,7 @@ struct FormInputTests {
 
     static func main() {
         _ = NSApplication.shared
+        NSApp.appearance = NSAppearance(named: .darkAqua)
         testSingleLine()
         testCapAlignment()
         testTextArea()
