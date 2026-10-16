@@ -149,6 +149,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `dictation-inference-test` | Dictation byte BPE, Fourier/mel features and non-overlapping audio chunks; no downloaded models |
 | `dictation-worker-test` | Dictation's framed channel, worker reuse/switching, removal, cancellation and broken pipes with a fixture helper |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
+| `dictionary-session-test` | Dictionary query lifecycle, stale-result rejection, cancellation and candidate filtering |
 | `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` — a real XHTML record and the plain-text fallback, read into page blocks |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
@@ -429,6 +430,22 @@ section.
 
 Run against the **Debug channel** (`Pipcast Dev.app`, `io.github.msarheed.pipcast.app.dev`). It has its own prefs,
 caches, TCC grants and login item, so this cannot disturb an installed copy.
+
+### Dictionary
+
+Run `dictionary-session-test` for deterministic query lifecycle and candidate filtering checks.
+Opt into installed English spelling service checks with
+`PIPCAST_TEST_DICTIONARY_SYSTEM=1 ./Scripts/run-tests.sh dictionary-session-test`.
+
+- Define Word: `reconize` offers `recognize` (or `recognise`); `recogni` offers completions.
+- ↑/↓ select suggestions; Return and clicking a suggestion look it up while preserving search focus.
+- Option-Return copies only the selected word and closes; on an exact definition it copies that term.
+- Return on a definition still copies the definition; Command-Return opens Dictionary.app.
+- The Actions menu exposes Define Word or Copy Definition, Copy Word, and Open in Dictionary.
+- Rapid typing, clearing, leaving the screen and reopening never publish an obsolete lookup.
+- Empty input shows the prompt; nonsense with no candidates shows No definition found.
+- IME composition keeps Return and navigation keys; Option-Return does not copy during composition.
+- Check Dark and Light, keyboard selection scrolling, and VoiceOver labels for the suggestions list.
 
 ### Core
 

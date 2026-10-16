@@ -8,15 +8,31 @@ final class DictionarySession {
         let term: String
         /// Nil when no enabled dictionary knows the term.
         let entry: DictionaryEntry?
+        let suggestions: [String]
     }
 
     /// The last answered lookup; it stays up while the next term resolves, so typing never blanks.
     private(set) var lookup: Lookup?
     @ObservationIgnored private var term = ""
     @ObservationIgnored private var task: Task<Void, Never>?
+    @ObservationIgnored private let findEntry: @Sendable (String) async -> DictionaryEntry?
+    @ObservationIgnored private let findSuggestions: @MainActor (String) async -> [String]
 
     /// Coalesces a burst of keystrokes into the lookup for the word they settle on.
     private static let debounce = Duration.milliseconds(90)
+
+    init(
+        findEntry: @escaping @Sendable (String) async -> DictionaryEntry? = DictionarySession.entry,
+        findSuggestions: @escaping @MainActor (String) async -> [String] = DictionarySuggestionService.words
+    ) {
+        self.findEntry = findEntry
+        self.findSuggestions = findSuggestions
+    }
+
+    @concurrent private static func entry(for term: String) async -> DictionaryEntry? {
+        guard !Task.isCancelled else { return nil }
+        return autoreleasepool { DictionaryService.entry(for: term) }
+    }
 
     func lookUp(_ query: String) {
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -27,16 +43,20 @@ final class DictionarySession {
             lookup = nil
             return
         }
+        let findEntry = findEntry
+        let findSuggestions = findSuggestions
         task = Task { [weak self] in
             try? await Task.sleep(for: Self.debounce)
             guard !Task.isCancelled else { return }
-            let entry = await Task.detached(priority: .userInitiated) {
-                DictionaryService.entry(for: term)
-            }.value
+            let entry = await findEntry(term)
             guard !Task.isCancelled else { return }
-            self?.lookup = Lookup(term: term, entry: entry)
+            let suggestions = entry == nil ? await findSuggestions(term) : []
+            guard !Task.isCancelled, let self, self.term == term else { return }
+            self.lookup = Lookup(term: term, entry: entry, suggestions: suggestions)
         }
     }
+
+    isolated deinit { task?.cancel() }
 
     func reset() {
         task?.cancel()

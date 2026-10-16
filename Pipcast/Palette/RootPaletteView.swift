@@ -14,6 +14,7 @@ struct RootPaletteView: View {
     @Environment(FrequentEmojiStore.self) private var frequentEmoji
     @Environment(FileSearchSession.self) private var fileSearch
     @Environment(DictionarySession.self) private var dictionary
+    @Environment(DictionaryCoordinator.self) private var dictionaryCoordinator
     @Environment(MenuSearchSession.self) private var menuSearch
     @Environment(WindowSwitchSession.self) private var windowSwitch
     @Environment(CalendarStore.self) private var calendarStore
@@ -121,7 +122,7 @@ struct RootPaletteView: View {
                 history: core.chatHistory, chat: quickAI, coordinator: core.quickAICoordinator,
                 vm: vm, openActions: openActions, metrics: metrics)
         case .dictionary:
-            return DictionaryScreen(session: dictionary, core: core, vm: vm)
+            return DictionaryScreen(session: dictionary, coordinator: dictionaryCoordinator, vm: vm)
         case .calculatorHistory:
             return CalculatorHistoryScreen(
                 history: calcHistory, currencyRates: currencyRates, core: core, vm: vm,
@@ -556,7 +557,7 @@ struct RootPaletteView: View {
                     return .handled
                 }
                 if command { return screen.secondary(at: selection) ? .handled : .ignored }
-                return screen.pasteKeepingWindowOpen(at: selection) ? .handled : .ignored
+                return screen.alternate(at: selection) ? .handled : .ignored
             }
             .onKeyPress(.escape) {
                 if menuPanel.isClosing { return .handled }
@@ -1169,7 +1170,7 @@ struct RootPaletteView: View {
             }
             if modifiers.contains(.command) { return screen.secondary(at: selection) }
             if modifiers.contains(.option) {
-                return screen.pasteKeepingWindowOpen(at: selection)
+                return screen.alternate(at: selection)
             }
             activateMenuItem(menuSelection)
             return true

@@ -302,6 +302,12 @@ run fallback-test          Pipcast/Features/Launcher/Model/Fallback.swift \
                            Pipcast/Features/Snippets/Model/Snippet.swift
 run dictionary-test        Pipcast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Pipcast/Features/Dictionary/Model/DictionaryMarkup.swift
+run dictionary-session-test Pipcast/Features/Dictionary/Model/DictionaryEntry.swift \
+                           Pipcast/Features/Dictionary/Model/DictionaryMarkup.swift \
+                           Pipcast/Features/Dictionary/Model/DictionarySuggestions.swift \
+                           Pipcast/Features/Dictionary/Service/DictionaryService.swift \
+                           Pipcast/Features/Dictionary/Service/DictionarySuggestionService.swift \
+                           Pipcast/Features/Dictionary/Service/DictionarySession.swift
 run dictation-test         Pipcast/Features/Dictation/Model/DictationModel.swift Pipcast/Features/Dictation/Model/DictationIdleRelease.swift Pipcast/Features/Dictation/Model/DictationTextFormatter.swift
 run dictation-field-test   Pipcast/Features/Dictation/Model/DictationModel.swift \
                            Pipcast/Features/Dictation/Model/DictationAudioChunks.swift \
