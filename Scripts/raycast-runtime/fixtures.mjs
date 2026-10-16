@@ -5,6 +5,7 @@
 
 import { createHarness, bootConfig, describeTree } from "./test.mjs";
 import { transformSync } from "esbuild";
+import { runOAuthFixtures } from "./oauth-fixtures.mjs";
 import { runModuleFixtures } from "./modules-fixtures.mjs";
 
 let passes = 0;
@@ -868,6 +869,7 @@ export default function Command() {
 // ─── Runner ─────────────────────────────────────────────────────────
 
 export async function runFixtures() {
+  await runOAuthFixtures();
   await run("List with sections, actions and a dropdown", listSource, "view", async (harness) => {
     const tree = harness.state.trees.at(-1);
     const dump = tree ? describeTree(tree) : "";
@@ -1133,7 +1135,7 @@ export async function runFixtures() {
           signIns.push([url, scheme]);
           return url.includes("deny")
             ? "com.raycast:/oauth?error=access_denied&error_description=The%20user%20denied%20access."
-            : "raycast://oauth?code=code-1&package_name=Extension";
+            : `raycast://oauth?code=code-1&package_name=Extension&state=${encodeURIComponent(new URL(url).searchParams.get("state"))}`;
         },
         "oauth.getTokens": ([provider]) => oauthTokens.get(provider) ?? null,
         "oauth.setTokens": ([provider, tokens]) => {

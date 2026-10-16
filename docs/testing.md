@@ -44,6 +44,22 @@ They cover shipped CommonJS packages, exports maps, relative directories, nested
 cycles, failed-load retries and the extension-root boundary. The runtime fixture suite includes the
 same checks.
 
+OAuth redirect checks run against the shipped runtime, including Raycast's base64url JSON relay,
+custom authorization URLs, all redirect methods, and missing, duplicate or mismatched callback state:
+
+```sh
+node Scripts/raycast-runtime/oauth-fixtures.mjs
+node Scripts/raycast-runtime/fixtures.mjs    # includes the OAuth and module checks
+node Scripts/raycast-runtime/oauth-bench.mjs # run from the repository root
+```
+
+The benchmark reports median runtime boot and authorization-request construction over nine rounds
+of 2,000 requests, with 100 warmups each. It uses the Node VM host harness, not JavaScriptCore or the
+running app; it cannot measure native memory, browser latency or total sign-in time. Compare on an
+idle machine with the same Node version. To measure an old generated bundle without changing this
+checkout, run the benchmark by absolute path from a scratch directory containing that bundle at
+`Pipcast/Resources/RaycastRuntime.generated.js`.
+
 The suite runs four harnesses at a time by default to reduce CPU usage. `PIPCAST_TEST_JOBS` overrides
 that limit; `PIPCAST_TEST_JOBS=1` runs one at a time. Each result is numbered
 against the total and shows its run and compile time, a quiet stretch names the harnesses still running, and a harness that runs longer

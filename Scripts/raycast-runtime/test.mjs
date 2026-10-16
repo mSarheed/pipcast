@@ -453,11 +453,11 @@ function summarize(value) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [dir, command] = process.argv.slice(2);
-  if (dir) {
-    await runExtension(dir, command);
-  } else {
-    await runFixtures();
-  }
+  const task = dir ? runExtension(dir, command) : runFixtures();
+  task.catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
 }
 
 /// Mirrors the Swift-side resolution: a manifest default can be platform-keyed
