@@ -36,9 +36,11 @@ enum CommandCatalog {
     nonisolated static func makeEntry(
         _ id: CommandID, url: URL? = nil, subtitle: String? = nil
     ) -> AppEntry {
-        AppEntry(
+        var entry = AppEntry(
             id: id.rawValue, name: id.name, url: url ?? placeholderURL(id), bundleID: nil,
             kind: id.entryKind, settingsOwner: id.owner, subtitle: subtitle)
+        entry.keywords = id.keywords
+        return entry
     }
 
     nonisolated private static func placeholderURL(_ id: CommandID) -> URL {

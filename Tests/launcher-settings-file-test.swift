@@ -18,9 +18,20 @@ struct LauncherSettingsFileTest {
         testWaitingRecords()
         testDeletedWaitingRecord()
         testMovedShortcut()
+        testCommandKeywords()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    private static func testCommandKeywords() {
+        let whatsNew = CommandCatalog.entry(for: .whatsNew)
+        check(
+            "What's New is found by the names people search for it by",
+            whatsNew?.keywords == ["Changelog", "Release Notes"])
+        check(
+            "a command without other names declares none",
+            CommandCatalog.entry(for: .clipboardHistory)?.keywords == [])
     }
 
     private static func testInvalidRecords() {
@@ -229,6 +240,7 @@ struct AppEntry: Sendable {
     let kind: Kind
     var settingsOwner: SettingsTab?
     var subtitle: String?
+    var keywords: [String] = []
     var preferenceKey: String { bundleID ?? id }
 }
 

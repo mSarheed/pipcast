@@ -66,8 +66,9 @@ no appcast: GitHub Releases is the only feed.
 `CHANGELOG.md` is copied into the app bundle, and `ChangelogStore` parses it once at launch into
 `Changelog` entries. The palette's What's New screen (`.changelog`, `ChangelogScreen`) lists the
 versions this build has reached beside the selected one's notes, laid out by `ReleaseNotesView`;
-↵ opens that release on GitHub. It opens from the What's New launcher command and the palette's
-app menu, which replaced a link to the GitHub releases page.
+↵ opens that release on GitHub. It opens from the What's New launcher command, which searching
+"changelog" or "release notes" also finds, and the palette's app menu, which replaced a link to the
+GitHub releases page.
 
 - **What's New reads the build's own file, never the network.** The notes a user reads are the ones
   this build shipped with, offline, and the release body on GitHub is published from the same section
