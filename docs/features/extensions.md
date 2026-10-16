@@ -689,11 +689,16 @@ fixed redirect URIs registered, which all end on `raycast://oauth` or `com.rayca
 redirect. Web requests encode a fresh random nonce, provider name and callback scheme as base64url
 JSON, the format Raycast's redirect page decodes and forwards. When the authorization URL carries
 `state`, the callback must return exactly one matching value, including for custom `{ url }` requests.
+Concurrent authorization requests wait their turn before opening the browser, including requests
+from separate clients. Each keeps its own state, verifier and authorization code; a failed request
+does not block the next. Teams can request presence and photos together as soon as recent users load.
 Each provider's token set lives in the extension's data file, beside its preferences, keyed by
 `providerId`. Only a command the user opened can start a sign-in; a background refresh fails until
 then. While the browser is up the palette hides, but Pop to Root Search holds off, because resetting
 would stop the command and cancel the sign-in. Summoning the palette meanwhile returns to the waiting
-command, and the palette comes back on its own when the redirect lands.
+command, and the palette comes back on its own when the redirect lands. Cancelling the command
+finishes its pending sign-in without waiting for a browser callback. A refused browser start also
+finishes immediately, and late callbacks cannot complete a cancelled or subsequent request.
 
 **Node built-ins** — `path`, `fs` (+ `fs/promises`, `createReadStream`/`createWriteStream`, a snapshot-backed `opendir`, and
 the descriptor calls `tar` unpacks through), `os`,

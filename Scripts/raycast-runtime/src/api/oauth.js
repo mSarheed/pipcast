@@ -16,6 +16,13 @@ const redirects = {
 };
 
 const expiryMarginSeconds = 10;
+let authorizationQueue = Promise.resolve();
+
+function authorizeInBrowser(url, scheme) {
+  const result = authorizationQueue.then(() => hostCall("oauth", "authorize", [url, scheme]));
+  authorizationQueue = result.then(() => {}, () => {});
+  return result;
+}
 
 const randomURLSafe = (size) => nodeModules.crypto.randomBytes(size).toString("base64url");
 
@@ -67,7 +74,7 @@ class PKCEClient {
   async authorize(request) {
     const url = typeof request.toURL === "function" ? request.toURL() : request.url;
     const expectedState = new URL(url).searchParams.get("state");
-    const redirect = await hostCall("oauth", "authorize", [url, redirects[this.redirectMethod].scheme]);
+    const redirect = await authorizeInBrowser(url, redirects[this.redirectMethod].scheme);
     const params = new URL(redirect).searchParams;
     const error = params.get("error");
     if (error) throw new Error(params.get("error_description") ?? error);

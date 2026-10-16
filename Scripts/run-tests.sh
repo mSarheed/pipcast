@@ -613,6 +613,7 @@ run ext-accessory-test     $E/Model/RenderNode.swift \
                            $E/Model/ExtensionPickerItem.swift \
                            $E/Model/ExtensionSearchAccessory.swift \
                            $E/Service/ExtensionStorage.swift
+run ext-sign-in-test       -parse-as-library $E/Service/ExtensionSignInSession.swift
 run slow ext-test          -parse-as-library \
                            Tests/ext-menu-bar-test.swift \
                            Tests/ext-fetch-test.swift \

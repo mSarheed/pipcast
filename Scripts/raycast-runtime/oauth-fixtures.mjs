@@ -84,6 +84,26 @@ export async function runOAuthFixtures() {
     await assert.rejects(harness.call("signIn(true)"), /state/);
     callback = () => "raycast://oauth?code=stateless";
     assert.equal((await harness.call('client.authorize({ url: "https://example.test/auth" })')).authorizationCode, "stateless");
+    for (const failFirst of [false, true]) {
+      const pending = [];
+      callback = state => new Promise((resolve, reject) => pending.push({ state, resolve, reject }));
+      const firstSignIn = harness.call('(async () => { await makeRequest(); return client.authorize(request); })()');
+      const firstResult = firstSignIn.then(value => ({ value }), error => ({ error }));
+      await new Promise(resolve => setImmediate(resolve));
+      const secondSignIn = harness.call('(async () => { await makeRequest(); return client.authorize(request); })()');
+      await new Promise(resolve => setImmediate(resolve));
+      assert.equal(pending.length, 1, "concurrent clients must wait before opening a second browser sign-in");
+      if (failFirst) pending[0].reject(new Error("Sign-in was cancelled."));
+      else pending[0].resolve(webRedirect(pending[0].state, "first-code"));
+      const result = await firstResult;
+      if (failFirst) assert.match(result.error.message, /cancelled/);
+      else assert.equal(result.value.authorizationCode, "first-code");
+      await new Promise(resolve => setImmediate(resolve));
+      assert.equal(pending.length, 2, "the next request starts after success or failure");
+      assert.notEqual(pending[0].state, pending[1].state);
+      pending[1].resolve(webRedirect(pending[1].state, "second-code"));
+      assert.equal((await secondSignIn).authorizationCode, "second-code");
+    }
     console.log("OAuth redirect regression checks passed");
   } finally {
     harness.stop("oauth");

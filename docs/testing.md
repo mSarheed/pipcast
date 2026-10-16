@@ -45,7 +45,8 @@ cycles, failed-load retries and the extension-root boundary. The runtime fixture
 same checks.
 
 OAuth redirect checks run against the shipped runtime, including Raycast's base64url JSON relay,
-custom authorization URLs, all redirect methods, and missing, duplicate or mismatched callback state:
+custom authorization URLs, all redirect methods, missing, duplicate or mismatched callback state,
+and concurrent browser requests with separate codes and recovery after cancellation:
 
 ```sh
 node Scripts/raycast-runtime/oauth-fixtures.mjs
@@ -173,6 +174,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `ext-version-test` | `Extensions/Service/ExtensionVersionStore.swift` — what an update check reports, adopts and forgets |
 | `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` — round-trip, failure runs, uninstall |
 | `ext-test` | the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
+| `ext-sign-in-test` | `Extensions/Service/ExtensionSignInSession.swift` — cancellation without a browser callback, late callback isolation, retry, refused starts and pre-cancelled runs |
 | `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
 | `icon-cache-test` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
 | `entry-icon-test` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
