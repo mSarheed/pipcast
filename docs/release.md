@@ -4,9 +4,10 @@ Releases are manual: Actions → Release → Run workflow. Choose `beta` or `sta
 base version such as `0.1.0`. Beta versions append the workflow run number.
 Only run this after signing and Homebrew credentials are configured.
 
-The workflow builds arm64 and universal apps, signs them with Developer ID Application,
-notarizes and staples the app and DMG, and validates their signatures. Both builds must
-succeed before anything is published. It publishes DMGs, updater ZIPs, and the matching
+The workflow compiles arm64 and x86_64 once each in parallel, then combines their main and helper
+executables into the universal app. Separate packaging jobs reuse the arm64 build, sign both apps
+with Developer ID Application, notarize and staple the app and DMG, and validate their signatures.
+Both architecture builds and both packaging jobs must succeed before anything is published. It publishes DMGs, updater ZIPs, and the matching
 AGPL source archive, then updates the cask in `mSarheed/homebrew-pipcast` with SHA-256 hashes.
 Stable uses `pipcast`; beta uses `pipcast@beta`. Merging to main publishes nothing.
 
@@ -39,3 +40,10 @@ No quarantine-removal hook is used. User data is preserved on uninstall.
 
 If publication succeeds but the tap update fails, the release remains available. Repair the
 tap token and update the cask to that existing release; do not overwrite published assets.
+
+Compilation jobs carry no signing or notarization secrets. They transfer app bundles in tar archives
+so executable permissions and symlinks survive artifact storage. Packaging checks that both slices
+have matching bundle identities and versions, combines all four executables, then signs helpers
+before the enclosing app. The existing arm64 and `-Universal-` asset names stay unchanged so installed
+updaters and Homebrew keep selecting the correct download. No release is published until both
+packages pass signature verification and Apple notarization.

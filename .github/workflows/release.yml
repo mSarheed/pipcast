@@ -23,6 +23,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        architecture: [arm64, x86_64]
+    env:
+      BASE_VERSION: ${{ inputs.version }}
+      CHANNEL: ${{ inputs.channel }}
+      ARCHITECTURE: ${{ matrix.architecture }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Compile ${{ matrix.architecture }}
+        run: ./Scripts/release-build.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: compiled-${{ matrix.architecture }}
+          path: build/release-artifacts/${{ matrix.architecture }}.tar
+          if-no-files-found: error
+          retention-days: 1
+  package:
+    needs: build
+    runs-on: macos-26
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
         architecture: [arm64, universal]
     env:
       BASE_VERSION: ${{ inputs.version }}
@@ -36,15 +59,24 @@ jobs:
       NOTARY_PRIVATE_KEY: ${{ secrets.NOTARY_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v7
-      - name: Build, sign, notarize, and package
-        run: ./Scripts/release-build.sh
+      - uses: actions/download-artifact@v8
+        with:
+          name: compiled-arm64
+          path: build/release-artifacts
+      - uses: actions/download-artifact@v8
+        if: matrix.architecture == 'universal'
+        with:
+          name: compiled-x86_64
+          path: build/release-artifacts
+      - name: Assemble, sign, notarize, and package
+        run: ./Scripts/release-package.sh
       - uses: actions/upload-artifact@v7
         with:
           name: pipcast-${{ matrix.architecture }}
           path: dist/
           if-no-files-found: error
   publish:
-    needs: build
+    needs: package
     runs-on: macos-26
     timeout-minutes: 15
     env:

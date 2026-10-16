@@ -19,6 +19,19 @@ There is no CI: every item is on you, run locally. CodeRabbit reviews each PR, b
 not a gate. Each is expanded below; the manual sweep at the end of this file is the sixth, judged by
 what you touched.
 
+## Release assembly
+
+After changing release build or packaging scripts, run:
+
+```sh
+python3 Scripts/test-release-merge.py
+```
+
+This compiles small real arm64 and x86_64 executables, combines the app and all helpers, checks
+bundle metadata rejection, and verifies signatures, executable permissions and symlinks through
+the tar handoff. It uses ad-hoc signatures; Developer ID signing and Apple notarization are checked
+by the release workflow with its configured credentials.
+
 ## The harnesses
 
 ```sh
