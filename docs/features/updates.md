@@ -87,11 +87,10 @@ app menu, which replaced a link to the GitHub releases page.
   (`LauncherScreen.Row.whatsNew`) with the release's headline, shaped like the meeting card; ↵ opens
   What's New, and ⌘K adds View on GitHub and Dismiss, which marks the notes read unopened. A due
   meeting keeps the slot: it is the one that cannot wait.
-- **One setting gates the card, the HUD and the dot.** General → Show What's New after updates
+- **The setting gates the card alone.** General → Show What's New after updates
   (`showsWhatsNewAfterUpdates`, `general.showWhatsNewAfterUpdates` in settings.json, carried by
-  backups) defaults on; `ChangelogCoordinator.unreadRelease` is the single read all three take. Off,
-  nothing is pinned, announced or dotted, while What's New stays one command away and the notes stay
-  unread. A launch while it is off spends the HUD, so re-enabling brings back the card and dot only.
+  backups) defaults on. The card reads `ChangelogCoordinator.pinnedRelease`, which is
+  `unreadRelease` behind that switch; the HUD and the dot read `unreadRelease` and show either way.
 - **View on GitHub from the card counts as reading it**, like opening What's New; Dismiss does too.
 - **The HUD and the menu row open What's New; only the command toggles it.** `showChangelog` uses
   `showPalette`, so a second click never closes the screen it just opened; `toggleChangelog` keeps

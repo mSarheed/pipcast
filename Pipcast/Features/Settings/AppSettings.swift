@@ -172,7 +172,7 @@ final class AppSettings {
         }
     }
 
-    /// The card, HUD and dot an update earns; What's New itself stays one command away either way.
+    /// The launcher card an unread update earns; the HUD and the menu dot don't depend on it.
     var showsWhatsNewAfterUpdates: Bool {
         didSet {
             defaults.set(showsWhatsNewAfterUpdates, forKey: Key.showsWhatsNewAfterUpdates.rawValue)

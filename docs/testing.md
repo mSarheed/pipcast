@@ -866,8 +866,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   fresh install shows neither.
 - The same update pins a What's New card atop the empty launcher; a due meeting's join card keeps
   the slot until it passes. ↵ opens What's New; ⌘K → Dismiss clears it unopened. With General → Show What's New after
-  updates off, no card, HUD or dot appears; turning it back on before reading brings back the card and
-  the dot, never a late HUD.
+  updates off, no card appears while the HUD and the dot still do; turning it back on before reading
+  brings the card back.
 - General → Automatically check for updates defaults on; turn it off and relaunch: it stays off,
   no background check or update prompt occurs, and Check for Updates still works. Re-enable it:
   checks resume. Settings search for "updates" reveals the toggle; settings.json edits and a backup

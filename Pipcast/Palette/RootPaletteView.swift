@@ -52,7 +52,7 @@ struct RootPaletteView: View {
                 appIndex: appIndex, favorites: favorites, visibility: visibility,
                 currencyRates: currencyRates, core: core, vm: vm, running: selectionIsRunning,
                 meeting: core.calendarCoordinator.cardedMeeting,
-                whatsNew: core.changelogCoordinator.unreadRelease, now: meetingClock.now,
+                whatsNew: core.changelogCoordinator.pinnedRelease, now: meetingClock.now,
                 openActions: openActions, openArgumentOptions: openArgumentOptions,
                 scrollToFollow: { scroll = ScrollIntent(kind: .follow) })
         case .uninstall:
