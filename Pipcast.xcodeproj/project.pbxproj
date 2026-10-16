@@ -466,6 +466,7 @@
 		84F79537DD36DC228AAEAE4C /* InterfaceMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8481C2A8FE22AB940F671D03 /* InterfaceMetrics.swift */; };
 		852B390CB4116CD5CD88F7E1 /* ChatGPTSubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A665B7ACF96FDFA836A0EB8F /* ChatGPTSubscriptionManager.swift */; };
 		85691B583171D15EFA36B60E /* Quicklink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B85BCD3526A49D048EC399 /* Quicklink.swift */; };
+		85781FE3491B2CB4CCB868F3 /* WhatsNewCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0984BB314B5C34E48FF56F40 /* WhatsNewCard.swift */; };
 		867C9F058538A65D788E1A91 /* ExtensionMenuBarImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192CBDF9767976ED8F178F1F /* ExtensionMenuBarImage.swift */; };
 		878943F367BC95A1DE8BEE4D /* SettingsBackupCoverage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DF672DC17E31CD6A125D5BA /* SettingsBackupCoverage.swift */; };
 		87DDA26DDDB788F598CE0C4D /* ChatCopyButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0C986099E893ADB98AC3EF /* ChatCopyButton.swift */; };
@@ -925,6 +926,7 @@
 		07F9D14BCF74E7C9A575DC18 /* RoomWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomWindow.swift; sourceTree = "<group>"; };
 		08507837B86813B8E950D786 /* EventEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventEditorScreen.swift; sourceTree = "<group>"; };
 		0944F127C51B16772D4DF870 /* SupportReminderSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportReminderSchedule.swift; sourceTree = "<group>"; };
+		0984BB314B5C34E48FF56F40 /* WhatsNewCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewCard.swift; sourceTree = "<group>"; };
 		09C6D42CDB2E20D2B370BEE0 /* WindowLayoutArgumentField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLayoutArgumentField.swift; sourceTree = "<group>"; };
 		09F65A73AD0292DC4A8CC1F3 /* WindowManagementFileFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementFileFormat.swift; sourceTree = "<group>"; };
 		09FE487CFA6FABBFB922D6C4 /* BackupCategorySelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupCategorySelection.swift; sourceTree = "<group>"; };
@@ -2987,6 +2989,7 @@
 				98B86E5C323B530EE48160E9 /* ReleaseNotesView.swift */,
 				D6A9FBE1568716404921BE14 /* UpdateCoordinator.swift */,
 				4B6852AFB7E0DD08D6D109EE /* UpdateWindowView.swift */,
+				0984BB314B5C34E48FF56F40 /* WhatsNewCard.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -4724,6 +4727,7 @@
 				ABE048B3076E22D4C62ACB33 /* VolumeLevel.swift in Sources */,
 				8B483A81F70B42EF8E135EFC /* VolumeSlider.swift in Sources */,
 				7B01AD83070BEF0A490F3242 /* VolumeState.swift in Sources */,
+				85781FE3491B2CB4CCB868F3 /* WhatsNewCard.swift in Sources */,
 				CDE84A178E17F22E981BA490 /* WindowActionMemory.swift in Sources */,
 				8C9E0B375611884766650B5C /* WindowChrome.swift in Sources */,
 				369E1A5CD226181DBF4082FB /* WindowCommand.swift in Sources */,

@@ -20,6 +20,12 @@ final class ChangelogCoordinator {
         self.core = core
     }
 
+    /// The update the card, HUD and dot all point at; nil once read, or with the setting off.
+    var unreadRelease: Changelog.Entry? {
+        guard core.settings.showsWhatsNewAfterUpdates, store.hasNews else { return nil }
+        return store.current
+    }
+
     /// Opening the notes is what reads them, so the dot goes with this call.
     func showChangelog() {
         store.markSeen()
@@ -32,13 +38,20 @@ final class ChangelogCoordinator {
         paletteCoordinator.togglePalette(mode: .changelog)
     }
 
+    /// The card's Dismiss: read without opening, so the card, dot and HUD all stand down.
+    func dismissNews() {
+        store.markSeen()
+    }
+
     /// Said once per version, after the relaunch an update ends in; the dot outlasts it.
     func announceIfUpdated() {
-        guard store.isAnnouncementDue, let running = store.running else { return }
+        guard unreadRelease != nil, store.isAnnouncementDue, let running = store.running else {
+            return
+        }
         Task { [weak self] in
             try? await Task.sleep(for: Self.announcementDelay)
             for _ in 0..<Self.announcementAttempts {
-                guard let self, store.isAnnouncementDue else { return }
+                guard let self, unreadRelease != nil, store.isAnnouncementDue else { return }
                 // The pill is shared: a Quick Action's progress and its Cancel must not be replaced.
                 if core.canInterruptUser, !core.isShowingMessage {
                     store.markAnnounced()

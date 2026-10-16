@@ -57,6 +57,8 @@ struct ChangelogTests {
         expect(changelog.entries.first?.notes.hasPrefix("A headline.") == true, "notes start after the heading")
         expect(changelog.entries.first?.notes.contains("### New") == true, "subheadings stay in the notes")
         expect(changelog.entries.last?.notes == "- First.", "the last entry runs to the end of the file")
+        expect(changelog.entries.first?.headline == "A headline.", "a section's opening line is its headline")
+        expect(changelog.entries.last?.headline == nil, "a section that opens with bullets has no headline")
         expect(!changelog.entries.contains { $0.notes.contains("Preamble") }, "the preamble is dropped")
 
         let unordered = Changelog(markdown: "## 0.1.0\nOld.\n## 0.3.0\nNew.")

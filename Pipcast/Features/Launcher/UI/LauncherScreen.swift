@@ -11,6 +11,8 @@ struct LauncherScreen: PaletteScreen {
     let running: Bool
     /// The join card's meeting, resolved by the coordinator; nil unless one is due.
     let meeting: MeetingEvent?
+    /// The unread update What's New pins; a due meeting takes the slot first.
+    let whatsNew: Changelog.Entry?
     let now: Date
     let openActions: () -> Void
     let openArgumentOptions: (String) -> Void
@@ -39,7 +41,7 @@ struct LauncherScreen: PaletteScreen {
     init(
         appIndex: AppIndex, favorites: FavoritesStore, visibility: VisibilityStore,
         currencyRates: CurrencyRateStore, core: AppCore, vm: PaletteState, running: Bool,
-        meeting: MeetingEvent?, now: Date,
+        meeting: MeetingEvent?, whatsNew: Changelog.Entry?, now: Date,
         openActions: @escaping () -> Void, openArgumentOptions: @escaping (String) -> Void,
         scrollToFollow: @escaping () -> Void
     ) {
@@ -84,7 +86,9 @@ struct LauncherScreen: PaletteScreen {
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         // At most one of them leads, so the flat index keeps a single-row offset.
         let meeting = pinsFavorites ? meeting : nil
+        let whatsNew = pinsFavorites && meeting == nil ? whatsNew : nil
         self.meeting = meeting
+        self.whatsNew = whatsNew
         self.results = results
         self.calc = calc
         self.files = files
@@ -101,6 +105,8 @@ struct LauncherScreen: PaletteScreen {
             self.rows = [.color(color)] + entries
         } else if let meeting {
             self.rows = [.meeting(meeting)] + entries
+        } else if let whatsNew {
+            self.rows = [.whatsNew(whatsNew)] + entries
         } else {
             self.rows = entries
         }
@@ -110,6 +116,7 @@ struct LauncherScreen: PaletteScreen {
     enum Row: Equatable, Identifiable {
         case calc(CalcResult)
         case meeting(MeetingEvent)
+        case whatsNew(Changelog.Entry)
         case color(ColorValue)
         case entry(AppEntry)
         /// Prefixed, because an application's entry id is the same bundle path a file hit carries.
@@ -121,6 +128,7 @@ struct LauncherScreen: PaletteScreen {
             switch self {
             case .calc: return "calc-card"
             case .meeting: return "meeting-card"
+            case .whatsNew: return "whats-new-card"
             case .color: return "color-card"
             case .entry(let app): return app.id
             case .file(let result): return "file-" + result.id
@@ -141,6 +149,7 @@ struct LauncherScreen: PaletteScreen {
         case .color: return "Copy Color"
         case .meeting(let meeting):
             return meeting.link == nil ? "Open in Calendar" : "Join Meeting"
+        case .whatsNew: return "Open What's New"
         case .entry(let app): return app.kind.descriptor.openVerb
         case .file(let result): return result.isDirectory ? "Open Folder" : "Open File"
         case .fallback(let fallback, _): return fallback.openVerb
@@ -217,7 +226,7 @@ struct LauncherScreen: PaletteScreen {
 
     private func isCardSelected(_ selection: Int) -> Bool {
         switch row(at: selection) {
-        case .calc, .meeting, .color: return true
+        case .calc, .meeting, .whatsNew, .color: return true
         case .entry, .file, .fallback, nil: return false
         }
     }
@@ -225,7 +234,8 @@ struct LauncherScreen: PaletteScreen {
     private var leadCard: LauncherList.LeadCard? {
         if let calc { return .calc(calc) }
         if let color { return .color(color) }
-        return meeting.map { .meeting($0, now: now) }
+        if let meeting { return .meeting(meeting, now: now) }
+        return whatsNew.map { .whatsNew($0) }
     }
 
     /// An error card is selectable but has no action: it must drive neither the pill nor ⌘K.
@@ -242,6 +252,8 @@ struct LauncherScreen: PaletteScreen {
             return ColorActionsMenu.content(color: color, core: core)
         case .meeting(let meeting):
             return MeetingActionsMenu.content(meeting: meeting, core: core)
+        case .whatsNew(let entry):
+            return WhatsNewActionsMenu.content(entry: entry, core: core)
         case .entry(let app):
             return AppActionsMenu.content(
                 app: app, searchQuery: vm.query, core: core, running: running,
@@ -269,6 +281,7 @@ struct LauncherScreen: PaletteScreen {
         case .color(let color):
             core.clipboardCoordinator.copyColor(color, as: ColorFormat.primary(for: color))
         case .meeting(let meeting): core.calendarCoordinator.activateMeeting(id: meeting.id)
+        case .whatsNew: core.changelogCoordinator.showChangelog()
         case .entry(let app):
             core.launcherCoordinator.launch(
                 app, searchQuery: vm.query, arguments: argumentValues(for: app))

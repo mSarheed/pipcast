@@ -6,6 +6,7 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
     case launcherShortcut = "general.launcherShortcut"
     case showInMenuBar = "general.showInMenuBar"
     case automaticallyCheckForUpdates = "general.automaticallyCheckForUpdates"
+    case showsWhatsNewAfterUpdates = "general.showWhatsNewAfterUpdates"
     case popToRootTimeout = "general.popToRootSeconds"
     case escapeKeyBehavior = "general.escapeKeyBehavior"
     case autoSwitchInputSource = "general.autoSwitchInputSource"

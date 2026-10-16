@@ -10,6 +10,12 @@ struct Changelog: Sendable {
         let notes: String
 
         var id: AppVersion { version }
+
+        /// The one-line summary a section opens with, before its first heading or bullet.
+        var headline: String? {
+            guard case .paragraph(let text)? = ReleaseNotes.blocks(from: notes).first else { return nil }
+            return text
+        }
     }
 
     let entries: [Entry]

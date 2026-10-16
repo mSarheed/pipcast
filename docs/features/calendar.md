@@ -111,8 +111,9 @@ carries the identity; `.generic` draws `link`.
 
 ## The card
 
-The card is `LauncherScreen.Row.meeting`, prepended the way the calculator card is. The two can never
-both lead: **the calculator only answers a typed query and the card only an empty one**, which is what
+The card is `LauncherScreen.Row.meeting`, prepended the way the calculator card is. What's New's
+update card shares the empty-query slot and yields it to a due meeting. The calculator and a card can
+never both lead: **the calculator only answers a typed query and the card only an empty one**, which is what
 keeps the flat selection index a single-row offset. `LauncherList.LeadCard` is that fact made
 structural — one optional card, one selected flag, one activate closure, whichever feature owns it.
 
