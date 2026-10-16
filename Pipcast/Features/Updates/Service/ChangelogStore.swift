@@ -50,8 +50,10 @@ final class ChangelogStore {
         running.flatMap(changelog.entry(for:))
     }
 
+    /// Ordered, not equal: an announcement for a later version also covers a downgraded copy.
     var isAnnouncementDue: Bool {
-        hasNews && state.lastAnnounced != running?.release
+        guard hasNews, let running else { return false }
+        return state.lastAnnounced.map { $0 < running.release } ?? true
     }
 
     func markAnnounced() {

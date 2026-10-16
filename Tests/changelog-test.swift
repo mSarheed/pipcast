@@ -229,6 +229,20 @@ struct ChangelogTests {
         expect(
             !returned.hasNews && !returned.isAnnouncementDue,
             "reading notes in a downgraded copy never unreads the newer version")
+
+        let announcedOnly = root.appendingPathComponent("announced-only")
+        try? FileManager.default.createDirectory(at: announcedOnly, withIntermediateDirectories: true)
+        guard let newest = install(version: "0.3.0") else { return }
+        let reading = sample.replacingOccurrences(of: "## 0.1.0", with: "## 0.3.0\n\n- Newer.\n\n## 0.1.0")
+        for url in [newest.bundleURL, updated.bundleURL] {
+            try? reading.write(
+                to: url.appendingPathComponent("CHANGELOG.md"), atomically: true, encoding: .utf8)
+        }
+        _ = ChangelogStore(bundle: first, isFirstLaunch: true, directory: announcedOnly)
+        ChangelogStore(bundle: newest, isFirstLaunch: false, directory: announcedOnly).markAnnounced()
+        let older = ChangelogStore(bundle: updated, isFirstLaunch: false, directory: announcedOnly)
+        expect(older.hasNews, "a downgrade past unread notes keeps the dot")
+        expect(!older.isAnnouncementDue, "a downgrade after a newer HUD does not announce again")
     }
 
     /// Parsed once at launch, so even a long history must cost next to nothing.
