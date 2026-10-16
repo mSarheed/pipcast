@@ -125,6 +125,19 @@ run app-name-test          Pipcast/Platform/AppDisplayName.swift \
                            Pipcast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
 run favorites-test         $L/FavoriteSlots.swift
+run app-installation-test  $L/SearchRelevance.swift $L/ScriptRomanization.swift \
+                           $L/LauncherMatch.swift $L/EntryNaming.swift $L/LauncherOrder.swift \
+                           $L/LauncherRankingStore.swift $L/LauncherSuggestions.swift $L/SearchScopes.swift \
+                           Pipcast/Features/Launcher/Service/AppIndex.swift \
+                           Pipcast/Features/Launcher/Service/AppLauncher.swift \
+                           Pipcast/Features/Launcher/Service/RunningAppsMonitor.swift \
+                           Pipcast/Features/Launcher/Service/FavoritesStore.swift \
+                           Pipcast/Features/Launcher/Service/AliasStore.swift \
+                           Pipcast/Features/Launcher/Service/VisibilityStore.swift \
+                           Pipcast/Features/Launcher/Service/BundleNameCache.swift \
+                           Pipcast/Platform/AppDisplayName.swift Pipcast/Platform/BundleLocalization.swift \
+                           Pipcast/Platform/Images/FileIconStamp.swift Pipcast/Platform/Memo.swift \
+                           Pipcast/Platform/Signposts.swift Pipcast/Platform/NotificationToken.swift
 run launcher-file-test     $L/LauncherFileFormat.swift \
                            Pipcast/Features/Settings/Model/SettingsFileJSON.swift
 run launcher-settings-file-test \
