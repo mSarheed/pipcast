@@ -45,7 +45,10 @@ final class ChangelogCoordinator {
 
     /// Said once per version, after the relaunch an update ends in; the dot outlasts it.
     func announceIfUpdated() {
-        guard unreadRelease != nil, store.isAnnouncementDue, let running = store.running else {
+        guard store.isAnnouncementDue, let running = store.running else { return }
+        // Spent while switched off, so turning it on later never says "Updated" for a stale update.
+        guard unreadRelease != nil else {
+            store.markAnnounced()
             return
         }
         Task { [weak self] in

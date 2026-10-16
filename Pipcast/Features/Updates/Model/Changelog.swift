@@ -8,13 +8,27 @@ struct Changelog: Sendable {
         let date: DateComponents?
         /// Markdown in the block shapes `ReleaseNotes.blocks` reads.
         let notes: String
+        /// The summary a section opens with, as one plain line; nil when it opens on a list.
+        let headline: String?
 
         var id: AppVersion { version }
 
-        /// The one-line summary a section opens with, before its first heading or bullet.
-        var headline: String? {
-            guard case .paragraph(let text)? = ReleaseNotes.blocks(from: notes).first else { return nil }
-            return text
+        init(version: AppVersion, date: DateComponents?, notes: String) {
+            self.version = version
+            self.date = date
+            self.notes = notes
+            headline = Self.headline(of: notes)
+        }
+
+        /// Read once here, never per render, and never linkified: the card is a target of its own.
+        private static func headline(of notes: String) -> String? {
+            let opening = notes.split(separator: "\n", omittingEmptySubsequences: false)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .prefix { !$0.isEmpty }
+            guard let first = opening.first, !first.hasPrefix("#"),
+                !["- ", "* ", "+ "].contains(where: first.hasPrefix)
+            else { return nil }
+            return opening.joined(separator: " ")
         }
     }
 

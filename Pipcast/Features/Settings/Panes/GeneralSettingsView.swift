@@ -32,7 +32,7 @@ struct GeneralSettingsView: View {
                 }
                 Toggle(isOn: $settings.showsWhatsNewAfterUpdates) {
                     SettingsRowTitle(.generalGeneral, "Show What's New after updates")
-                    Text("Pins it atop the launcher until you've read it.")
+                    Text("Announces it, pins it atop the launcher and marks the menu until read.")
                 }
                 Picker(selection: $settings.popToRootTimeout) {
                     ForEach(PopToRootTimeout.allCases) { timeout in

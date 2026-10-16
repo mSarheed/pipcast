@@ -59,6 +59,13 @@ struct ChangelogTests {
         expect(changelog.entries.last?.notes == "- First.", "the last entry runs to the end of the file")
         expect(changelog.entries.first?.headline == "A headline.", "a section's opening line is its headline")
         expect(changelog.entries.last?.headline == nil, "a section that opens with bullets has no headline")
+        expect(
+            Changelog(markdown: "## 0.1.0\n\nWrapped\n  across lines by @someone.\n\n- x").entries.first?.headline
+                == "Wrapped across lines by @someone.",
+            "a wrapped headline is one plain line, with nothing linkified")
+        expect(
+            Changelog(markdown: "## 0.1.0\n\n### New\n- x").entries.first?.headline == nil,
+            "a section that opens with a heading has no headline")
         expect(!changelog.entries.contains { $0.notes.contains("Preamble") }, "the preamble is dropped")
 
         let unordered = Changelog(markdown: "## 0.1.0\nOld.\n## 0.3.0\nNew.")

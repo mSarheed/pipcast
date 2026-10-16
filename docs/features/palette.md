@@ -233,8 +233,9 @@ its own, so it also sets `argumentEntryID`, which lists that row alone in root s
 is its name. Both are set **after** `showPalette`, since `prepare` clears them.
 
 The flat `selection` index is the single source of truth for highlight / activation and **must always
-match the visible row order**, including the card at index 0 when present — the calculator's (see
-[calculator.md](calculator.md)) or the meeting join card (see [calendar.md](calendar.md)), never both.
+match the visible row order**, including the card at index 0 when present — whichever `LauncherList.LeadCard` leads: the calculator's
+or colour card for a typed query (see [calculator.md](calculator.md)), or for an empty one the meeting
+join card (see [calendar.md](calendar.md)) or What's New's (see [updates.md](updates.md)). Never two.
 
 ## Window placement
 

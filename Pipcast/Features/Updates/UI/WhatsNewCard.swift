@@ -7,7 +7,8 @@ struct WhatsNewCard: View {
     let selected: Bool
 
     var body: some View {
-        HStack(spacing: metrics.spacing.xl) {
+        let subtitle = subtitle
+        return HStack(spacing: metrics.spacing.xl) {
             SymbolImage(name: CommandID.whatsNew.sfSymbol, size: metrics.size.headerIconSlot)
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: metrics.spacing.xs) {
@@ -66,6 +67,7 @@ enum WhatsNewActionsMenu {
                     core.changelogCoordinator.showChangelog()
                 },
                 PopoverMenuItem(title: "View on GitHub", systemImage: "arrow.up.right.square") {
+                    core.changelogCoordinator.dismissNews()
                     core.changelogCoordinator.openRelease(entry)
                 },
                 PopoverMenuItem(title: "Dismiss", systemImage: "xmark", startsSection: true) {
