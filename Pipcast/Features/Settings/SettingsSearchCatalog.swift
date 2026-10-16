@@ -653,7 +653,7 @@ enum SettingsSearchCatalog {
             keywords: ["version", "upgrade", "release"]),
         .init(
             group: .aboutLinks, "Links",
-            keywords: ["github", "source", "issues", "website"]),
+            keywords: ["github", "source", "issues"]),
         .init(
             .aboutLinks, "Feedback",
             keywords: ["contribute", "report", "suggest", "support"])

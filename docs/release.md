@@ -26,7 +26,7 @@ Repository Actions secrets:
 Enter credentials through GitHub's Actions secret settings or `gh secret set` using
 protected file/stdin input. Never commit or paste private keys into issue or chat text.
 
-The workflow does not deploy a website or send announcements. No website deployment workflow is included.
+The workflow does not send announcements.
 
 The beta is available now; stable becomes available after its first manual release:
 
