@@ -145,6 +145,9 @@ private struct ChangelogPaletteRow: View {
 }
 
 private struct ChangelogPaletteDetail: View {
+    /// The heading's date is ISO, so it is read as Gregorian and shown in the user's calendar.
+    private static let gregorian = Calendar(identifier: .gregorian)
+
     let entry: Changelog.Entry
 
     @Environment(\.metrics) private var metrics
@@ -155,7 +158,7 @@ private struct ChangelogPaletteDetail: View {
                 VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
                     Text("What's New in \(Bundle.main.appDisplayName) \(entry.version.description)")
                         .font(metrics.typography.markdownHeading2)
-                    if let date = entry.date.flatMap(Calendar.current.date(from:)) {
+                    if let date = entry.date.flatMap(Self.gregorian.date(from:)) {
                         Text(date.formatted(date: .abbreviated, time: .omitted))
                             .font(Font(metrics.typography.textNSFont(.subheadline)))
                             .foregroundStyle(Theme.Colors.textSecondary)

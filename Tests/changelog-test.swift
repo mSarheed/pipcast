@@ -221,6 +221,14 @@ struct ChangelogTests {
 
         let read = ChangelogStore(bundle: updated, isFirstLaunch: false, directory: root)
         expect(!read.hasNews && !read.isAnnouncementDue, "opening What's New clears the dot for good")
+
+        let downgraded = ChangelogStore(bundle: first, isFirstLaunch: false, directory: root)
+        downgraded.markSeen()
+        downgraded.markAnnounced()
+        let returned = ChangelogStore(bundle: updated, isFirstLaunch: false, directory: root)
+        expect(
+            !returned.hasNews && !returned.isAnnouncementDue,
+            "reading notes in a downgraded copy never unreads the newer version")
     }
 
     /// Parsed once at launch, so even a long history must cost next to nothing.

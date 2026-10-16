@@ -55,15 +55,21 @@ final class ChangelogStore {
     }
 
     func markAnnounced() {
-        state.lastAnnounced = running?.release
+        guard let running else { return }
+        state.lastAnnounced = Self.later(state.lastAnnounced, running.release)
         persist()
     }
 
     func markSeen() {
         hasNews = false
         guard let running else { return }
-        state.lastSeen = running.release
+        state.lastSeen = Self.later(state.lastSeen, running.release)
         persist()
+    }
+
+    /// Only ever forward: reading notes in a downgraded copy must not unread a newer version's.
+    private static func later(_ recorded: AppVersion?, _ version: AppVersion) -> AppVersion {
+        recorded.map { max($0, version) } ?? version
     }
 
     private func persist() {
