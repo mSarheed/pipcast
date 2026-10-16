@@ -38,6 +38,9 @@ final class MessageHUDController {
             interactive: onCancel != nil)
     }
 
+    /// One pill serves every message, so a new one would replace whatever is up.
+    var isShowing: Bool { presenter.isShowing }
+
     func dismiss() {
         presenter.dismiss()
     }

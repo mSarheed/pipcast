@@ -930,6 +930,8 @@ final class AppCore {
         messageHUD.dismiss()
     }
 
+    var isShowingMessage: Bool { messageHUD.isShowing }
+
     func pickVolume(current: Float32) async -> Float32? {
         await dialogs.pickVolume(current: current)
     }

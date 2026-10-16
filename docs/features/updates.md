@@ -79,8 +79,9 @@ app menu, which replaced a link to the GitHub releases page.
 - **An update is announced once, with a HUD and a dot.** After a launch on a newer version than the
   last one read, the palette's menu button and its What's New row carry an `UnreadDot`, and four
   seconds in a clickable HUD says what the app updated to. The HUD is recorded as `lastAnnounced` the
-  moment it shows, so it is said once per version, never once per launch; a busy user
-  (`canInterruptUser`) is not interrupted, and gets it on the next launch instead. Opening What's New
+  moment it shows, so it is said once per version, never once per launch. It waits while the user is
+  busy (`canInterruptUser`) or the message pill is in use — a Quick Action's progress and Cancel
+  share it — retrying for two minutes before leaving it to the next launch. Opening What's New
   is what clears the dot, recorded as `lastSeen`.
 - **The HUD and the menu row open What's New; only the command toggles it.** `showChangelog` uses
   `showPalette`, so a second click never closes the screen it just opened; `toggleChangelog` keeps

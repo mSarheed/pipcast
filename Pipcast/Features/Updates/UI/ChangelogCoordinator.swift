@@ -5,6 +5,9 @@ import AppKit
 final class ChangelogCoordinator {
     /// Long enough to clear the login rush and the relaunch that delivered the update.
     private static let announcementDelay = Duration.seconds(4)
+    /// A busy moment defers the HUD for up to two minutes; past that, the next launch offers it.
+    private static let announcementRetry = Duration.seconds(15)
+    private static let announcementAttempts = 8
 
     private let store: ChangelogStore
     private let paletteCoordinator: PaletteCoordinator
@@ -34,11 +37,18 @@ final class ChangelogCoordinator {
         guard store.isAnnouncementDue, let running = store.running else { return }
         Task { [weak self] in
             try? await Task.sleep(for: Self.announcementDelay)
-            guard let self, store.isAnnouncementDue, core.canInterruptUser else { return }
-            store.markAnnounced()
-            core.showMessage(
-                "Updated to \(Bundle.main.appDisplayName) \(running) — see what's new",
-                tone: .neutral, onClick: { [weak self] in self?.showChangelog() })
+            for _ in 0..<Self.announcementAttempts {
+                guard let self, store.isAnnouncementDue else { return }
+                // The pill is shared: a Quick Action's progress and its Cancel must not be replaced.
+                if core.canInterruptUser, !core.isShowingMessage {
+                    store.markAnnounced()
+                    core.showMessage(
+                        "Updated to \(Bundle.main.appDisplayName) \(running) — see what's new",
+                        tone: .neutral, onClick: { [weak self] in self?.showChangelog() })
+                    return
+                }
+                try? await Task.sleep(for: Self.announcementRetry)
+            }
         }
     }
 

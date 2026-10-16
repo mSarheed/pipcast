@@ -84,6 +84,14 @@ private struct ChangelogPaletteList: View {
                                 onSelect(entry)
                                 onActivate()
                             })
+                        // The click catcher is pointer-only, so VoiceOver gets the row's actions here.
+                        .accessibilityElement(children: .combine)
+                        .accessibilityAddTraits(entry.id == selectedID ? [.isButton, .isSelected] : .isButton)
+                        .accessibilityAction { onSelect(entry) }
+                        .accessibilityAction(named: "View on GitHub") {
+                            onSelect(entry)
+                            onActivate()
+                        }
                     }
                 }
                 .padding(.horizontal, metrics.spacing.md)
