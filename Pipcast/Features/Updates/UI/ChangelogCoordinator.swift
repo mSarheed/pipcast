@@ -20,6 +20,16 @@ final class ChangelogCoordinator {
         self.core = core
     }
 
+    /// The update the HUD and dot point at; nil once read.
+    var unreadRelease: Changelog.Entry? {
+        store.hasNews ? store.current : nil
+    }
+
+    /// The launcher card's release; the setting gates only the card, never the HUD or dot.
+    var pinnedRelease: Changelog.Entry? {
+        core.settings.showsWhatsNewAfterUpdates ? unreadRelease : nil
+    }
+
     /// Opening the notes is what reads them, so the dot goes with this call.
     func showChangelog() {
         store.markSeen()
@@ -30,6 +40,11 @@ final class ChangelogCoordinator {
     func toggleChangelog() {
         store.markSeen()
         paletteCoordinator.togglePalette(mode: .changelog)
+    }
+
+    /// The card's Dismiss: read without opening, so the card and dot both stand down.
+    func dismissNews() {
+        store.markSeen()
     }
 
     /// Said once per version, after the relaunch an update ends in; the dot outlasts it.

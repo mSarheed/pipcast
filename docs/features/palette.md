@@ -81,8 +81,10 @@ answers through `perform(_:at:)`, so a new chord never adds a cast to the shell.
 
 Where a reset leaves the highlight is the screen's to say too. Every reset — an open, a new query, a
 new filter — goes through `RootPaletteView.land()`, which reads `landingSelection`, so handlers that
-fire in one update agree whatever order they run in. `onAppear` lands as well: the first show builds
-the view after `prepare` has run, so no change handler ever sees that reset. The landing is row 0 on
+fire in one update agree whatever order they run in. `onAppear` lands as well, for the one build no
+change handler sees: normally the panel is built unshown once launch's first app scan lands
+(`PaletteWindowController.prewarm`), while a summon that comes sooner builds it after its own
+`prepare`. Every later summon lands through the change handlers. The landing is row 0 on
 every screen but two: the clipboard lands past its pins
 ([clipboard.md](clipboard.md#pinned-entries)), and Search Quicklinks lands on the row a prompt names
 ([quicklinks.md](quicklinks.md)).
@@ -104,7 +106,7 @@ every screen but two: the clipboard lands past its pins
 | `.quicklinkEditor`   | `QuicklinkEditorScreen`   | `QuicklinkEditorView` (see [quicklinks.md](quicklinks.md#launcher-editor)) |
 | `.snippets`          | `SnippetsScreen`          | `SnippetsList` + preview (see [snippets.md](snippets.md#search-snippets))        |
 | `.snippetEditor`     | `SnippetEditorScreen`     | `SnippetEditorView` (see [snippets.md](snippets.md#launcher-editor)) |
-| `.dictionary`        | `DictionaryScreen`        | `DictionaryEntryView` (see [dictionary.md](dictionary.md))                       |
+| `.dictionary`        | `DictionaryScreen`        | `DictionaryEntryView` or `DictionarySuggestionsView` (see [dictionary.md](dictionary.md))                       |
 | `.extensionCommand`  | `ExtensionCommandScreen`  | `ExtensionCommandView` (see [extensions.md](extensions.md))                      |
 
 **Tab rings the three surfaces a reader opens directly — launcher → AI chat → clipboard → launcher**
@@ -235,8 +237,9 @@ its own, so it also sets `argumentEntryID`, which lists that row alone in root s
 is its name. Both are set **after** `showPalette`, since `prepare` clears them.
 
 The flat `selection` index is the single source of truth for highlight / activation and **must always
-match the visible row order**, including the card at index 0 when present — the calculator's (see
-[calculator.md](calculator.md)) or the meeting join card (see [calendar.md](calendar.md)), never both.
+match the visible row order**, including the card at index 0 when present — whichever `LauncherList.LeadCard` leads: the calculator's
+or colour card for a typed query (see [calculator.md](calculator.md)), or for an empty one the meeting
+join card (see [calendar.md](calendar.md)) or What's New's (see [updates.md](updates.md)). Never two.
 
 ## Window placement
 
@@ -549,10 +552,13 @@ handled in `PalettePanel.sendEvent` before `super` hands the event to the respon
 
 - **A bare backspace** — the field editor consumes it as an edit (`onBareBackspace`).
 - **Chords with no main menu item** — ⌘, and ⌘w, which an app with a menu bar would never see here.
-- **The physical number-row slots.** `FavoriteSlots` matches ⌘1…⌘0 by key code before fixed command
-  chords, then publishes the resolved position to the active screen. Only the launcher and clipboard
-  screens intercept these slots; other screens keep their own ⌘-number shortcuts. The launcher's
-  compact visibility setting is visual only and does not disable its favorite slots.
+- **The physical number-row slots.** `NumberSlots` matches ⌘1…⌘0 by key code before fixed command
+  chords, then synchronously hands the resolved position to the mounted palette view. Only launcher
+  and clipboard screens intercept these slots; other screens keep their own ⌘-number shortcuts.
+  Expanded launcher slots activate the first ten numbered rows, excluding the timed meeting card,
+  through the screen's primary action, including required-argument focus.
+  Compact launcher slots still address favorites, independently of the strip visibility setting.
+  Composition and open menus suppress numbered activation.
 - **Chords AppKit has already bound to a selector.** `⌘.` is the one that bites: AppKit binds it to
   `cancelOperation:` alongside Escape, so `interpretKeyEvents` hands it to the field editor and
   `onKeyPress(keys: ["."])` never fires. Pin (⌘.) therefore arrives through `onCommandShortcut`,

@@ -66,8 +66,9 @@ no appcast: GitHub Releases is the only feed.
 `CHANGELOG.md` is copied into the app bundle, and `ChangelogStore` parses it once at launch into
 `Changelog` entries. The palette's What's New screen (`.changelog`, `ChangelogScreen`) lists the
 versions this build has reached beside the selected one's notes, laid out by `ReleaseNotesView`;
-↵ opens that release on GitHub. It opens from the What's New launcher command and the palette's
-app menu, which replaced a link to the GitHub releases page.
+↵ opens that release on GitHub. It opens from the What's New launcher command, which searching
+"changelog" or "release notes" also finds, and the palette's app menu, which replaced a link to the
+GitHub releases page.
 
 - **What's New reads the build's own file, never the network.** The notes a user reads are the ones
   this build shipped with, offline, and the release body on GitHub is published from the same section
@@ -83,6 +84,15 @@ app menu, which replaced a link to the GitHub releases page.
   busy (`canInterruptUser`) or the message pill is in use — a Quick Action's progress and Cancel
   share it — retrying for two minutes before leaving it to the next launch. Opening What's New
   is what clears the dot, recorded as `lastSeen`.
+- **An unread update also leads the empty launcher.** `WhatsNewCard` takes the lead-card slot
+  (`LauncherScreen.Row.whatsNew`) with the release's headline, shaped like the meeting card; ↵ opens
+  What's New, and ⌘K adds View on GitHub and Dismiss, which marks the notes read unopened. A due
+  meeting keeps the slot: it is the one that cannot wait.
+- **The setting gates the card alone.** General → Show What's New after updates
+  (`showsWhatsNewAfterUpdates`, `general.showWhatsNewAfterUpdates` in settings.json, carried by
+  backups) defaults on. The card reads `ChangelogCoordinator.pinnedRelease`, which is
+  `unreadRelease` behind that switch; the HUD and the dot read `unreadRelease` and show either way.
+- **View on GitHub from the card counts as reading it**, like opening What's New; Dismiss does too.
 - **The HUD and the menu row open What's New; only the command toggles it.** `showChangelog` uses
   `showPalette`, so a second click never closes the screen it just opened; `toggleChangelog` keeps
   the launcher command's hotkey behaving like every other screen's.

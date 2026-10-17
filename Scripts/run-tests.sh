@@ -124,7 +124,20 @@ run scopes-test            $L/SearchScopes.swift
 run app-name-test          Pipcast/Platform/AppDisplayName.swift \
                            Pipcast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
-run favorites-test         $L/FavoriteSlots.swift
+run favorites-test         $L/NumberSlots.swift
+run app-installation-test  $L/SearchRelevance.swift $L/ScriptRomanization.swift \
+                           $L/LauncherMatch.swift $L/EntryNaming.swift $L/LauncherOrder.swift \
+                           $L/LauncherRankingStore.swift $L/LauncherSuggestions.swift $L/SearchScopes.swift \
+                           Pipcast/Features/Launcher/Service/AppIndex.swift \
+                           Pipcast/Features/Launcher/Service/AppLauncher.swift \
+                           Pipcast/Features/Launcher/Service/RunningAppsMonitor.swift \
+                           Pipcast/Features/Launcher/Service/FavoritesStore.swift \
+                           Pipcast/Features/Launcher/Service/AliasStore.swift \
+                           Pipcast/Features/Launcher/Service/VisibilityStore.swift \
+                           Pipcast/Features/Launcher/Service/BundleNameCache.swift \
+                           Pipcast/Platform/AppDisplayName.swift Pipcast/Platform/BundleLocalization.swift \
+                           Pipcast/Platform/Images/FileIconStamp.swift Pipcast/Platform/Memo.swift \
+                           Pipcast/Platform/Signposts.swift Pipcast/Platform/NotificationToken.swift
 run launcher-file-test     $L/LauncherFileFormat.swift \
                            Pipcast/Features/Settings/Model/SettingsFileJSON.swift
 run launcher-settings-file-test \
@@ -244,7 +257,7 @@ run palette-menu-click-test Pipcast/Platform/Appearance.swift \
                            Pipcast/Platform/WindowLevel.swift \
                            Pipcast/Platform/NotificationToken.swift \
                            Pipcast/DesignSystem/Interaction/KeyboardFocus.swift \
-                           Pipcast/Palette/PalettePanel.swift
+                           Pipcast/Palette/PalettePanel.swift $L/NumberSlots.swift
 run form-input-test        Pipcast/Platform/Appearance.swift \
                            Pipcast/DesignSystem/Theme.swift \
                            Pipcast/DesignSystem/InterfaceMetrics.swift \
@@ -302,6 +315,12 @@ run fallback-test          Pipcast/Features/Launcher/Model/Fallback.swift \
                            Pipcast/Features/Snippets/Model/Snippet.swift
 run dictionary-test        Pipcast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Pipcast/Features/Dictionary/Model/DictionaryMarkup.swift
+run dictionary-session-test Pipcast/Features/Dictionary/Model/DictionaryEntry.swift \
+                           Pipcast/Features/Dictionary/Model/DictionaryMarkup.swift \
+                           Pipcast/Features/Dictionary/Model/DictionarySuggestions.swift \
+                           Pipcast/Features/Dictionary/Service/DictionaryService.swift \
+                           Pipcast/Features/Dictionary/Service/DictionarySuggestionService.swift \
+                           Pipcast/Features/Dictionary/Service/DictionarySession.swift
 run dictation-test         Pipcast/Features/Dictation/Model/DictationModel.swift Pipcast/Features/Dictation/Model/DictationIdleRelease.swift Pipcast/Features/Dictation/Model/DictationTextFormatter.swift
 run dictation-field-test   Pipcast/Features/Dictation/Model/DictationModel.swift \
                            Pipcast/Features/Dictation/Model/DictationAudioChunks.swift \
@@ -624,6 +643,7 @@ run ext-accessory-test     $E/Model/RenderNode.swift \
                            $E/Model/ExtensionPickerItem.swift \
                            $E/Model/ExtensionSearchAccessory.swift \
                            $E/Service/ExtensionStorage.swift
+run ext-sign-in-test       -parse-as-library $E/Service/ExtensionSignInSession.swift
 run slow ext-test          -parse-as-library \
                            Tests/ext-menu-bar-test.swift \
                            Tests/ext-fetch-test.swift \

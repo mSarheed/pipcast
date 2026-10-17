@@ -101,6 +101,16 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// Builds and lays out the panel unshown, so the first summon finds its view graph made.
+    func prewarm() {
+        guard panel == nil else { return }
+        let panel = ensurePanel()
+        positionPanel(panel, collapsed: core.paletteCoordinator.paletteIsCollapsed)
+        panel.contentView?.layoutSubtreeIfNeeded()
+        // The summon re-resolves it for whichever screen is in use by then.
+        anchor = nil
+    }
+
     // Isolated so teardown may touch the main-actor monitor; the block is already weak.
     isolated deinit {
         if let pasteMonitor { NSEvent.removeMonitor(pasteMonitor) }
@@ -436,13 +446,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             }
             if self.core.palette.mode == .emoji, let zoom = Self.emojiGridZoom(from: event) {
                 self.core.palette.noteEmojiGridZoom(zoom)
-                return true
-            }
-            guard Self.commandCharacter(from: event) != nil else { return false }
-            if self.core.palette.mode == .launcher || self.core.palette.mode == .clipboard,
-                let index = FavoriteSlots.index(forKeyCode: event.keyCode)
-            {
-                self.core.palette.noteFavoriteSlot(index)
                 return true
             }
             guard let character = Self.commandCharacter(from: event) else { return false }

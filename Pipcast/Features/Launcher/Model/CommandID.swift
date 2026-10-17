@@ -173,6 +173,14 @@ enum CommandID: String, CaseIterable, Sendable {
         }
     }
 
+    /// Other names people search by, which find the command without outranking its own name.
+    var keywords: [String] {
+        switch self {
+        case .whatsNew: ["Changelog", "Release Notes"]
+        default: []
+        }
+    }
+
     /// Queries this command wins until the user opens a rival more.
     var boostedTerms: Set<String> {
         switch self {

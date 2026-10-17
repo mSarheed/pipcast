@@ -6,6 +6,7 @@ final class PaletteState {
     var menuOpen = false { didSet { onMenuOpenChanged?(menuOpen) } }
     var onMenuOpenChanged: ((Bool) -> Void)?
     var isComposing = false
+    var isControlListOpen = false
     var searchFieldFrame = CGRect.zero
     var mode = PaletteMode.launcher
 
@@ -15,7 +16,7 @@ final class PaletteState {
 }
 
 enum PaletteMode {
-    case launcher, quicklinkEditor
+    case launcher, clipboard, quicklinkEditor
     var isNativeEditor: Bool { self == .quicklinkEditor }
 }
 
@@ -86,6 +87,54 @@ struct PaletteMenuClickTests {
             }
             panel.sendEvent(event)
         }
+
+        var slots: [Int] = []
+        panel.onNumberSlot = { slots.append($0) }
+        func numberKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags = .command,
+                       repeated: Bool = false) {
+            guard let event = NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: flags,
+                timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: panel.windowNumber,
+                context: nil, characters: "&", charactersIgnoringModifiers: "&",
+                isARepeat: repeated, keyCode: keyCode)
+            else { fatalError("key event creation") }
+            panel.sendEvent(event)
+        }
+        numberKey(18)
+        numberKey(29)
+        check(slots == [0, 9], "physical digits dispatch synchronously despite layout characters")
+        for flags: NSEvent.ModifierFlags in [[], [.command, .shift], [.command, .option],
+                                            [.command, .control]] {
+            numberKey(19, flags: flags)
+        }
+        numberKey(19, repeated: true)
+        state.menuOpen = true
+        numberKey(19)
+        state.menuOpen = false
+        state.isControlListOpen = true
+        numberKey(19)
+        state.isControlListOpen = false
+        state.mode = .quicklinkEditor
+        numberKey(19)
+        check(slots == [0, 9], "modifiers, repeats, menus and other screens cannot activate slots")
+        state.mode = .clipboard
+        numberKey(19)
+        check(slots == [0, 9, 1], "clipboard retains physical pinned slots")
+        state.mode = .launcher
+        let editor = NSTextView(frame: .zero)
+        panel.contentView?.addSubview(editor)
+        panel.makeFirstResponder(editor)
+        editor.setMarkedText("ni", selectedRange: NSRange(location: 2, length: 0),
+                             replacementRange: NSRange(location: NSNotFound, length: 0))
+        check(editor.hasMarkedText(), "fixture has real AppKit marked text")
+        numberKey(20)
+        check(slots == [0, 9, 1], "IME composition keeps number keys from launching results")
+        editor.unmarkText()
+        numberKey(20)
+        check(slots == [0, 9, 1, 2], "numbered activation resumes after composition")
+        panel.makeFirstResponder(nil)
+        editor.removeFromSuperview()
+        panel.onNumberSlot = nil
 
         var dismissals = 0
         func openMenu() {

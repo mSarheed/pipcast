@@ -11,6 +11,8 @@ struct ClipboardThumbnailTests {
     static func main() async {
         await removalDuringGenerationLeavesNoCopy()
         await clearDuringGenerationLeavesNoCopy()
+        await removalDuringBothCopiesLeavesNoCopy()
+        await clearDuringBothCopiesLeavesNoCopy()
         await sameNameDifferentExtensionsStayApart()
         await timeoutReleasesTheQueue()
         await cancellationReleasesTheQueue()
@@ -50,9 +52,50 @@ struct ClipboardThumbnailTests {
             expect(gone, "the image is gone before any queued work")
         }
         _ = await making.value
-        ImageDerivative.queue.sync {}
+        ImageDerivative.drain()
         expect(!FileManager.default.fileExists(atPath: url.path), "\(way) mid-copy deletes the image")
         expect(!FileManager.default.fileExists(atPath: copy.url.path), "\(way) mid-copy leaves no copy")
+    }
+
+    static func removalDuringBothCopiesLeavesNoCopy() async {
+        await deletingDuringBothCopies("removing") { store, item in store.remove(item) }
+    }
+
+    static func clearDuringBothCopiesLeavesNoCopy() async {
+        await deletingDuringBothCopies("clearing history") { store, _ in store.clearAll() }
+    }
+
+    /// The row and preview copies are made on separate lanes, so a delete must wait out each.
+    static func deletingDuringBothCopies(
+        _ way: String, delete: (ClipboardStore, ClipboardItem) -> Void
+    ) async {
+        let dir = scratchDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = ClipboardStore(directory: dir.appendingPathComponent("store"))
+        let item = adopt("shot.png", color: .systemRed, into: store, from: dir, width: 1500)
+        guard let url = store.imageURL(for: item),
+            let row = ImageDerivative.covering(url, maxPixel: 64),
+            let preview = ImageDerivative.covering(url, maxPixel: 900)
+        else { return fail("\(way): the adopted image has a row and a preview copy") }
+        expect(row.queue !== preview.queue, "\(way): the row and preview copies take separate lanes")
+        let reads = dir.appendingPathComponent("read")
+        let helper = script(in: dir, sleeping: 0.6, markingReadsAt: reads)
+
+        let makingRow = Task { await ImageThumbnail.makeCopy(row, of: url, helper: helper) }
+        let makingPreview = Task { await ImageThumbnail.makeCopy(preview, of: url, helper: helper) }
+        let bothRead = await eventually {
+            [row, preview].allSatisfy { FileManager.default.fileExists(atPath: reads.path + "-\($0.edge)") }
+        }
+        expect(bothRead, "\(way): both helpers read the image before the delete")
+        delete(store, item)
+        _ = await makingRow.value
+        _ = await makingPreview.value
+        ImageDerivative.drain()
+        expect(!FileManager.default.fileExists(atPath: url.path), "\(way) mid-copies deletes the image")
+        expect(!FileManager.default.fileExists(atPath: row.url.path), "\(way) mid-copies leaves no row copy")
+        expect(
+            !FileManager.default.fileExists(atPath: preview.url.path),
+            "\(way) mid-copies leaves no preview copy")
     }
 
     /// Adopted images keep their names, so `shot.jpg` and `shot.png` can share a stem.
@@ -75,7 +118,7 @@ struct ClipboardThumbnailTests {
         expect(color(of: copies[1]) == "blue", "shot.png's copy shows shot.png")
 
         store.remove(jpeg)
-        ImageDerivative.queue.sync {}
+        ImageDerivative.drain()
         expect(!FileManager.default.fileExists(atPath: copies[0].path), "removing shot.jpg drops its copy")
         expect(FileManager.default.fileExists(atPath: copies[1].path), "and keeps shot.png's")
     }
@@ -140,7 +183,7 @@ struct ClipboardThumbnailTests {
         try? Data("not a png".utf8).write(to: copy.url)
         let image = await ImageThumbnail.loadAsync(
             url, maxPixel: 64, copyingWith: dir.appendingPathComponent("missing-helper"))
-        ImageDerivative.queue.sync {}
+        ImageDerivative.drain()
         expect(image != nil, "an unreadable copy falls back to the original")
         let dropped = !FileManager.default.fileExists(atPath: copy.url.path)
         expect(dropped, "and is dropped so the next draw remakes it")
@@ -149,11 +192,12 @@ struct ClipboardThumbnailTests {
     // MARK: - Fixtures
 
     /// Stand-in helper: reads the source first and writes the copy last, as the real one does.
-    static func script(in dir: URL, sleeping seconds: Double) -> URL {
+    static func script(in dir: URL, sleeping seconds: Double, markingReadsAt marker: URL? = nil) -> URL {
         let url = dir.appendingPathComponent("helper-\(UUID().uuidString).sh")
         let body = """
             #!/bin/sh
             read=$(mktemp) && cp "$2" "$read" || exit 1
+            \(marker.map { "touch \"\($0.path)-$4\"" } ?? "")
             sleep \(seconds)
             mkdir -p "$(dirname "$3")" && mv "$read" "$3"
             """
@@ -162,15 +206,16 @@ struct ClipboardThumbnailTests {
         return url
     }
 
-    /// Wider than the row copy's edge, so a copy is due; JPEG or PNG by extension.
-    static func image(_ name: String, color: NSColor, in dir: URL) -> URL {
+    /// Wider than the row copy's edge by default, so a copy is due; JPEG or PNG by extension.
+    static func image(_ name: String, color: NSColor, in dir: URL, width: Int = 600) -> URL {
         let url = dir.appendingPathComponent(name)
+        let height = width * 2 / 3
         let context = CGContext(
-            data: nil, width: 600, height: 400, bitsPerComponent: 8, bytesPerRow: 0,
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpace(name: CGColorSpace.sRGB)!,
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         context.setFillColor(color.cgColor)
-        context.fill(CGRect(x: 0, y: 0, width: 600, height: 400))
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         let type = url.pathExtension == "jpg" ? UTType.jpeg : UTType.png
         let destination = CGImageDestinationCreateWithURL(url as CFURL, type.identifier as CFString, 1, nil)!
         CGImageDestinationAddImage(destination, context.makeImage()!, nil)
@@ -179,11 +224,11 @@ struct ClipboardThumbnailTests {
     }
 
     static func adopt(
-        _ name: String, color: NSColor, into store: ClipboardStore, from dir: URL
+        _ name: String, color: NSColor, into store: ClipboardStore, from dir: URL, width: Int = 600
     ) -> ClipboardItem {
         let staged = dir.appendingPathComponent("staged-\(UUID().uuidString)", isDirectory: true)
         try? FileManager.default.createDirectory(at: staged, withIntermediateDirectories: true)
-        let blob = image(name, color: color, in: staged)
+        let blob = image(name, color: color, in: staged, width: width)
         ClipboardStore.importStoredItems(
             inDatabaseAt: store.dbURL, adoptingImagesInto: store.imagesDir,
             [ClipboardItem(imagePath: blob.path, sourceBundleID: nil)])
@@ -201,6 +246,16 @@ struct ClipboardThumbnailTests {
             let pixel = NSBitmapImageRep(cgImage: image).colorAt(x: 10, y: 10)?.usingColorSpace(.sRGB)
         else { return "unreadable" }
         return pixel.redComponent > pixel.blueComponent ? "red" : "blue"
+    }
+
+    /// The helpers settle on their own schedule, so this polls, giving up after five seconds.
+    static func eventually(_ condition: () -> Bool) async -> Bool {
+        let deadline = ContinuousClock.now + .seconds(5)
+        while ContinuousClock.now < deadline {
+            if condition() { return true }
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        return condition()
     }
 
     static func scratchDirectory() -> URL {

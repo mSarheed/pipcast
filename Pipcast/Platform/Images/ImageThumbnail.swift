@@ -24,21 +24,21 @@ enum ImageThumbnail {
         _ url: URL, maxPixel: CGFloat, copyingWith helper: URL? = nil
     ) async -> NSImage? {
         if let cached = cached(url, maxPixel: maxPixel) { return cached }
-        var decodable = url
+        var made: ImageDerivative?
         if let helper, let copy = ImageDerivative.covering(url, maxPixel: Int(maxPixel.rounded(.up))),
             await makeCopy(copy, of: url, helper: helper)
         {
-            decodable = copy.url
+            made = copy
         }
         // A tile scrolled away mid-copy must not fall back to the full-size decode it was avoiding.
         guard !Task.isCancelled else { return nil }
-        return await Task.detached(priority: .userInitiated) { [decodable] in
-            if let image = decode(decodable, cachingAs: url, maxPixel: maxPixel) {
+        return await Task.detached(priority: .userInitiated) { [made] in
+            if let image = decode(made?.url ?? url, cachingAs: url, maxPixel: maxPixel) {
                 return Decoded(image: image)
             }
-            guard decodable != url else { return Decoded(image: nil) }
+            guard let made else { return Decoded(image: nil) }
             // An unreadable copy is dropped so the next draw remakes it; the original shows now.
-            ImageDerivative.queue.async { try? FileManager.default.removeItem(at: decodable) }
+            made.queue.async { try? FileManager.default.removeItem(at: made.url) }
             return Decoded(image: decode(url, cachingAs: url, maxPixel: maxPixel))
         }.value.image
     }
@@ -68,7 +68,7 @@ enum ImageThumbnail {
         return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 
-    /// Waits on `ImageDerivative.queue`, off the cooperative pool, so a blob's delete waits it out.
+    /// Waits on the copy's own lane, off the cooperative pool, so a blob's delete waits it out.
     static func makeCopy(
         _ copy: ImageDerivative, of url: URL, helper: URL,
         timeout: DispatchTimeInterval = .seconds(10)
@@ -83,7 +83,7 @@ enum ImageThumbnail {
         let cancelled = Cancellation()
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
-                ImageDerivative.queue.async {
+                copy.queue.async {
                     let made = run(process, making: copy, of: url, timeout: timeout, cancelled: cancelled)
                     continuation.resume(returning: made)
                 }

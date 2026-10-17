@@ -14,6 +14,7 @@ final class PalettePanel: NSPanel {
     var onEscape: (() -> Bool)?
     /// Command chords the field editor swallows, plus the ones no main menu handles.
     var onCommandShortcut: ((NSEvent) -> Bool)?
+    var onNumberSlot: ((Int) -> Void)?
     /// The palette's typing context, handed over each time a field takes focus.
     var onFieldEditorFocused: ((NSTextInputContext) -> Void)?
     /// Inline argument fields use arrows at their text boundaries to continue their focus ring.
@@ -222,6 +223,16 @@ final class PalettePanel: NSPanel {
         if event.type == .keyDown, let boundary = headerFieldBoundary(for: event),
             onHeaderFieldBoundaryArrow?(boundary) == true
         {
+            return
+        }
+        if event.type == .keyDown, !event.isARepeat,
+            event.modifierFlags.intersection([.command, .option, .control, .shift]) == .command,
+            paletteState?.mode == .launcher || paletteState?.mode == .clipboard,
+            paletteState?.menuOpen != true, paletteState?.isControlListOpen != true,
+            fieldEditor?.hasMarkedText() != true,
+            let index = NumberSlots.index(forKeyCode: event.keyCode), let onNumberSlot
+        {
+            onNumberSlot(index)
             return
         }
         // The controller owns the chords the field editor or a missing main menu would eat.

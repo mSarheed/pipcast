@@ -60,13 +60,19 @@ struct FileSearchRow: View {
     let result: FileSearchResult
     let selected: Bool
     let showsLocation: Bool
+    let numberSlot: Character?
+    @Environment(PaletteState.self) private var palette
     @State private var image: NSImage?
     @State private var hovered = false
 
-    init(result: FileSearchResult, selected: Bool, showsLocation: Bool = false) {
+    init(
+        result: FileSearchResult, selected: Bool, showsLocation: Bool = false,
+        numberSlot: Character? = nil
+    ) {
         self.result = result
         self.selected = selected
         self.showsLocation = showsLocation
+        self.numberSlot = numberSlot
         _image = State(initialValue: IconCache.cachedFitted(forFile: result.id))
     }
 
@@ -109,7 +115,12 @@ struct FileSearchRow: View {
                     .truncationMode(.middle)
             }
             Spacer(minLength: 0)
-            if showsLocation {
+            if let numberSlot, palette.commandHeld {
+                HStack(spacing: metrics.spacing.xxs) {
+                    KeyCapChip(text: "⌘", style: .outline)
+                    KeyCapChip(text: String(numberSlot), style: .outline)
+                }
+            } else if showsLocation {
                 Text(result.isDirectory ? "Folder" : "File")
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(.secondary)

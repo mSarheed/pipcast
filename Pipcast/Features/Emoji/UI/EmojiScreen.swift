@@ -69,7 +69,7 @@ struct EmojiScreen: PaletteScreen {
     }
 
     /// ⌥↵ — the palette stays up, so a run of emoji goes over without re-summoning it.
-    func pasteKeepingWindowOpen(at selection: Int) -> Bool {
+    func alternate(at selection: Int) -> Bool {
         guard let entry = entry(at: selection) else { return false }
         core.emojiCoordinator.pasteEmojiKeepingWindowOpen(entry)
         return true

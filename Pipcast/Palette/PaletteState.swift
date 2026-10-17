@@ -36,9 +36,6 @@ final class PaletteState {
     private(set) var queryRewriteToken = UUID()
     /// AppKit binds ⌘. to `cancelOperation:`, so the field editor eats it before `onKeyPress`.
     private(set) var pinChordToken = UUID()
-    /// Bumped when AppKit resolves ⌘1…⌘0 to a slot index from the physical number row.
-    private(set) var favoriteSlotToken = UUID()
-    private(set) var favoriteSlotIndex: Int?
     /// Bumped for ⌘0 / ⌘+ / ⌘-, which the panel claims before the field editor can.
     private(set) var emojiGridZoomToken = UUID()
     private(set) var emojiGridZoom: EmojiGridZoom?
@@ -52,7 +49,6 @@ final class PaletteState {
     var pendingArgumentEntryID: String?
     /// The row a shortcut opened root search onto, listed alone while the query is its name.
     var argumentEntryID: String?
-    /// True once ⌘ has been *held*, which numbers the favorite rows. The panel is the only writer.
     private(set) var commandHeld = false
     /// A chord is a tap, so the numbering waits out the tap before it claims the trailing labels.
     @ObservationIgnored private var commandHoldTask: Task<Void, Never>?
@@ -179,11 +175,6 @@ final class PaletteState {
     func rewriteQuery(_ text: String) {
         query = text
         queryRewriteToken = UUID()
-    }
-
-    func noteFavoriteSlot(_ index: Int) {
-        favoriteSlotIndex = index
-        favoriteSlotToken = UUID()
     }
 
     func noteEmojiGridZoom(_ zoom: EmojiGridZoom) {

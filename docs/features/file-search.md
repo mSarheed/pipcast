@@ -272,6 +272,10 @@ the screen's own row actions: ↵ opens, ⌘↵ reveals, the copy, paste and tra
 `FileSearchActionsMenu.perform`, and a row drags out as a copy. Row icons come from the same transient
 fitted cache, purged when the palette hides.
 
+The root launcher's numbered shortcuts pass a digit to `FileSearchRow`. Holding ⌘ replaces its
+File/Folder label with that chord inside the existing selection and hover background; the dedicated
+Search Files screen passes no digit and retains its usual label.
+
 ## Invocation
 
 Settings ▸ File Search owns the `fileSearchEnabled` switch, which is off when its preference is absent,

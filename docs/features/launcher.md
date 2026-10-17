@@ -1,7 +1,20 @@
 # App launcher & root search
 
-`AppIndex.scan()` runs off-main, enumerates the user's search scopes, and dedups by bundle ID (the
-earliest scope wins; within one folder, the newest `CFBundleShortVersionString` does).
+`AppIndex.scan()` runs off-main and keeps each distinct application path in launcher results.
+Settings and app pickers retain one representative per bundle ID: the earliest scope wins;
+within one folder, the newest `CFBundleShortVersionString` does.
+
+Copies sharing a bundle ID keep app-wide aliases, visibility, ranking, favorites and global shortcuts.
+Favorites and Suggestions show the representative, while the other copies remain in ordinary results.
+Version subtitles distinguish copies; equal or missing versions also show the containing folder.
+Return opens the selected path with running-application substitution disabled, so a different running
+version cannot replace it. Restart also reopens the selected path. Bundle-ID-based operations such as
+Window Layouts retain macOS's default running-application substitution. Uninstall is unavailable while
+indexed copies share the bundle ID, because their support files and preferences may be shared.
+
+`./Scripts/run-tests.sh app-installation-test` covers the shipped index and app-wide preferences.
+Set `PIPCAST_TEST_APP_LAUNCH=1` for temporary native-app launch, quit and restart checks; the harness
+reports notification-dependent checks as skipped when the session cannot deliver workspace events.
 
 ## Invariants
 
@@ -60,9 +73,9 @@ prevent cycles.
 
 Within one folder, bundles are listed newest `CFBundleShortVersionString` first, compared as numbers
 so `26.6` outranks `9.4`. A tie or an unreadable version falls back to Finder's name order. Because
-the scan keeps a bundle ID's first copy, two Xcodes in `/Applications` resolve to the newest, every
-scan, and the embedded apps follow their parent. Scope order still comes first: listing an older
-copy as its own earlier scope pins it (#1288).
+the first copy represents its bundle ID, the newest Xcode in `/Applications` represents the app in
+Settings and Favorites, and the embedded apps follow their parent. Scope order still comes first:
+listing an older copy as its own earlier scope pins it (#1288). Search retains every copy.
 
 The defaults cover `/Applications` and `/System/Applications` plus their `Utilities` folders,
 `/System/Library/CoreServices/Applications`, the cryptex apps under
@@ -240,8 +253,8 @@ from its own Info.plist.
 
 A renamed bundle is the other half. A Finder rename never touches `CFBundleDisplayName`, so the
 on-disk basename is indexed as an alternate title — rename `Slack.app` to `Work Chat.app` and both find
-it. Duplicate copies dedupe by bundle id, and the losing copy lends its file name to the winner
-rather than being dropped whole.
+it. Each installed copy keeps its own names and URL; a renamed copy never lends its name to a
+different installation.
 
 ### Subtitles
 
@@ -273,8 +286,8 @@ agenda order. Those sections follow publication order, so visible rows and flat 
 downstream. The result limit bounds ordinary matches, while whole categories remain uncapped, as they
 are for an empty query.
 
-Category queries show headers without pinning favorites or handing out their ⌘-digit slots. Opening
-a row records its visit; the query is learned only when it did not match that row's category, so
+Category queries show headers without pinning favorites; ⌘-digit slots follow the displayed rows.
+Opening a row records its visit; the query is learned only when it did not match that row's category, so
 category browsing cannot teach every window command the same search term.
 
 ### Contextual commands
@@ -723,28 +736,31 @@ across the list — the top of Favorites on add, the neighbour above the one tha
 
 ### ⌘-digit slots
 
-`FavoriteSlots` (`Launcher/Model/FavoriteSlots.swift`) defines ten local palette slots: **⌘1…⌘9 then
-⌘0**. They match the physical number row, not the character produced by the current keyboard layout,
-so the same positions work on QWERTY and AZERTY. The same slots address pinned Clipboard entries in
-that screen; the eleventh favorite is still listed and reorderable, and simply has no slot.
+`NumberSlots` (`Launcher/Model/NumberSlots.swift`) defines ten local palette slots: **⌘1…⌘9 then
+⌘0**. They match the physical number row, so the same positions work on QWERTY and AZERTY.
 
-Both palette sizes serve the chords from the same prefix, because `paletteIsCollapsed` already
-requires an empty query: **compact implies empty implies `favoriteCount` is the pinned prefix**. That
-is why `LauncherScreen.pinnedFavorites` feeds the strip, the chords and the numbered rows alike,
-rather than the compact bar re-deriving an empty-query order of its own. In compact the strip draws
-the first five; ⌘6–⌘0 still launch favorites it has no room for, and the "…" is a button after them
-rather than a slot, so no favorite loses its digit to the overflow.
+In the expanded launcher, the slots activate the first ten numbered rows in displayed order.
+A leading calculator or color card counts; section headers and the timed meeting card do not.
+The meeting card never takes a favorite's chord when its join window starts. Favorites, meeting
+entries, suggestions, search results, files and fallbacks follow in their displayed order. A missing
+slot does nothing. A calculator error remains non-actionable, just as with Return. `NumberSlots`
+maps flat rows to digits and back for both the rendered hints and activation.
 
-Holding ⌘ swaps each numbered row's kind label for its chord. `PalettePanel` publishes the modifier
-into `PaletteState.commandHeld` from `.flagsChanged` and clears it in `resignKey` — not in `prepare`,
-which a re-show that preserves state skips entirely. The flag flips **400 ms after** the press, not
-on it: every ⌘ chord in the palette starts as a ⌘ press, so revealing on the down edge flashed the
-numbering under ⌘↵ and ⌘K. `noteCommandHeld` schedules the reveal and any release cancels it, so a
-chord's own tap never outlives its keystroke while a deliberate hold still lights every row. **`AppRow` observes that flag itself**: reading
-it any higher would attach it to `RootPaletteView`'s body and rebuild the whole palette on every ⌘
-press, where a row-level read re-runs only the handful of rows the `LazyVStack` has realized. The
-digit each row shows is carried on its `Row` case from the section build, so no row searches for its
-own position.
+`RootPaletteView` selects the requested row and uses the same activation path as Return. Required
+arguments receive focus instead of launching incomplete input. Query text and filled arguments flow
+through the existing screen action. Composition and open menus suppress numbered activation.
+When the shortcut selects a different row, focus waits for its argument fields to mount. The
+view-owned task checks cancellation, row identity, query and palette reset before moving the caret.
+
+Compact mode retains favorite-only slots, including ⌘6–⌘0 for favorites beyond the five-icon strip.
+Clipboard retains its pinned-entry slots. Other screens retain their own shortcuts. The compact
+visibility setting is visual only and does not disable favorite shortcuts.
+
+Holding ⌘ for 400 ms replaces app and file kind labels with their chords; calculator and color
+cards show a trailing overlay without changing their layout. The delay prevents a flash under ⌘↵
+and ⌘K. Releasing ⌘ or resigning key clears it. The row and hint views observe
+`PaletteState.commandHeld` locally, so revealing hints does not rebuild the whole palette. Slot
+digits are computed from section offsets, never by searching each row's ID.
 
 ## Hiding one result
 
@@ -813,15 +829,15 @@ running dot and the availability of the running-only actions:
   running, also bound to **⌃⇧Q** on the selected row. The chord guard mirrors the menu row's
   condition (an `.application` entry that `RunningAppsMonitor` reports running) so the key never
   swallows a press it won't act on, and it's skipped in the compact bar, which shows no selection.
-  `AppLauncher.quit(bundleID:)` terminates every instance of the bundle and reports whether
+  `AppLauncher.quit(bundleID:url:)` terminates instances at the selected path and reports whether
   anything was running; the palette only dismisses when something was, and it restores focus unless
   the app it just quit _was_ `previousApp`.
 - **Force Quit Application** — the row below it and **⌃⌥⇧Q**, on the same guard and
-  the same dismissal. `AppLauncher.quit(bundleID:force:)` sends `forceTerminate()` instead, so the
+  the same dismissal. `AppLauncher.quit(bundleID:url:force:)` sends `forceTerminate()` instead, so the
   app gets no chance to save or refuse.
 - **Restart Application** — the row above Quit and **⌘R**, on the same guard: all three chords resolve
   their target through `LauncherScreen.runningApplication(at:)`, the single place that condition
-  lives. `AppLauncher.restart(bundleID:url:)` snapshots the running instances, subscribes to
+  lives. `AppLauncher.restart(bundleID:url:)` snapshots instances at the selected path, subscribes to
   `NSWorkspace.DidTerminateApplicationMessage` _before_ terminating so an instance that exits at
   once can't outrun the wait, then reopens the bundle once every snapshotted PID has gone. The wait
   is bounded by a five-second grace: a quit an app refuses, or one sitting behind a save sheet the

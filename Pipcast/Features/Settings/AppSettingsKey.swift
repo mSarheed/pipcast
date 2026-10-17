@@ -16,6 +16,7 @@ enum AppSettingsKey: String, CaseIterable {
     case emojiGridColumns = "emojiGridColumns"
     case showInMenuBar = "showInMenuBar"
     case automaticallyCheckForUpdates = "automaticallyCheckForUpdates"
+    case showsWhatsNewAfterUpdates = "showsWhatsNewAfterUpdates"
     case popToRootTimeout = "popToRootTimeout"
     case escapeKeyBehavior = "escapeKeyBehavior"
     case appearance = "appearance"

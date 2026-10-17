@@ -138,7 +138,9 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   to a top-left anchor so it grows downward, and the hosting view sets `sizingOptions = []` so SwiftUI
   never drives the window size — without that the hosting view resizes the panel to fit content and the
   top edge drifts on the compact↔expanded swap. The panel auto-dismisses on `windowDidResignKey`,
-  unless a modal panel holds key.
+  unless a modal panel holds key. It is built once: normally unshown when launch's first app scan
+  lands (`PaletteWindowController.prewarm`), so the first summon finds its view graph made, or by a
+  summon that comes sooner. Every summon reuses that panel.
   See [features/palette.md](features/palette.md).
 - **Settings and Onboarding** — titled `NSWindow`s, one `Windows/AppWindowController.swift` each, owned
   by `SettingsCoordinator` and `OnboardingCoordinator`. SwiftUI `Settings` and `Window` scenes are

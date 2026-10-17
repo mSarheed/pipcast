@@ -157,8 +157,17 @@ final class AppSettings {
     }
 
     var launchAtLogin: Bool {
-        didSet { LaunchAtLogin.set(launchAtLogin) }
+        get { loginItemEnabled }
+        set {
+            loginItemRead?.cancel()
+            loginItemEnabled = newValue
+            LaunchAtLogin.set(newValue)
+        }
     }
+    /// As SMAppService last reported it; its XPC answer takes ~40 ms, so launch reads it off main.
+    private var loginItemEnabled = false
+    /// Cancelled by a write, so a status read still in flight cannot undo the user's choice.
+    @ObservationIgnored private var loginItemRead: Task<Void, Never>?
 
     /// The launcher icon's visibility; dragging the icon out of the menu bar turns it off.
     var showInMenuBar: Bool {
@@ -169,6 +178,13 @@ final class AppSettings {
         didSet {
             defaults.set(
                 automaticallyCheckForUpdates, forKey: Key.automaticallyCheckForUpdates.rawValue)
+        }
+    }
+
+    /// The launcher card an unread update earns; the HUD and the menu dot don't depend on it.
+    var showsWhatsNewAfterUpdates: Bool {
+        didSet {
+            defaults.set(showsWhatsNewAfterUpdates, forKey: Key.showsWhatsNewAfterUpdates.rawValue)
         }
     }
 
@@ -652,13 +668,15 @@ final class AppSettings {
         clipboardDefaultAction =
             defaults.string(forKey: Key.clipboardDefaultAction.rawValue)
             .flatMap(ClipboardDefaultAction.init) ?? .paste
-        launchAtLogin = LaunchAtLogin.isEnabled
         showInMenuBar =
             defaults.object(forKey: Key.showInMenuBar.rawValue) == nil
             || defaults.bool(forKey: Key.showInMenuBar.rawValue)
         automaticallyCheckForUpdates =
             defaults.object(forKey: Key.automaticallyCheckForUpdates.rawValue) == nil
             || defaults.bool(forKey: Key.automaticallyCheckForUpdates.rawValue)
+        showsWhatsNewAfterUpdates =
+            defaults.object(forKey: Key.showsWhatsNewAfterUpdates.rawValue) == nil
+            || defaults.bool(forKey: Key.showsWhatsNewAfterUpdates.rawValue)
         hyperKey =
             defaults.string(forKey: Key.hyperKey.rawValue).flatMap(HyperKeyPhysicalKey.init)
             ?? .none
@@ -847,5 +865,10 @@ final class AppSettings {
             defaults.object(forKey: Key.supportReminders.rawValue) == nil
             || defaults.bool(forKey: Key.supportReminders.rawValue)
         settingsFileEnabled = defaults.bool(forKey: Key.settingsFileEnabled.rawValue)
+        loginItemRead = Task { [weak self] in
+            let enabled = await LaunchAtLogin.isEnabled()
+            guard !Task.isCancelled else { return }
+            self?.loginItemEnabled = enabled
+        }
     }
 }

@@ -90,6 +90,7 @@ because the app rewrites the file.
   "general": {
     "showInMenuBar": true,
     "automaticallyCheckForUpdates": true,
+    "showWhatsNewAfterUpdates": true,
     "popToRootSeconds": 0,
     "escapeKeyBehavior": "navigateBackOrClose",
     "autoSwitchInputSource": null,

@@ -1,7 +1,7 @@
 import ServiceManagement
 
 enum LaunchAtLogin {
-    static var isEnabled: Bool {
+    @concurrent static func isEnabled() async -> Bool {
         SMAppService.mainApp.status == .enabled
     }
 
