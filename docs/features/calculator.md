@@ -637,6 +637,8 @@ separator other than `.` or `,` (the Arabic `٫`) falls back to English, and so 
 separator outside `. , ' ’` and the no-break spaces — an ordinary space is never grouping, so
 `1hr 30` and `5 feet 3 inches` keep their meaning. `RegionNumberFormatMonitor` re-reads on
 `NSLocale.currentLocaleDidChangeNotification`, so a change in System Settings applies without a relaunch.
+Each read runs off the main actor: the first loads ICU's number data, which launch would otherwise
+wait on, and English stands in for the few milliseconds before it lands.
 
 `CalcNumberFormat.canonical` scans each run of digits and the separators between them, and rewrites
 it to canonical spelling or rejects the whole query. Rejection means **no card**, never a guess:

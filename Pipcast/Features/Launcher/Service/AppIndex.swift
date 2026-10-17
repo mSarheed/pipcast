@@ -371,18 +371,23 @@ final class AppIndex {
     @ObservationIgnored private var resultsMemo = Memo<ResultsKey, Results>()
     private var entriesRevision = 0
 
-    private static let systemActionEntries: [AppEntry] = SystemActionCatalog.all
-        .map { command in
-            AppEntry(
-                id: command.entryID, name: command.name,
-                url: URL(string: "pipcast://system-action/" + command.id.rawValue)!,
-                bundleID: nil, kind: .systemAction)
-        }
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    /// Named once, being fixed: launch publishes a dozen times and would re-fold them on each.
+    private static let systemActionEntries: [AppEntry] = named(
+        SystemActionCatalog.all
+            .map { command in
+                AppEntry(
+                    id: command.entryID, name: command.name,
+                    url: URL(string: "pipcast://system-action/" + command.id.rawValue)!,
+                    bundleID: nil, kind: .systemAction)
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })
 
-    private static let allWindowCommandEntries: [AppEntry] = WindowCommandCatalog.all
-        .map(AppEntry.init)
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    private static let allWindowCommandEntries: [AppEntry] = named(
+        WindowCommandCatalog.all
+            .map(AppEntry.init)
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })
+
+    private static let catalogEntries: [AppEntry] = named(CommandCatalog.all)
 
     private var discoveredEntries: [AppEntry] = []
     private var customCommandEntries: [AppEntry] = []
@@ -420,11 +425,11 @@ final class AppIndex {
     }
 
     private var quickActionEntries: [AppEntry] {
-        visibleCatalogEntries.filter { $0.kind == .quickAction } + customQuickActionEntries
+        visibleCatalogEntries.filter { $0.kind == .quickAction } + Self.named(customQuickActionEntries)
     }
 
     private var visibleCatalogEntries: [AppEntry] {
-        CommandCatalog.all.filter {
+        Self.catalogEntries.filter {
             guard let command = CommandCatalog.command(for: $0) else { return true }
             return !hiddenCommands.contains(command) && !unlistedCommands.contains(command)
         }
@@ -683,12 +688,10 @@ final class AppIndex {
         // Each slice arrives in its own display order; the slice order is the section order.
         let updated =
             Self.named(meetingEntries) + discoveredEntries
-            + Self.named(
-                extensionEntries + quicklinkEntries + appleShortcutEntries + snippetEntries
-                    + Self.systemActionEntries + windowLayoutEntries + windowRoomEntries
-                    + windowCommandEntries
-                    + customWindowSizeEntries + customCommandEntries + quickActionEntries
-                    + commandEntries)
+            + Self.named(extensionEntries + quicklinkEntries + appleShortcutEntries + snippetEntries)
+            + Self.systemActionEntries + Self.named(windowLayoutEntries + windowRoomEntries)
+            + windowCommandEntries + Self.named(customWindowSizeEntries + customCommandEntries)
+            + quickActionEntries + commandEntries
         guard updated != searchEntries else { return }
         searchEntries = updated
         apps = updated.filter(\.isPrimaryInstallation)
