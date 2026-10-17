@@ -103,7 +103,7 @@ every screen but two: the clipboard lands past its pins
 | `.quicklinkEditor`   | `QuicklinkEditorScreen`   | `QuicklinkEditorView` (see [quicklinks.md](quicklinks.md#launcher-editor)) |
 | `.snippets`          | `SnippetsScreen`          | `SnippetsList` + preview (see [snippets.md](snippets.md#search-snippets))        |
 | `.snippetEditor`     | `SnippetEditorScreen`     | `SnippetEditorView` (see [snippets.md](snippets.md#launcher-editor)) |
-| `.dictionary`        | `DictionaryScreen`        | `DictionaryEntryView` (see [dictionary.md](dictionary.md))                       |
+| `.dictionary`        | `DictionaryScreen`        | `DictionaryEntryView` or `DictionarySuggestionsView` (see [dictionary.md](dictionary.md))                       |
 | `.extensionCommand`  | `ExtensionCommandScreen`  | `ExtensionCommandView` (see [extensions.md](extensions.md))                      |
 
 **Tab rings the three surfaces a reader opens directly — launcher → AI chat → clipboard → launcher**
@@ -233,8 +233,9 @@ its own, so it also sets `argumentEntryID`, which lists that row alone in root s
 is its name. Both are set **after** `showPalette`, since `prepare` clears them.
 
 The flat `selection` index is the single source of truth for highlight / activation and **must always
-match the visible row order**, including the card at index 0 when present — the calculator's (see
-[calculator.md](calculator.md)) or the meeting join card (see [calendar.md](calendar.md)), never both.
+match the visible row order**, including the card at index 0 when present — whichever `LauncherList.LeadCard` leads: the calculator's
+or colour card for a typed query (see [calculator.md](calculator.md)), or for an empty one the meeting
+join card (see [calendar.md](calendar.md)) or What's New's (see [updates.md](updates.md)). Never two.
 
 ## Window placement
 

@@ -74,7 +74,7 @@ struct ClipboardScreen: PaletteScreen {
     }
 
     /// ⌥↵ — the palette stays up, so a run of entries goes over without re-summoning it.
-    func pasteKeepingWindowOpen(at selection: Int) -> Bool {
+    func alternate(at selection: Int) -> Bool {
         guard let item = item(at: selection) else { return false }
         core.clipboardCoordinator.pasteKeepingWindowOpen(item)
         return true

@@ -45,7 +45,8 @@ cycles, failed-load retries and the extension-root boundary. The runtime fixture
 same checks.
 
 OAuth redirect checks run against the shipped runtime, including Raycast's base64url JSON relay,
-custom authorization URLs, all redirect methods, and missing, duplicate or mismatched callback state:
+custom authorization URLs, all redirect methods, missing, duplicate or mismatched callback state,
+and concurrent browser requests with separate codes and recovery after cancellation:
 
 ```sh
 node Scripts/raycast-runtime/oauth-fixtures.mjs
@@ -149,6 +150,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `dictation-inference-test` | Dictation byte BPE, Fourier/mel features and non-overlapping audio chunks; no downloaded models |
 | `dictation-worker-test` | Dictation's framed channel, worker reuse/switching, removal, cancellation and broken pipes with a fixture helper |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
+| `dictionary-session-test` | Dictionary query lifecycle, stale-result rejection, cancellation and candidate filtering |
 | `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` — a real XHTML record and the plain-text fallback, read into page blocks |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
@@ -173,6 +175,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `ext-version-test` | `Extensions/Service/ExtensionVersionStore.swift` — what an update check reports, adopts and forgets |
 | `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` — round-trip, failure runs, uninstall |
 | `ext-test` | the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
+| `ext-sign-in-test` | `Extensions/Service/ExtensionSignInSession.swift` — cancellation without a browser callback, late callback isolation, retry, refused starts and pre-cancelled runs |
 | `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
 | `icon-cache-test` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
 | `entry-icon-test` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
@@ -441,6 +444,25 @@ section.
 
 Run against the **Debug channel** (`Pipcast Dev.app`, `io.github.msarheed.pipcast.app.dev`). It has its own prefs,
 caches, TCC grants and login item, so this cannot disturb an installed copy.
+
+### Dictionary
+
+Run `dictionary-session-test` for deterministic query lifecycle and candidate filtering checks.
+Opt into installed English spelling service checks with
+`PIPCAST_TEST_DICTIONARY_SYSTEM=1 ./Scripts/run-tests.sh dictionary-session-test`.
+
+- Define Word: `reconize` offers `recognize` (or `recognise`); `recogni` offers completions.
+- ↑/↓ select suggestions; Return and clicking a suggestion look it up while preserving search focus.
+- Option-Return copies only the selected word and closes; on an exact definition it copies that term.
+- Return on a definition still copies the definition; Command-Return opens Dictionary.app.
+- The Actions menu exposes Define Word or Copy Definition, Copy Word, and Open in Dictionary.
+- With suggestions visible, type an exact word and immediately open ⌘K before the lookup finishes.
+  The menu closes when the definition arrives; reopening shows Copy Definition for the new word.
+  Repeat with another missing word and a no-result query; an old menu never acts on new results.
+- Rapid typing, clearing, leaving the screen and reopening never publish an obsolete lookup.
+- Empty input shows the prompt; nonsense with no candidates shows No definition found.
+- IME composition keeps Return and navigation keys; Option-Return does not copy during composition.
+- Check Dark and Light, keyboard selection scrolling, and VoiceOver labels for the suggestions list.
 
 ### Core
 
@@ -769,6 +791,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A bare amount (`1 usd`) answers in the Mac's region currency, and follows a change to
   System Settings ▸ General ▸ Language & Region without a relaunch — and nothing prompts for location
 - A crypto query (`1 btc`, `0.5 sol to eur`) answers, and `1 usd to btc` stays in plain notation
+- `1000 usd in eur/12` converts and then divides; copying preserves the euro amount and code.
+  `100km/h in m/s / 2` retains the compound target, and `1000 usd in eur / 0` stays silent
 
 ### Calendar and meetings
 
@@ -876,6 +900,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   updated to and a dot marks the palette's menu button and its What's New row. Clicking the HUD, the
   row or the What's New command opens the screen, and the dot is gone; relaunching shows neither. A
   fresh install shows neither.
+- The same update pins a What's New card atop the empty launcher; a due meeting's join card keeps
+  the slot until it passes. ↵ opens What's New; ⌘K → Dismiss clears it unopened. With General → Show What's New after
+  updates off, no card appears while the HUD and the dot still do; turning it back on before reading
+  brings the card back.
 - General → Automatically check for updates defaults on; turn it off and relaunch: it stays off,
   no background check or update prompt occurs, and Check for Updates still works. Re-enable it:
   checks resume. Settings search for "updates" reveals the toggle; settings.json edits and a backup

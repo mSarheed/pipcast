@@ -172,6 +172,13 @@ final class AppSettings {
         }
     }
 
+    /// The launcher card an unread update earns; the HUD and the menu dot don't depend on it.
+    var showsWhatsNewAfterUpdates: Bool {
+        didSet {
+            defaults.set(showsWhatsNewAfterUpdates, forKey: Key.showsWhatsNewAfterUpdates.rawValue)
+        }
+    }
+
     /// The physical key remapped to the Hyper chord; `HyperKeyManager` reacts via its observer.
     var hyperKey: HyperKeyPhysicalKey {
         didSet { defaults.set(hyperKey.rawValue, forKey: Key.hyperKey.rawValue) }
@@ -659,6 +666,9 @@ final class AppSettings {
         automaticallyCheckForUpdates =
             defaults.object(forKey: Key.automaticallyCheckForUpdates.rawValue) == nil
             || defaults.bool(forKey: Key.automaticallyCheckForUpdates.rawValue)
+        showsWhatsNewAfterUpdates =
+            defaults.object(forKey: Key.showsWhatsNewAfterUpdates.rawValue) == nil
+            || defaults.bool(forKey: Key.showsWhatsNewAfterUpdates.rawValue)
         hyperKey =
             defaults.string(forKey: Key.hyperKey.rawValue).flatMap(HyperKeyPhysicalKey.init)
             ?? .none

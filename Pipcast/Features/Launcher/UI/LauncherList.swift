@@ -44,12 +44,14 @@ struct LauncherList: View {
     enum LeadCard: Equatable {
         case calc(CalcResult)
         case meeting(MeetingEvent, now: Date)
+        case whatsNew(Changelog.Entry)
         case color(ColorValue)
 
         var sectionTitle: String {
             switch self {
             case .calc: return "Calculator"
             case .meeting: return "Meeting"
+            case .whatsNew: return "Update"
             case .color: return "Color"
             }
         }
@@ -58,6 +60,7 @@ struct LauncherList: View {
             switch self {
             case .calc: return "calc-card"
             case .meeting: return "meeting-card"
+            case .whatsNew: return "whats-new-card"
             case .color: return "color-card"
             }
         }
@@ -267,6 +270,8 @@ private struct LeadCardView: View {
             CalculatorCard(result: result, selected: selected)
         case .meeting(let meeting, let now):
             MeetingCard(meeting: meeting, now: now, selected: selected)
+        case .whatsNew(let entry):
+            WhatsNewCard(entry: entry, selected: selected)
         case .color(let color):
             ColorCard(color: color, selected: selected)
         }

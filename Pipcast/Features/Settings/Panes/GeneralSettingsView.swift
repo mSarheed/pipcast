@@ -30,6 +30,10 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalGeneral, "Automatically check for updates")
                     Text("Check for Updates remains available when off.")
                 }
+                Toggle(isOn: $settings.showsWhatsNewAfterUpdates) {
+                    SettingsRowTitle(.generalGeneral, "Show What's New after updates")
+                    Text("Pins it atop the launcher until you've read it.")
+                }
                 Picker(selection: $settings.popToRootTimeout) {
                     ForEach(PopToRootTimeout.allCases) { timeout in
                         Text(timeout.title).tag(timeout)
