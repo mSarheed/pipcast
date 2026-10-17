@@ -276,6 +276,18 @@ The script then runs `Scripts/check-settings-search.js`, one check SwiftLint can
 marked by a `SettingsRowTitle`. Either gap compiles and reads fine, and fails only at runtime as a
 search result that navigates and then sits there.
 
+### Numbered launcher results
+
+- Search for multiple apps or commands and use ⌘1–⌘9 / ⌘0: each activates the corresponding row.
+  Hold ⌘ to check the hints. Headers take no number; a calculator or color card takes the first.
+  A timed meeting card has no number and never displaces the favorite chords as its join window starts.
+- Check file and fallback rows, a missing slot, and a non-actionable calculator error.
+- A numbered command with missing required arguments selects the row and focuses its first empty
+  field, including when a different row was selected. Type to verify the new field owns focus, then
+  activate again. Escape returns to search; arrows still navigate normally.
+- Compose IME marked text or open an actions/argument menu: numbered shortcuts must not launch a row.
+- Compact favorites and Clipboard pins retain their shortcuts; extension screens retain their keys.
+
 ## Performance measurement
 
 `Platform/Signposts.swift` emits eight intervals on the `io.github.msarheed.pipcast.perf` subsystem: `AppCore.start`,

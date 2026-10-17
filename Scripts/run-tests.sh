@@ -124,7 +124,7 @@ run scopes-test            $L/SearchScopes.swift
 run app-name-test          Pipcast/Platform/AppDisplayName.swift \
                            Pipcast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
-run favorites-test         $L/FavoriteSlots.swift
+run favorites-test         $L/NumberSlots.swift
 run launcher-file-test     $L/LauncherFileFormat.swift \
                            Pipcast/Features/Settings/Model/SettingsFileJSON.swift
 run launcher-settings-file-test \
@@ -244,7 +244,7 @@ run palette-menu-click-test Pipcast/Platform/Appearance.swift \
                            Pipcast/Platform/WindowLevel.swift \
                            Pipcast/Platform/NotificationToken.swift \
                            Pipcast/DesignSystem/Interaction/KeyboardFocus.swift \
-                           Pipcast/Palette/PalettePanel.swift
+                           Pipcast/Palette/PalettePanel.swift $L/NumberSlots.swift
 run form-input-test        Pipcast/Platform/Appearance.swift \
                            Pipcast/DesignSystem/Theme.swift \
                            Pipcast/DesignSystem/InterfaceMetrics.swift \

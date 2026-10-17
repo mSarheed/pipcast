@@ -273,8 +273,8 @@ agenda order. Those sections follow publication order, so visible rows and flat 
 downstream. The result limit bounds ordinary matches, while whole categories remain uncapped, as they
 are for an empty query.
 
-Category queries show headers without pinning favorites or handing out their ⌘-digit slots. Opening
-a row records its visit; the query is learned only when it did not match that row's category, so
+Category queries show headers without pinning favorites; ⌘-digit slots follow the displayed rows.
+Opening a row records its visit; the query is learned only when it did not match that row's category, so
 category browsing cannot teach every window command the same search term.
 
 ### Contextual commands
@@ -723,28 +723,31 @@ across the list — the top of Favorites on add, the neighbour above the one tha
 
 ### ⌘-digit slots
 
-`FavoriteSlots` (`Launcher/Model/FavoriteSlots.swift`) defines ten local palette slots: **⌘1…⌘9 then
-⌘0**. They match the physical number row, not the character produced by the current keyboard layout,
-so the same positions work on QWERTY and AZERTY. The same slots address pinned Clipboard entries in
-that screen; the eleventh favorite is still listed and reorderable, and simply has no slot.
+`NumberSlots` (`Launcher/Model/NumberSlots.swift`) defines ten local palette slots: **⌘1…⌘9 then
+⌘0**. They match the physical number row, so the same positions work on QWERTY and AZERTY.
 
-Both palette sizes serve the chords from the same prefix, because `paletteIsCollapsed` already
-requires an empty query: **compact implies empty implies `favoriteCount` is the pinned prefix**. That
-is why `LauncherScreen.pinnedFavorites` feeds the strip, the chords and the numbered rows alike,
-rather than the compact bar re-deriving an empty-query order of its own. In compact the strip draws
-the first five; ⌘6–⌘0 still launch favorites it has no room for, and the "…" is a button after them
-rather than a slot, so no favorite loses its digit to the overflow.
+In the expanded launcher, the slots activate the first ten numbered rows in displayed order.
+A leading calculator or color card counts; section headers and the timed meeting card do not.
+The meeting card never takes a favorite's chord when its join window starts. Favorites, meeting
+entries, suggestions, search results, files and fallbacks follow in their displayed order. A missing
+slot does nothing. A calculator error remains non-actionable, just as with Return. `NumberSlots`
+maps flat rows to digits and back for both the rendered hints and activation.
 
-Holding ⌘ swaps each numbered row's kind label for its chord. `PalettePanel` publishes the modifier
-into `PaletteState.commandHeld` from `.flagsChanged` and clears it in `resignKey` — not in `prepare`,
-which a re-show that preserves state skips entirely. The flag flips **400 ms after** the press, not
-on it: every ⌘ chord in the palette starts as a ⌘ press, so revealing on the down edge flashed the
-numbering under ⌘↵ and ⌘K. `noteCommandHeld` schedules the reveal and any release cancels it, so a
-chord's own tap never outlives its keystroke while a deliberate hold still lights every row. **`AppRow` observes that flag itself**: reading
-it any higher would attach it to `RootPaletteView`'s body and rebuild the whole palette on every ⌘
-press, where a row-level read re-runs only the handful of rows the `LazyVStack` has realized. The
-digit each row shows is carried on its `Row` case from the section build, so no row searches for its
-own position.
+`RootPaletteView` selects the requested row and uses the same activation path as Return. Required
+arguments receive focus instead of launching incomplete input. Query text and filled arguments flow
+through the existing screen action. Composition and open menus suppress numbered activation.
+When the shortcut selects a different row, focus waits for its argument fields to mount. The
+view-owned task checks cancellation, row identity, query and palette reset before moving the caret.
+
+Compact mode retains favorite-only slots, including ⌘6–⌘0 for favorites beyond the five-icon strip.
+Clipboard retains its pinned-entry slots. Other screens retain their own shortcuts. The compact
+visibility setting is visual only and does not disable favorite shortcuts.
+
+Holding ⌘ for 400 ms replaces app and file kind labels with their chords; calculator and color
+cards show a trailing overlay without changing their layout. The delay prevents a flash under ⌘↵
+and ⌘K. Releasing ⌘ or resigning key clears it. The row and hint views observe
+`PaletteState.commandHeld` locally, so revealing hints does not rebuild the whole palette. Slot
+digits are computed from section offsets, never by searching each row's ID.
 
 ## Hiding one result
 

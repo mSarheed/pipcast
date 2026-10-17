@@ -110,7 +110,7 @@ struct PaletteShortcutTests {
             .hideApp, .restart, .edit, .duplicate, .showInFinder
         ]
         let anywhere: [PaletteShortcut] = [
-            .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot(0), .continueInChat, .newItem,
+            .commandDelete, .delete, .deleteAll, .pin, .numberSlot(0), .continueInChat, .newItem,
             .settings, .copyCalculation
         ]
         for shortcut in expanded {
@@ -126,7 +126,7 @@ struct PaletteShortcutTests {
             .newItem, .settings, .edit, .duplicate, .showInFinder
         ]
         let leaving: [PaletteShortcut] = [
-            .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot(0),
+            .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .numberSlot(0),
             .continueInChat
         ]
         for shortcut in closing {

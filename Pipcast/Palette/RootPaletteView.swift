@@ -28,6 +28,7 @@ struct RootPaletteView: View {
     @FocusState private var searchFocused: Bool
     /// Kept apart from the search field's own focus. See docs/features/palette.md.
     @FocusState private var argumentFocused: String?
+    @State private var numberArgumentFocus: NumberArgumentFocus?
     /// Which in-window menu is open; at most one, so the state cannot disagree with itself.
     @State private var openMenu: OpenMenu?
     /// Sampled once by `openActions`, so the running-only rows can't appear while the menu is up.
@@ -330,7 +331,7 @@ struct RootPaletteView: View {
                 .background(
                     WindowReader {
                         hostWindow = $0
-                        installHeaderArrowHandler(in: $0)
+                        installInputHandlers(in: $0)
                     }
                 )
                 // The window's frame is the size source, so the glass and clip stay matched.
@@ -458,9 +459,6 @@ struct RootPaletteView: View {
                 // Next turn, past the refocus that selects all, so typing extends the answer.
                 Task { @MainActor in (hostWindow as? PalettePanel)?.moveFieldEditorCaretToEnd() }
             }
-            .onChange(of: vm.favoriteSlotToken) {
-                if let index = vm.favoriteSlotIndex { performShortcut(.favoriteSlot(index)) }
-            }
             // One optional makes "exactly one menu" structural; this only presents it.
             .onChange(of: openMenu) {
                 guard menuOpen else { return }
@@ -472,6 +470,7 @@ struct RootPaletteView: View {
             .onDisappear {
                 menuPanel.hide()
                 (hostWindow as? PalettePanel)?.onHeaderFieldBoundaryArrow = nil
+                (hostWindow as? PalettePanel)?.onNumberSlot = nil
             }
             // The first show builds this view after `prepare`, so no handler saw that reset.
             .onAppear {
@@ -761,6 +760,24 @@ struct RootPaletteView: View {
             Task { @MainActor in focusPendingArgument() }
         }
         .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
+        .task(id: numberArgumentFocus) {
+            guard let request = numberArgumentFocus else { return }
+            await Task.yield()
+            defer {
+                if numberArgumentFocus == request { numberArgumentFocus = nil }
+            }
+            guard !Task.isCancelled, vm.mode == .launcher, vm.isVisible, !isCollapsed,
+                vm.selection == request.selection, vm.query == request.query,
+                vm.resetToken == request.resetToken, !menuOpen, !vm.isControlListOpen, !vm.isComposing,
+                let launcher = screen as? LauncherScreen,
+                launcher.rows.indices.contains(request.selection),
+                launcher.rows[request.selection].id == request.rowID,
+                let field = launcher.headerAccessory(
+                    at: request.selection, focus: $argumentFocused)?.firstIncompleteField
+            else { return }
+            argumentFocused = field
+            searchFocused = false
+        }
         .onChange(of: quickAI.pendingAttachments.map(\.id)) { refreshAttachmentsMenu() }
     }
 
@@ -1339,7 +1356,36 @@ struct RootPaletteView: View {
         content.activate(index)
     }
 
-    /// For the chords the panel hands over as tokens, which work while a menu is open.
+    private func activateNumberSlot(_ index: Int) {
+        guard !menuOpen, !vm.isControlListOpen, !vm.isComposing else { return }
+        guard vm.mode == .launcher, !isCollapsed else {
+            performShortcut(.numberSlot(index))
+            return
+        }
+        guard let screen = screen as? LauncherScreen,
+            let selection = screen.numberSlots.selection(at: index, rowCount: screen.rows.count)
+        else { return }
+        let previous = vm.selection
+        numberArgumentFocus = nil
+        returnFocusToSearchField()
+        vm.selection = selection
+        scroll = ScrollIntent(kind: .follow)
+        if let field = screen.headerAccessory(
+            at: selection, focus: $argumentFocused)?.firstIncompleteField
+        {
+            if previous != selection {
+                numberArgumentFocus = NumberArgumentFocus(
+                    selection: selection, rowID: screen.rows[selection].id,
+                    query: vm.query, resetToken: vm.resetToken)
+            } else {
+                argumentFocused = field
+                searchFocused = false
+            }
+            return
+        }
+        screen.activate(at: selection)
+    }
+
     private func performShortcut(_ shortcut: PaletteShortcut) {
         let screen = screen
         _ = screen.perform(shortcut, at: selection(in: screen))
@@ -1377,9 +1423,9 @@ struct RootPaletteView: View {
         searchFocused = next == nil
     }
 
-    /// Right at an inline field's end and Left at its start continue the same ring as Tab.
-    private func installHeaderArrowHandler(in window: NSWindow?) {
+    private func installInputHandlers(in window: NSWindow?) {
         guard let panel = window as? PalettePanel else { return }
+        panel.onNumberSlot = { index in activateNumberSlot(index) }
         panel.onHeaderFieldBoundaryArrow = { boundary in
             guard !menuOpen, !vm.isControlListOpen, !isCollapsed,
                 let accessory = headerAccessory, !accessory.fieldNames.isEmpty
@@ -1469,6 +1515,13 @@ struct RootPaletteView: View {
         screen.activate(at: selection(in: screen))
     }
 
+}
+
+private struct NumberArgumentFocus: Equatable {
+    let selection: Int
+    let rowID: String
+    let query: String
+    let resetToken: UUID
 }
 
 /// The palette's in-window menus. One optional of these is the whole "only one is open" invariant.

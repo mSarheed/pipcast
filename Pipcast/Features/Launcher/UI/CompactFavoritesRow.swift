@@ -37,7 +37,7 @@ struct CompactFavoritesRow: View {
     }
 
     private func help(for app: AppEntry, at index: Int) -> String {
-        guard let digit = FavoriteSlots.digit(at: index) else { return app.name }
+        guard let digit = NumberSlots.digit(at: index) else { return app.name }
         return "\(app.name)  ⌘\(digit)"
     }
 }

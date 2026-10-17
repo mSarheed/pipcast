@@ -43,7 +43,7 @@ struct ClipboardList: View {
                 rows.append(.header(title))
                 currentTitle = title
             }
-            let slot = item.isPinned ? FavoriteSlots.digit(at: pinnedSlot) : nil
+            let slot = item.isPinned ? NumberSlots.digit(at: pinnedSlot) : nil
             if item.isPinned { pinnedSlot += 1 }
             rows.append(.item(item, slot: slot))
         }

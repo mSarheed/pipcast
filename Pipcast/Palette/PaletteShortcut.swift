@@ -55,7 +55,7 @@ enum PaletteShortcut: Equatable {
     /// ⌘., which AppKit binds to `cancelOperation:`, so it arrives as a token instead of a key.
     case pin
     /// ⌘1…⌘0, matched by key code in the panel and handed over as a slot.
-    case favoriteSlot(Int)
+    case numberSlot(Int)
 
     /// `matches` compares through the active layout, so the letters stay positional.
     static func resolve(
@@ -95,7 +95,7 @@ enum PaletteShortcut: Equatable {
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
             .hideApp, .restart, .edit, .duplicate, .showInFinder:
             true
-        case .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot, .continueInChat, .newItem,
+        case .commandDelete, .delete, .deleteAll, .pin, .numberSlot, .continueInChat, .newItem,
             .settings, .copyCalculation:
             false
         }
@@ -107,7 +107,7 @@ enum PaletteShortcut: Equatable {
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
             .newItem, .settings, .edit, .duplicate, .showInFinder:
             true
-        case .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot,
+        case .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .numberSlot,
             .continueInChat:
             false
         }

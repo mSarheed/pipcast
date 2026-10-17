@@ -44,7 +44,7 @@ struct ClipboardScreen: PaletteScreen {
             deleteAll()
             return true
         case .pin: return pin(at: selection)
-        case .favoriteSlot(let index): return activatePinned(at: index)
+        case .numberSlot(let index): return activatePinned(at: index)
         case .copyText:
             guard let item = item(at: selection), item.offersTextExtraction else { return false }
             core.clipboardCoordinator.copyImageText(item)
