@@ -261,6 +261,8 @@ The template grows with its text; only the whole form scrolls, never an individu
 A blank name disables Save.
 A clipboard draft preserves the selected text verbatim and initially focuses Name. It is available
 only while Snippets is enabled and never changes the feature switch or its consent.
+When invoked from Actions, accepted creation returns key status to the palette before showing the
+editor, preserving the original in-app window as the focus and text-injection target.
 An IO or revision failure leaves the draft open and shows the error beside its fields.
 
 **⌘↵** saves; plain **↵** inserts a template line break. **Tab** and **Shift-Tab** walk the fields,

@@ -128,12 +128,13 @@ struct SnippetsTests {
         let palette = PaletteState()
         let core = AppCore()
         let clipboard = ClipboardStore(directory: directory.appending(path: "Clipboard"))
+        let navigation = PaletteCoordinator(state: palette)
         let coordinator = SnippetCoordinator(
             store: store, listener: SnippetKeywordListener(syntheticEventTag: 0),
             injector: TextInjector(clipboardManager: ClipboardManager(), settings: settings),
             clipboardStore: clipboard,
             appIndex: AppIndex(), settings: settings, windowController: PaletteWindowController(),
-            paletteCoordinator: PaletteCoordinator(state: palette), palette: palette,
+            paletteCoordinator: navigation, palette: palette,
             showMessage: { _, _ in }, core: core)
         let text = "  First 👩🏽‍💻\n你好 e\u{301}\r\n{clipboard}\n"
         clipboard.addText(text, sourceBundleID: nil)
@@ -213,6 +214,49 @@ struct SnippetsTests {
         check("committed Return activates the row after returning focus to the palette",
             activations == 1 && NSApp.keyWindow === parent && coordinator.editor?.text == text)
         coordinator.cancelSnippetEditing()
+        let ownWindow = MenuPanel()
+        ownWindow.setFrame(parent.frame, display: false)
+        let ownEditor = HarnessEditor(frame: NSRect(x: 0, y: 0, width: 300, height: 100))
+        ownWindow.contentView = ownEditor
+        ownWindow.makeKeyAndOrderFront(nil)
+        _ = ownWindow.makeFirstResponder(ownEditor)
+        check("in-app source has an injection target",
+            InjectionTarget.behindPalette(ownWindow: ownWindow, app: nil)?.ownEditor === ownEditor)
+        parent.makeKey()
+        parent.addChildWindow(actions, ordered: .above)
+        actions.makeKey()
+        _ = actions.makeFirstResponder(search)
+        var shownFrom: NSWindow?
+        navigation.onShow = { shownFrom = NSApp.keyWindow }
+        actions.onKeyDown = { event in
+            guard event.charactersIgnoringModifiers == "s", event.modifierFlags.contains(.command) else { return false }
+            return coordinator.createSnippet(from: clip)
+        }
+        let commandS = NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: .command, timestamp: 0,
+            windowNumber: actions.windowNumber, context: nil, characters: "s",
+            charactersIgnoringModifiers: "s", isARepeat: false, keyCode: 1)!
+        settings.snippetsEnabled = false
+        actions.sendEvent(commandS)
+        check("disabled creation leaves Actions key and does not re-show the palette",
+            NSApp.keyWindow === actions && shownFrom == nil && coordinator.editor == nil)
+        settings.snippetsEnabled = true
+        fieldEditor.setMarkedText(
+            "にほん", selectedRange: NSRange(location: 3, length: 0),
+            replacementRange: NSRange(location: NSNotFound, length: 0))
+        actions.sendEvent(commandS)
+        check("composing creation leaves Actions key and does not re-show the palette",
+            NSApp.keyWindow === actions && shownFrom == nil && coordinator.editor == nil)
+        fieldEditor.insertText("日本", replacementRange: NSRange(location: NSNotFound, length: 0))
+        actions.sendEvent(commandS)
+        check("Actions shortcut returns key to the palette before showing the snippet editor",
+            shownFrom === parent && coordinator.editor?.text == text)
+        check("Actions creation leaves the original in-app injection responder intact",
+            InjectionTarget.behindPalette(ownWindow: ownWindow, app: nil)?.ownEditor === ownEditor)
+        coordinator.cancelSnippetEditing()
+        navigation.onShow = nil
+        parent.removeChildWindow(actions)
+        ownWindow.orderOut(nil)
         actions.onKeyDown = nil
         parent.orderOut(nil)
         actions.orderOut(nil)

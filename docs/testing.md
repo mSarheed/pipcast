@@ -893,6 +893,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   activating a row; a subsequent Return opens the selected action. An active IME composition in
   either the palette or Actions search must not open a snippet editor; committing the composition
   releases the shortcut.
+- Summon the palette over a Pipcast Notes or AI editor, open Clipboard History and Actions, then
+  press ⌘S. After Save or Cancel and palette dismissal, focus returns to the original editor;
+  snippet expansion still targets that editor. Rejected creation must keep Actions key.
 - Repeated create/cancel cycles release their drafts and do not grow the post-close memory floor.
 
 ### Clean install

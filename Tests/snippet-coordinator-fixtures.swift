@@ -62,9 +62,13 @@ final class PaletteState {
 @MainActor
 final class PaletteCoordinator {
     let state: PaletteState
+    var onShow: (() -> Void)?
     init(state: PaletteState) { self.state = state }
     func togglePalette(mode: PaletteState.Mode) { state.mode = mode }
-    func showPalette(mode: PaletteState.Mode) { state.mode = mode }
+    func showPalette(mode: PaletteState.Mode) {
+        onShow?()
+        state.mode = mode
+    }
     func hidePalette(restoreFocus: Bool = true) {}
 }
 

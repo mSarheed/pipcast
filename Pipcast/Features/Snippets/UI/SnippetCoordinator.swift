@@ -142,6 +142,7 @@ final class SnippetCoordinator {
         else {
             return false
         }
+        (NSApp.keyWindow as? MenuPanel)?.parent?.makeKey()
         let editor = SnippetEditorSession(record: nil, initialText: text, sourceClipboardID: item.id)
         editor.focusedField = .name
         self.editor = editor
