@@ -163,7 +163,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `quicklink-test` | all of `Quicklinks/Model/`, plus editor drafts and placeholder selection |
 | `quicklink-coordinator-test` | Opening and requested arguments, launcher editing, current enabled-state preservation, deletion during editing and feature gates; no platform effects or on-screen focus checks |
 | `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
-| `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus clipboard draft/save lifecycle through the coordinator, editor drafts, placeholder selection and `Platform/HealthTicker.swift` |
+| `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus clipboard draft/save lifecycle through the coordinator, Actions Return composition through `Palette/MenuPanel.swift`, editor drafts, placeholder selection and `Platform/HealthTicker.swift` |
 | `notes-test` | all of `Notes/Model/` and `Notes/Service/`, including the Markdown parser, edit plans and reveal policy, plus the real fuzzy matcher and signposts |
 | `notes-editor-test` | the Notes editor, rendered and literal, with real TextKit 2 and AppKit editing objects: styling, reveal, layout fragments, keys, chords, checkboxes and links |
 | `raycast-test` | `Backup/Service/RaycastDecoder.swift`, `Scrypt.swift`, `Platform/Compression/Zlib.swift`, `Clipboard/Model/RaycastClipboardImport.swift` and import-time clipboard retention |
@@ -889,8 +889,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Images, referenced files, empty results and disabled Snippets offer no action; ⌘S does nothing.
   Creating a draft never enables Snippets or asks for Accessibility.
 - Tab and Shift-Tab walk the editor fields, arrows edit the focused field, Return inserts a template
-  newline, and ⌘↵ saves. An active IME composition in either the palette or Actions search must not
-  open a snippet editor; committing the composition releases the shortcut.
+  newline, and ⌘↵ saves. In Actions search, Return and keypad Enter commit IME input without
+  activating a row; a subsequent Return opens the selected action. An active IME composition in
+  either the palette or Actions search must not open a snippet editor; committing the composition
+  releases the shortcut.
 - Repeated create/cancel cycles release their drafts and do not grow the post-close memory floor.
 
 ### Clean install

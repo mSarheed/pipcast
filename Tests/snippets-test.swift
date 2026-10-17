@@ -152,9 +152,8 @@ struct SnippetsTests {
             check("non-text clips offer no action", !coordinator.canCreateSnippet(from: item))
             check("non-text clips cannot open a draft", !coordinator.createSnippet(from: item))
         }
-        let actions = NSPanel(
-            contentRect: NSRect(x: -10000, y: -10000, width: 300, height: 100),
-            styleMask: [.titled, .nonactivatingPanel], backing: .buffered, defer: false)
+        let actions = MenuPanel()
+        actions.setFrame(NSRect(x: -10000, y: -10000, width: 300, height: 100), display: false)
         let search = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         actions.contentView = search
         actions.makeKeyAndOrderFront(nil)
@@ -174,6 +173,48 @@ struct SnippetsTests {
         fieldEditor.insertText("日本", replacementRange: NSRange(location: NSNotFound, length: 0))
         check("committed Actions input allows a draft", coordinator.createSnippet(from: clip))
         coordinator.cancelSnippetEditing()
+        let parent = MenuPanel()
+        parent.setFrame(actions.frame, display: false)
+        parent.orderFront(nil)
+        var activations = 0
+        actions.onKeyDown = { event in
+            guard event.specialKey == .carriageReturn || event.specialKey == .enter else { return false }
+            parent.makeKey()
+            activations += 1
+            _ = coordinator.createSnippet(from: clip)
+            return true
+        }
+        for (character, keyCode): (String, UInt16) in [("\r", 36), ("\u{3}", 76)] {
+            actions.makeKey()
+            _ = actions.makeFirstResponder(search)
+            fieldEditor.setMarkedText(
+                "にほん", selectedRange: NSRange(location: 3, length: 0),
+                replacementRange: NSRange(location: NSNotFound, length: 0))
+            let event = NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                windowNumber: actions.windowNumber, context: nil, characters: character,
+                charactersIgnoringModifiers: character, isARepeat: false, keyCode: keyCode)!
+            actions.sendEvent(event)
+            check("composing Return reaches the native field editor", !fieldEditor.hasMarkedText())
+            check("composing Return never activates the selected Actions row", activations == 0)
+            check("composing Return preserves the menu and refuses a draft",
+                NSApp.keyWindow === actions && coordinator.editor == nil)
+            coordinator.cancelSnippetEditing()
+        }
+        actions.makeKey()
+        _ = actions.makeFirstResponder(search)
+        fieldEditor.insertText("日本", replacementRange: NSRange(location: NSNotFound, length: 0))
+        activations = 0
+        let committedReturn = NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+            windowNumber: actions.windowNumber, context: nil, characters: "\r",
+            charactersIgnoringModifiers: "\r", isARepeat: false, keyCode: 36)!
+        actions.sendEvent(committedReturn)
+        check("committed Return activates the row after returning focus to the palette",
+            activations == 1 && NSApp.keyWindow === parent && coordinator.editor?.text == text)
+        coordinator.cancelSnippetEditing()
+        actions.onKeyDown = nil
+        parent.orderOut(nil)
         actions.orderOut(nil)
         palette.isComposing = true
         check("IME composition keeps its input", !coordinator.createSnippet(from: clip) && coordinator.editor == nil)

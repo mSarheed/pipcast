@@ -38,6 +38,10 @@ final class PaletteWindowController {
 final class PaletteState {
     enum Mode { case launcher, clipboard, snippets, snippetEditor }
     var mode = Mode.clipboard
+    var menuPresentationToken = UUID()
+    func notePointerMoved(to: CGPoint) {}
+    func disarmHoverHighlight(pointerAt: CGPoint) {}
+    func noteCommandHeld(_ held: Bool) {}
     var isComposing = false
     var query = ""
     var clipboardFilter = ClipboardFilter.all

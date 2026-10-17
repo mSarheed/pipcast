@@ -479,6 +479,7 @@ run quicklink-coordinator-test Pipcast/Features/Quicklinks/Model/Quicklink.swift
                            Pipcast/Features/Snippets/Model/Snippet.swift \
                            Pipcast/Features/Snippets/Model/SnippetTemplateEngine.swift
 run slow snippets-test     Tests/snippet-coordinator-fixtures.swift \
+                           Pipcast/Palette/MenuPanel.swift \
                            Pipcast/Platform/AppPaths.swift \
                            Pipcast/Features/Snippets/UI/SnippetCoordinator.swift \
                            Pipcast/Features/Clipboard/Model/ClipboardStore.swift \
