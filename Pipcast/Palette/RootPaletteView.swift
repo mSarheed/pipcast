@@ -494,7 +494,7 @@ struct RootPaletteView: View {
                 (hostWindow as? PalettePanel)?.onHeaderFieldBoundaryArrow = nil
                 (hostWindow as? PalettePanel)?.onNumberSlot = nil
             }
-            // The first show builds this view after `prepare`, so no handler saw that reset.
+            // No change handler saw a reset before the first build, so that build lands here.
             .onAppear {
                 searchFocused = !screen.hidesSearchField
                 land()

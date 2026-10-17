@@ -118,6 +118,11 @@ final class PaletteCoordinator {
         palette.pendingArgumentEntryID = entry.id
     }
 
+    /// Spends the palette's first build while nothing waits on it, rather than on the first summon.
+    func prewarmPalette() {
+        windowController.prewarm()
+    }
+
     func hidePalette(restoreFocus: Bool = true) {
         menuSearch.reset()
         windowSwitch.reset()

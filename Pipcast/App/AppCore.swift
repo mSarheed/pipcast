@@ -410,6 +410,8 @@ final class AppCore {
                 } else if let launcherSettingsFile {
                     reportSettingsFileIssues(launcherSettingsFile.applyInstalled())
                 }
+                // After the first scan, launch has settled and the launcher has entries to lay out.
+                paletteCoordinator.prewarmPalette()
             }
             hotKeys.displayName = { [weak self] action in self?.hotKeyDisplayName(for: action) }
             hotKeys.allowsAction = { [weak self] action in

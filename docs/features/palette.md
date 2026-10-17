@@ -80,8 +80,10 @@ answers through `perform(_:at:)`, so a new chord never adds a cast to the shell.
 
 Where a reset leaves the highlight is the screen's to say too. Every reset — an open, a new query, a
 new filter — goes through `RootPaletteView.land()`, which reads `landingSelection`, so handlers that
-fire in one update agree whatever order they run in. `onAppear` lands as well: the first show builds
-the view after `prepare` has run, so no change handler ever sees that reset. The landing is row 0 on
+fire in one update agree whatever order they run in. `onAppear` lands as well, for the one build no
+change handler sees: normally the panel is built unshown once launch's first app scan lands
+(`PaletteWindowController.prewarm`), while a summon that comes sooner builds it after its own
+`prepare`. Every later summon lands through the change handlers. The landing is row 0 on
 every screen but two: the clipboard lands past its pins
 ([clipboard.md](clipboard.md#pinned-entries)), and Search Quicklinks lands on the row a prompt names
 ([quicklinks.md](quicklinks.md)).
