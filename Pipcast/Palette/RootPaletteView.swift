@@ -297,6 +297,16 @@ struct RootPaletteView: View {
         }
     }
 
+    /// What one render resolved: building a screen is a list build, so the header reads this.
+    private struct Resolution {
+        let screen: any PaletteScreen
+        let accessory: PaletteHeaderAccessory?
+        let hidesSearchField: Bool
+        let extensionScreen: ExtensionScreen
+
+        var extensionCommandScreen: ExtensionCommandScreen? { screen as? ExtensionCommandScreen }
+    }
+
     var body: some View {
         // Resolve the screen once per render, so the flat index can't drift from the rows.
         let screen = screen
@@ -306,6 +316,11 @@ struct RootPaletteView: View {
         let showActionGroup =
             (count > 0 || screen.actsWithoutRows)
             && screen.hasPrimaryAction(at: sel)
+        let resolution = Resolution(
+            screen: screen,
+            accessory: isCollapsed ? nil : screen.headerAccessory(at: sel, focus: $argumentFocused),
+            hidesSearchField: !isCollapsed && screen.hidesSearchField,
+            extensionScreen: (screen as? ExtensionCommandScreen)?.screen ?? .empty)
 
         // One header position, so focus survives the swap. See docs/features/palette.md.
         return keyHandlers(
@@ -317,7 +332,7 @@ struct RootPaletteView: View {
                         screen.body(selection: sel, scroll: scroll)
                     }
                 }
-                .safeAreaInset(edge: .top, spacing: 0) { header }
+                .safeAreaInset(edge: .top, spacing: 0) { header(resolution) }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if !isCollapsed {
                         bottomBar(
@@ -351,17 +366,18 @@ struct RootPaletteView: View {
                             ? Theme.Duration.dialogEnter : Theme.Duration.dialogExit),
                     value: core.isDimmingPaletteForDialog
                 )
-                .clipShape(RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous))),
-            selection: sel)
+                .clipShape(RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous)),
+                resolution: resolution),
+            screen: screen, selection: sel)
     }
 
     /// The emoji grid's observers, split out so `stateObservers` stays within type-checker reach.
     @ViewBuilder
-    private func emojiObservers(_ content: some View) -> some View {
+    private func emojiObservers(_ content: some View, screen resolved: any PaletteScreen) -> some View {
         content
             .onChange(of: vm.emojiCategoryFilter) { land() }
             .onChange(of: core.pinnedEmoji.revision) { emojiGridChanged() }
-            .onChange(of: (screen as? EmojiScreen)?.frequentlyUsed) { old, new in
+            .onChange(of: (resolved as? EmojiScreen)?.frequentlyUsed) { old, new in
                 guard let old, let new else { return }
                 (screen as? EmojiScreen)?.frequentlyUsedChanged(from: old, to: new)
                 emojiGridChanged()
@@ -383,8 +399,8 @@ struct RootPaletteView: View {
 
     /// Split from `body` for the same reason `keyHandlers` is: one chain cannot carry them all.
     @ViewBuilder
-    private func stateObservers(_ content: some View) -> some View {
-        emojiObservers(content)
+    private func stateObservers(_ content: some View, resolution: Resolution) -> some View {
+        emojiObservers(content, screen: resolution.screen)
             // Every show bumps focusToken so the search field refocuses.
             .onChange(of: vm.focusToken) {
                 searchFocused = !screen.hidesSearchField
@@ -405,11 +421,12 @@ struct RootPaletteView: View {
                 }
             }
             // Anything typed while the command was still starting predates its handler.
-            .onChange(of: extensionScreen.searchTextHandler) { previous, handler in
+            .onChange(of: resolution.extensionScreen.searchTextHandler) { previous, handler in
                 guard previous == nil, let handler, !vm.query.isEmpty else { return }
                 extensions.dispatch(handler: handler, arguments: [vm.query])
             }
-            .modifier(ExtensionSelectionForwarder(screen: extensionScreen, selection: vm.selection))
+            .modifier(
+                ExtensionSelectionForwarder(screen: resolution.extensionScreen, selection: vm.selection))
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) { land() }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
@@ -483,7 +500,8 @@ struct RootPaletteView: View {
                 land()
                 focusPendingArgument()
             }
-            .modifier(SearchFieldHiding(hidden: hidesSearchField, apply: applySearchFieldHiding))
+            .modifier(
+                SearchFieldHiding(hidden: resolution.hidesSearchField, apply: applySearchFieldHiding))
             // Several paths flip `paletteIsCollapsed`, so resize the window to match.
             .onChange(of: core.paletteCoordinator.paletteIsCollapsed) {
                 core.paletteCoordinator.syncPaletteSize()
@@ -492,7 +510,9 @@ struct RootPaletteView: View {
 
     /// Split from `body`: one chain of this length is past what the type-checker will infer.
     @ViewBuilder
-    private func keyHandlers(_ content: some View, selection sel: Int) -> some View {
+    private func keyHandlers(
+        _ content: some View, screen resolved: any PaletteScreen, selection sel: Int
+    ) -> some View {
         content
             // Repeat included: holding the key keeps stepping, as the bare-key form does.
             .onKeyPress(keys: [.downArrow], phases: [.down, .repeat]) { press in
@@ -598,7 +618,7 @@ struct RootPaletteView: View {
             }
             .modifier(
                 ExtensionShortcutKeys(
-                    screen: menuOpen ? nil : screen as? ExtensionCommandScreen, selection: sel)
+                    screen: menuOpen ? nil : resolved as? ExtensionCommandScreen, selection: sel)
             )
             .onKeyPress(phases: .down) { press in
                 guard press.modifiers.contains(.command),
@@ -667,7 +687,7 @@ struct RootPaletteView: View {
         if hidden { vm.query = "" }
     }
 
-    private var header: some View {
+    private func header(_ resolution: Resolution) -> some View {
         HStack(alignment: .center, spacing: 0) {
             // Matches the list rows and section headers' own indent below.
             headerGutter(width: metrics.spacing.md * 2)
@@ -685,13 +705,13 @@ struct RootPaletteView: View {
             // slot + xl equals a row's icon + lg, so the query starts where the row titles do.
             headerGutter(width: metrics.spacing.xl)
             // One structural position: a field inside a branch loses first responder when it flips.
-            headerField
-            if let accessory = headerAccessory {
+            headerField(resolution)
+            if let accessory = resolution.accessory {
                 accessory.view
                 // Given room last: at the default priority it would split it with the field.
                 Spacer(minLength: 0).layoutPriority(-1)
             }
-            if tabOpensChat {
+            if tabOpensChat(accessory: resolution.accessory) {
                 headerGutter(width: metrics.spacing.md)
                 quickAITabHint
             }
@@ -733,7 +753,7 @@ struct RootPaletteView: View {
                 }
             }
             if isCollapsed, settings.showFavoritesInCompactMode,
-                let launcher = screen as? LauncherScreen
+                let launcher = resolution.screen as? LauncherScreen
             {
                 let favorites = launcher.compactFavorites
                 if !favorites.isEmpty {
@@ -746,7 +766,7 @@ struct RootPaletteView: View {
                     )
                 }
             }
-            if !isCollapsed, let command = extensionCommandScreen,
+            if !isCollapsed, let command = resolution.extensionCommandScreen,
                 let accessory = command.searchAccessory
             {
                 headerGutter(width: metrics.spacing.md)
@@ -818,8 +838,8 @@ struct RootPaletteView: View {
     }
 
     /// Resolved through `PaletteTabAction`, so the hint cannot promise the wrong destination.
-    private var tabOpensChat: Bool {
-        guard !isCollapsed, headerAccessory?.fieldNames.isEmpty ?? true else { return false }
+    private func tabOpensChat(accessory: PaletteHeaderAccessory?) -> Bool {
+        guard !isCollapsed, accessory?.fieldNames.isEmpty ?? true else { return false }
         return PaletteTabAction.resolve(
             mode: vm.mode, aiEnabled: settings.aiEnabled,
             clipboardEnabled: settings.clipboardEnabled) == .ask
@@ -828,33 +848,32 @@ struct RootPaletteView: View {
     private var hidesSearchField: Bool { !isCollapsed && screen.hidesSearchField }
 
     /// The field, kept mounted and hidden rather than swapped: a branch would tear its editor down.
-    private var headerField: some View {
-        searchField
+    private func headerField(_ resolution: Resolution) -> some View {
+        let hidden = resolution.hidesSearchField
+        let prompt = searchPrompt(resolution)
+        let width = searchFieldWidth(resolution, prompt: prompt)
+        return searchField(prompt: prompt)
             // A ceiling, not a size, so the row squeezes a long query before the strip overruns.
-            .frame(minWidth: searchFieldFloor, maxWidth: searchFieldWidth)
-            .opacity(hidesSearchField ? 0 : 1)
-            .allowsHitTesting(!hidesSearchField)
-            .accessibilityHidden(hidesSearchField)
+            .frame(minWidth: width.map { min($0, metrics.size.searchFieldMinWidth) }, maxWidth: width)
+            .opacity(hidden ? 0 : 1)
+            .allowsHitTesting(!hidden)
+            .accessibilityHidden(hidden)
             // The frame it publishes is where the panel puts an I-beam; hidden, it owns nowhere.
-            .onChange(of: hidesSearchField) { _, hidden in
+            .onChange(of: hidden) { _, hidden in
                 if hidden { vm.searchFieldFrame = .zero }
             }
     }
 
     /// Fixed only where something shares the row: the accessory strip, or a screen's own title.
-    private var searchFieldWidth: CGFloat? {
-        if hidesSearchField { return nil }
-        return headerAccessory.map(searchFieldWidth)
-    }
-
-    private var searchFieldFloor: CGFloat? {
-        searchFieldWidth.map { min($0, metrics.size.searchFieldMinWidth) }
+    private func searchFieldWidth(_ resolution: Resolution, prompt: String) -> CGFloat? {
+        if resolution.hidesSearchField { return nil }
+        return resolution.accessory.map { searchFieldWidth(for: $0, prompt: prompt) }
     }
 
     /// Capped to keep the strip on screen; empty, it measures the prompt so the strip follows it.
-    private func searchFieldWidth(for accessory: PaletteHeaderAccessory) -> CGFloat {
+    private func searchFieldWidth(for accessory: PaletteHeaderAccessory, prompt: String) -> CGFloat {
         let font = metrics.typography.searchFieldNSFont
-        let text = vm.query.isEmpty ? searchPrompt : vm.query
+        let text = vm.query.isEmpty ? prompt : vm.query
         let typed = (text as NSString).size(withAttributes: [.font: font]).width
         let chrome = metrics.size.headerIconSlot + metrics.spacing.md * 3 + metrics.spacing.xl
         let room = metrics.size.panelWidth - accessory.width - chrome
@@ -864,17 +883,19 @@ struct RootPaletteView: View {
             max(room, metrics.size.searchFieldMinWidth))
     }
 
-    private var searchPrompt: String {
+    private func searchPrompt(_ resolution: Resolution) -> String {
         // Squeezed to the caret, the field has no room for a prompt; beside one it keeps it.
-        if headerAccessory?.placement == .afterQuery, vm.mode != .ai { return "" }
-        if vm.mode == .extensionCommand, let placeholder = extensionScreen.searchPlaceholder {
+        if resolution.accessory?.placement == .afterQuery, vm.mode != .ai { return "" }
+        if vm.mode == .extensionCommand,
+            let placeholder = resolution.extensionScreen.searchPlaceholder
+        {
             return placeholder
         }
         return vm.mode.placeholder
     }
 
     /// The one search field — empty it's a drag handle, and any text hands every press to editing.
-    private var searchField: some View {
+    private func searchField(prompt: String) -> some View {
         @Bindable var vm = vm
         return TextField("", text: $vm.query)
             .textFieldStyle(.plain)
@@ -886,7 +907,7 @@ struct RootPaletteView: View {
             .background(alignment: .leading) {
                 // An IME's marked text leaves `query` empty, so the placeholder would overlap it.
                 if vm.query.isEmpty, !vm.isComposing {
-                    Text(searchPrompt)
+                    Text(prompt)
                         .font(metrics.typography.searchField)
                         .foregroundStyle(Theme.Colors.textTertiary)
                         .lineLimit(1)
@@ -895,7 +916,7 @@ struct RootPaletteView: View {
                 }
             }
             // The prompt used to carry this; without it the field would be unlabelled.
-            .accessibilityLabel(Text(searchPrompt))
+            .accessibilityLabel(Text(prompt))
             // Never branches on query — that tore down the field editor mid-keystroke once.
             .overlay {
                 if settings.paletteDraggable {
