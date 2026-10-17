@@ -37,8 +37,9 @@ struct ClipboardList: View {
         var rows: [Row] = []
         var currentTitle: String?
         var pinnedSlot = 0
+        let buckets = DateBucket.Boundaries()
         for item in results {
-            let title = item.isPinned ? "Pinned" : DateBucket(for: item.createdAt).title
+            let title = item.isPinned ? "Pinned" : buckets.bucket(for: item.createdAt).title
             if title != currentTitle {
                 rows.append(.header(title))
                 currentTitle = title
@@ -109,17 +110,33 @@ enum DateBucket: Int {
         }
     }
 
-    init(for date: Date, now: Date = Date(), calendar: Calendar = .current) {
-        if calendar.isDateInToday(date) {
-            self = .today
-        } else if calendar.isDateInYesterday(date) {
-            self = .yesterday
-        } else if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
-            self = .thisWeek
-        } else if calendar.isDate(date, equalTo: now, toGranularity: .month) {
-            self = .thisMonth
-        } else {
-            self = .earlier
+    /// Resolved once per list; asking the calendar per row costs ~5 ms on a 1,000-entry history.
+    struct Boundaries {
+        private let today: DateInterval?
+        private let yesterday: DateInterval?
+        private let week: DateInterval?
+        private let month: DateInterval?
+
+        init(now: Date = Date(), calendar: Calendar = .current) {
+            today = calendar.dateInterval(of: .day, for: now)
+            yesterday = calendar.date(byAdding: .day, value: -1, to: now)
+                .flatMap { calendar.dateInterval(of: .day, for: $0) }
+            week = calendar.dateInterval(of: .weekOfYear, for: now)
+            month = calendar.dateInterval(of: .month, for: now)
+        }
+
+        func bucket(for date: Date) -> DateBucket {
+            if Self.date(date, isIn: today) { return .today }
+            if Self.date(date, isIn: yesterday) { return .yesterday }
+            if Self.date(date, isIn: week) { return .thisWeek }
+            if Self.date(date, isIn: month) { return .thisMonth }
+            return .earlier
+        }
+
+        /// Half-open, as the calendar's own day test is: `DateInterval.contains` takes in the end.
+        private static func date(_ date: Date, isIn interval: DateInterval?) -> Bool {
+            guard let interval else { return false }
+            return interval.start <= date && date < interval.end
         }
     }
 }
