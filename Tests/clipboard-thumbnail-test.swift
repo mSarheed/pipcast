@@ -50,7 +50,7 @@ struct ClipboardThumbnailTests {
             expect(gone, "the image is gone before any queued work")
         }
         _ = await making.value
-        ImageDerivative.queue.sync {}
+        ImageDerivative.drain()
         expect(!FileManager.default.fileExists(atPath: url.path), "\(way) mid-copy deletes the image")
         expect(!FileManager.default.fileExists(atPath: copy.url.path), "\(way) mid-copy leaves no copy")
     }
@@ -75,7 +75,7 @@ struct ClipboardThumbnailTests {
         expect(color(of: copies[1]) == "blue", "shot.png's copy shows shot.png")
 
         store.remove(jpeg)
-        ImageDerivative.queue.sync {}
+        ImageDerivative.drain()
         expect(!FileManager.default.fileExists(atPath: copies[0].path), "removing shot.jpg drops its copy")
         expect(FileManager.default.fileExists(atPath: copies[1].path), "and keeps shot.png's")
     }
@@ -140,7 +140,7 @@ struct ClipboardThumbnailTests {
         try? Data("not a png".utf8).write(to: copy.url)
         let image = await ImageThumbnail.loadAsync(
             url, maxPixel: 64, copyingWith: dir.appendingPathComponent("missing-helper"))
-        ImageDerivative.queue.sync {}
+        ImageDerivative.drain()
         expect(image != nil, "an unreadable copy falls back to the original")
         let dropped = !FileManager.default.fileExists(atPath: copy.url.path)
         expect(dropped, "and is dropped so the next draw remakes it")

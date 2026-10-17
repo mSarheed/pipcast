@@ -116,9 +116,11 @@ is deliberately no `.string`, which a rich text field would take over the image.
 the `ImageDerivative` copy it needs, 256px for a row or 1080px for the preview, to
 `images/.thumbnails/` (excluded from backup); later draws decode those. Without a readable copy, from a
 failed or timed-out helper or a size past 1080px, the original is decoded in the app as before.
-Copies are made and deleted on one serial `ImageDerivative.queue`, so a copy's delete waits out the
-copy in flight; the blob itself is still deleted at once. The helper's wait runs on that queue, off
-the cooperative pool, with a 10 s deadline and the caller's cancellation. `load` sweeps copies whose
+Each copy is made and deleted on one serial lane, so its delete waits out the copy in flight; the
+blob itself is still deleted at once. Row copies share three lanes by file name, so a page of rows
+makes three at a time, and previews have a fourth, so the selected entry never queues behind them.
+The helper's wait runs on that lane, off the cooperative pool, with a 10 s deadline and the caller's
+cancellation; `ImageDerivative.drain()` waits every lane out. `load` sweeps copies whose
 blob is gone, which a quit before the queue ran can leave. Copies are keyed by the blob's whole file
 name. An image outside `images/`, such as a Raycast import, never gets copies.
 

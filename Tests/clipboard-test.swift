@@ -623,7 +623,7 @@ struct ClipboardTests {
             for copy in kept + orphans { try? Data("copy".utf8).write(to: copy) }
 
             store.load()
-            ImageDerivative.queue.sync {}
+            ImageDerivative.drain()
             expect(
                 !orphans.contains { FileManager.default.fileExists(atPath: $0.path) },
                 "a copy whose blob is gone is swept on load")
