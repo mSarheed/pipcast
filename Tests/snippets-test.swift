@@ -152,6 +152,29 @@ struct SnippetsTests {
             check("non-text clips offer no action", !coordinator.canCreateSnippet(from: item))
             check("non-text clips cannot open a draft", !coordinator.createSnippet(from: item))
         }
+        let actions = NSPanel(
+            contentRect: NSRect(x: -10000, y: -10000, width: 300, height: 100),
+            styleMask: [.titled, .nonactivatingPanel], backing: .buffered, defer: false)
+        let search = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        actions.contentView = search
+        actions.makeKeyAndOrderFront(nil)
+        check("Actions search takes focus", actions.makeFirstResponder(search))
+        guard let fieldEditor = actions.firstResponder as? NSTextView else {
+            check("Actions has a native field editor", false)
+            actions.orderOut(nil)
+            return
+        }
+        fieldEditor.setMarkedText(
+            "にほん", selectedRange: NSRange(location: 3, length: 0),
+            replacementRange: NSRange(location: NSNotFound, length: 0))
+        check("Actions composition is separate from palette state", NSApp.keyWindow === actions && !palette.isComposing)
+        check(
+            "Actions IME composition refuses a snippet draft",
+            !coordinator.createSnippet(from: clip) && coordinator.editor == nil && fieldEditor.hasMarkedText())
+        fieldEditor.insertText("日本", replacementRange: NSRange(location: NSNotFound, length: 0))
+        check("committed Actions input allows a draft", coordinator.createSnippet(from: clip))
+        coordinator.cancelSnippetEditing()
+        actions.orderOut(nil)
         palette.isComposing = true
         check("IME composition keeps its input", !coordinator.createSnippet(from: clip) && coordinator.editor == nil)
         palette.isComposing = false

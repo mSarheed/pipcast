@@ -136,7 +136,10 @@ final class SnippetCoordinator {
 
     @discardableResult
     func createSnippet(from item: ClipboardItem) -> Bool {
-        guard canCreateSnippet(from: item), !palette.isComposing, let text = item.text else {
+        guard canCreateSnippet(from: item), !palette.isComposing,
+            (NSApp.keyWindow?.firstResponder as? NSTextView)?.hasMarkedText() != true,
+            let text = item.text
+        else {
             return false
         }
         let editor = SnippetEditorSession(record: nil, initialText: text, sourceClipboardID: item.id)

@@ -889,7 +889,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Images, referenced files, empty results and disabled Snippets offer no action; ⌘S does nothing.
   Creating a draft never enables Snippets or asks for Accessibility.
 - Tab and Shift-Tab walk the editor fields, arrows edit the focused field, Return inserts a template
-  newline, and ⌘↵ saves. An active IME composition must not open a snippet editor.
+  newline, and ⌘↵ saves. An active IME composition in either the palette or Actions search must not
+  open a snippet editor; committing the composition releases the shortcut.
 - Repeated create/cancel cycles release their drafts and do not grow the post-close memory floor.
 
 ### Clean install
