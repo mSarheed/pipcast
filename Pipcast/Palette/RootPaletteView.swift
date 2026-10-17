@@ -397,10 +397,27 @@ struct RootPaletteView: View {
         refreshActionsMenu()
     }
 
+    /// The menu panel's observers, split out so `stateObservers` stays within type-checker reach.
+    @ViewBuilder
+    private func menuObservers(_ content: some View) -> some View {
+        content
+            // One optional makes "exactly one menu" structural; this only presents it.
+            .onChange(of: openMenu) {
+                guard menuOpen else { return }
+                syncMenuPanel(presenting: true)
+            }
+            // The hosted tree is its own hierarchy, so the highlight has to be pushed into it.
+            .onChange(of: menuSelection) { syncMenuPanel(presenting: false) }
+            .onChange(of: vm.menuQuery) { menuQueryChanged() }
+            .onChange(of: dictionary.lookup) {
+                if vm.mode == .dictionary, openMenu == .actions { closeMenus() }
+            }
+    }
+
     /// Split from `body` for the same reason `keyHandlers` is: one chain cannot carry them all.
     @ViewBuilder
     private func stateObservers(_ content: some View, resolution: Resolution) -> some View {
-        emojiObservers(content, screen: resolution.screen)
+        menuObservers(emojiObservers(content, screen: resolution.screen))
             // Every show bumps focusToken so the search field refocuses.
             .onChange(of: vm.focusToken) {
                 searchFocused = !screen.hidesSearchField
@@ -477,17 +494,6 @@ struct RootPaletteView: View {
                 searchFocused = true
                 // Next turn, past the refocus that selects all, so typing extends the answer.
                 Task { @MainActor in (hostWindow as? PalettePanel)?.moveFieldEditorCaretToEnd() }
-            }
-            // One optional makes "exactly one menu" structural; this only presents it.
-            .onChange(of: openMenu) {
-                guard menuOpen else { return }
-                syncMenuPanel(presenting: true)
-            }
-            // The hosted tree is its own hierarchy, so the highlight has to be pushed into it.
-            .onChange(of: menuSelection) { syncMenuPanel(presenting: false) }
-            .onChange(of: vm.menuQuery) { menuQueryChanged() }
-            .onChange(of: dictionary.lookup) {
-                if vm.mode == .dictionary, openMenu == .actions { closeMenus() }
             }
             .onDisappear {
                 menuPanel.hide()
