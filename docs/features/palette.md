@@ -79,6 +79,14 @@ A chord aimed at the selected row — ⌃X, ⇧⌘F, ⌘Y and the rest — follo
 `PaletteShortcut` recognises the key and carries its compact-bar and open-menu guards, and the screen
 answers through `perform(_:at:)`, so a new chord never adds a cast to the shell.
 
+The panel offers an unmodified, non-repeated Space to the root view only when its native editor
+has no marked text and an empty selection at the end. The root checks search focus, menu state,
+the opt-in alias preference and agreement between editor text and query. The screen decides
+whether its selected row accepts Space; only launcher user aliases do. An accepted Space is
+delivered as Return to the same window's responder chain and existing argument and coordinator
+path. Queries without an exact alias skip screen construction. The callback is removed when the
+root view disappears.
+
 Where a reset leaves the highlight is the screen's to say too. Every reset — an open, a new query, a
 new filter — goes through `RootPaletteView.land()`, which reads `landingSelection`, so handlers that
 fire in one update agree whatever order they run in. `onAppear` lands as well, for the one build no

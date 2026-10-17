@@ -25,6 +25,7 @@ enum AppSettingsKey: String, CaseIterable {
     case compactMode = "compactMode"
     case showFavoritesInCompactMode = "showFavoritesInCompactMode"
     case searchScopes = "launcherSearchScopes"
+    case activateAliasesWithSpace = "activateAliasesWithSpace"
     case launcherShowsSuggestions = "launcherShowsSuggestions"
     case rootSearchSensitivity = "rootSearchSensitivity"
     case openOnCursorScreen = "openOnCursorScreen"

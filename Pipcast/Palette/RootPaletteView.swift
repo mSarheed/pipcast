@@ -499,6 +499,7 @@ struct RootPaletteView: View {
                 menuPanel.hide()
                 (hostWindow as? PalettePanel)?.onHeaderFieldBoundaryArrow = nil
                 (hostWindow as? PalettePanel)?.onNumberSlot = nil
+                (hostWindow as? PalettePanel)?.acceptsSearchSpace = nil
             }
             // No change handler saw a reset before the first build, so that build lands here.
             .onAppear {
@@ -1458,6 +1459,14 @@ struct RootPaletteView: View {
     private func installInputHandlers(in window: NSWindow?) {
         guard let panel = window as? PalettePanel else { return }
         panel.onNumberSlot = { index in activateNumberSlot(index) }
+        panel.acceptsSearchSpace = { text in
+            guard settings.activateAliasesWithSpace, searchFocused, argumentFocused == nil,
+                !menuOpen, !vm.isControlListOpen, !vm.isComposing, !vm.isEditingField,
+                !isCollapsed, text == vm.query, core.aliases.matches(text)
+            else { return false }
+            let screen = screen
+            return screen.acceptsSpace(at: selection(in: screen))
+        }
         panel.onHeaderFieldBoundaryArrow = { boundary in
             guard !menuOpen, !vm.isControlListOpen, !isCollapsed,
                 let accessory = headerAccessory, !accessory.fieldNames.isEmpty

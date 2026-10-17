@@ -170,6 +170,9 @@ enum SettingsSearchCatalog {
             .generalCalculator, "Number format",
             keywords: ["decimal", "comma", "separator", "locale", "region", "thousands"]),
         .init(
+            .generalSearch, "Activate aliases with Space",
+            keywords: ["alias", "spacebar", "shortcut", "exact", "launch"]),
+        .init(
             .generalSearch, "Show suggestions",
             keywords: ["frequent", "recent", "recommended", "empty", "root search"]),
         .init(

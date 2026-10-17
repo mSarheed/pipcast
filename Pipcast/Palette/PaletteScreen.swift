@@ -132,6 +132,7 @@ private extension MenuPanelCorner {
         at selection: Int, searchQuery: ActionMenuSearchQuery, menuSelection: Binding<Int>,
         onActivate: @escaping (Int) -> Void
     ) -> PaletteMenuContent?
+    func acceptsSpace(at selection: Int) -> Bool
     func activate(at selection: Int)
     /// ⌘↵. False when the selection has no secondary action, leaving the key unhandled.
     func secondary(at selection: Int) -> Bool
@@ -152,6 +153,7 @@ private extension MenuPanelCorner {
 }
 
 extension PaletteScreen {
+    func acceptsSpace(at selection: Int) -> Bool { false }
     func hasPrimaryAction(at selection: Int) -> Bool { true }
     func isPrimaryActionEnabled(at selection: Int) -> Bool { true }
     func hasActions(at selection: Int) -> Bool { true }

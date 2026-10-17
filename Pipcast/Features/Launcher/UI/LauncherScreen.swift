@@ -279,6 +279,11 @@ struct LauncherScreen: PaletteScreen {
         }
     }
 
+    func acceptsSpace(at selection: Int) -> Bool {
+        guard let entry = entry(at: selection) else { return false }
+        return core.aliases.matches(vm.query, for: entry.preferenceKey)
+    }
+
     func activate(at selection: Int) {
         switch row(at: selection) {
         // Error cards no-op — copyCalculatorResult only acts on value payloads.

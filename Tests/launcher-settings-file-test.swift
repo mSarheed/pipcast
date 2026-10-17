@@ -19,9 +19,31 @@ struct LauncherSettingsFileTest {
         testDeletedWaitingRecord()
         testMovedShortcut()
         testCommandKeywords()
+        testExactAliases()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    private static func testExactAliases() {
+        let fixture = Fixture()
+        let key = CommandID.clipboardHistory.rawValue
+        fixture.aliases.setAlias("café", for: key)
+        for query in ["café", "CAFE", "ＣＡＦＥ", "cafe\u{301}"] {
+            check("exact alias uses ranking normalization: \(query)", fixture.aliases.matches(query, for: key))
+            check("alias prefilter accepts normalized match: \(query)", fixture.aliases.matches(query))
+        }
+        for query in ["", "caf", "café ", " café", "Clipboard History", "\u{200B}"] {
+            check("ordinary search is not an exact alias: \(query)", !fixture.aliases.matches(query, for: key))
+            check("alias prefilter rejects ordinary search: \(query)", !fixture.aliases.matches(query))
+        }
+        check("another selected entry has no matching alias", !fixture.aliases.matches("cafe", for: "other"))
+        fixture.aliases.setAlias("new", for: key)
+        check("editing an alias takes effect immediately", !fixture.aliases.matches("cafe", for: key))
+        check("alias prefilter follows edits", !fixture.aliases.matches("cafe") && fixture.aliases.matches("new"))
+        fixture.aliases.removeKeys([key])
+        check("removed aliases cannot activate", !fixture.aliases.matches("new", for: key))
+        check("alias prefilter follows removal", !fixture.aliases.matches("new"))
     }
 
     private static func testCommandKeywords() {

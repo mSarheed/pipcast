@@ -24,6 +24,7 @@ enum SettingsBackupCoverage {
         "compactMode": .compactMode,
         "showFavoritesInCompactMode": .showFavoritesInCompactMode,
         "searchScopes": .searchScopes,
+        "activateAliasesWithSpace": .activateAliasesWithSpace,
         "launcherShowsSuggestions": .launcherShowsSuggestions,
         "rootSearchSensitivity": .rootSearchSensitivity,
         "openOnCursorScreen": .openOnCursorScreen,

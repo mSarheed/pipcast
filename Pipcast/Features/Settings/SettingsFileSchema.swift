@@ -49,6 +49,7 @@ enum SettingsFileSchema {
         case .hyperKeySecureInputCompatibility:
             return bind(settings, \.hyperKeySecureInputCompatibility)
         case .calcNumberStyle: return bind(settings, \.calcNumberStyle)
+        case .activateAliasesWithSpace: return bind(settings, \.activateAliasesWithSpace)
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
         case .rootSearchSensitivity: return bind(settings, \.rootSearchSensitivity)
         case .applicationsEnabled: return launcher.kindBinding(for: key, kind: .application)

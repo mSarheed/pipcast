@@ -18,6 +18,18 @@ final class AliasStore {
 
     func alias(for entryKey: String) -> String? { aliases[entryKey] }
 
+    func matches(_ query: String) -> Bool {
+        let normalized = FuzzyMatch.normalized(query)
+        return !normalized.isEmpty
+            && aliases.values.contains { FuzzyMatch.normalized($0) == normalized }
+    }
+
+    func matches(_ query: String, for entryKey: String) -> Bool {
+        guard let alias = aliases[entryKey] else { return false }
+        let normalized = FuzzyMatch.normalized(query)
+        return !normalized.isEmpty && normalized == FuzzyMatch.normalized(alias)
+    }
+
     /// Stored as typed — trimming here would eat the space mid-word — but blank still means none.
     func setAlias(_ alias: String, for entryKey: String) {
         let value = alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : alias

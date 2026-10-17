@@ -399,6 +399,20 @@ Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extensi
 Settings ▸ Window Management passes each command, custom size, layout and room's `AppEntry`, and each
 dims the field when the entry is hidden from launcher search, whose entry the ranker never sees.
 
+**General → Search → Activate aliases with Space** is off by default. When enabled, an
+unmodified Space at the end of the root search activates the selected row only if its user alias
+matches the entire query under the same case, diacritic and width folding as ranking. It uses
+Return's existing path, including focusing an incomplete required argument. Duplicate aliases
+follow the visible selection; titles, partial aliases, fallback rows and cards do not qualify.
+Commands with only optional arguments launch immediately, just as with Return. A selected exact
+alias takes the Space even when you intended to begin a longer query; leave the preference off
+if that interferes with your searches.
+
+Space remains text while editing a selection or the middle of a query, in another field or screen,
+during IME composition, or with a modifier. An open menu owns input, and key repeats do not activate
+aliases. No query is trimmed to manufacture an exact match. The preference is mirrored as
+`search.activateAliasesWithSpace` in settings.json and included in settings backups.
+
 Aliases ride along in a settings backup (`launcherAliases`), and deleting what an alias points at —
 uninstalling an app, deleting a quicklink or custom command, uninstalling an extension — removes it
 with the entry's other per-entry preferences.

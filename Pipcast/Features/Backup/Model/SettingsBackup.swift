@@ -42,6 +42,7 @@ struct SettingsBackup: Codable {
         var compactMode: Bool?
         var showFavoritesInCompactMode: Bool?
         var searchScopes: [String]?
+        var activateAliasesWithSpace: Bool?
         var launcherShowsSuggestions: Bool?
         var rootSearchSensitivity: String?
         var openOnCursorScreen: Bool?
@@ -155,6 +156,7 @@ extension SettingsBackup {
             compactMode: s.compactMode,
             showFavoritesInCompactMode: s.showFavoritesInCompactMode,
             searchScopes: s.searchScopes,
+            activateAliasesWithSpace: s.activateAliasesWithSpace,
             launcherShowsSuggestions: s.launcherShowsSuggestions,
             rootSearchSensitivity: s.rootSearchSensitivity.rawValue,
             openOnCursorScreen: s.openOnCursorScreen,
@@ -391,6 +393,10 @@ extension SettingsBackup {
         }
         if let scopes = s.searchScopes {
             settings.searchScopes = SearchScopes.normalize(scopes)
+            count += 1
+        }
+        if let flag = s.activateAliasesWithSpace {
+            settings.activateAliasesWithSpace = flag
             count += 1
         }
         if let flag = s.launcherShowsSuggestions {

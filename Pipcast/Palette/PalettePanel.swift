@@ -10,6 +10,8 @@ final class PalettePanel: NSPanel {
 
     /// Bare backspace, which the field editor swallows before `onKeyPress` could see it.
     var onBareBackspace: (() -> Bool)?
+    /// Space at the query's end; true sends Return instead, so an exact alias activates.
+    var acceptsSearchSpace: ((String) -> Bool)?
     /// Escape, which a focused form field answers before `onKeyPress` could see it.
     var onEscape: (() -> Bool)?
     /// Command chords the field editor swallows, plus the ones no main menu handles.
@@ -218,6 +220,21 @@ final class PalettePanel: NSPanel {
             fieldEditor?.hasMarkedText() != true,
             onBareBackspace?() == true
         {
+            return
+        }
+        if event.type == .keyDown, Int(event.keyCode) == kVK_Space,
+            event.characters == " ", !event.isARepeat,
+            event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
+            let editor = fieldEditor, !editor.hasMarkedText(),
+            editor.selectedRange() == NSRange(location: (editor.string as NSString).length, length: 0),
+            acceptsSearchSpace?(editor.string) == true,
+            let activation = NSEvent.keyEvent(
+                with: .keyDown, location: event.locationInWindow, modifierFlags: event.modifierFlags,
+                timestamp: event.timestamp, windowNumber: event.windowNumber, context: nil,
+                characters: "\r", charactersIgnoringModifiers: "\r", isARepeat: false,
+                keyCode: UInt16(kVK_Return))
+        {
+            super.sendEvent(activation)
             return
         }
         if event.type == .keyDown, let boundary = headerFieldBoundary(for: event),

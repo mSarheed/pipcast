@@ -144,6 +144,7 @@ run launcher-settings-file-test \
                            $L/LauncherFileFormat.swift $L/CommandID.swift $L/CommandCatalog.swift \
                            Pipcast/Features/Launcher/Service/LauncherSettingsFile.swift \
                            Pipcast/Features/Launcher/Service/AliasStore.swift \
+                           $L/SearchRelevance.swift \
                            Pipcast/Features/Launcher/Service/VisibilityStore.swift \
                            Pipcast/Features/Settings/SettingsTab.swift \
                            Pipcast/Features/Settings/Model/*.swift \

@@ -109,6 +109,10 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                Toggle(isOn: $settings.activateAliasesWithSpace) {
+                    SettingsRowTitle(.generalSearch, "Activate aliases with Space")
+                    Text("Run the selected exact alias, or focus its required argument fields.")
+                }
                 Toggle(isOn: $settings.launcherShowsSuggestions) {
                     SettingsRowTitle(.generalSearch, "Show suggestions")
                     Text("What you open most, while the search field is empty.")

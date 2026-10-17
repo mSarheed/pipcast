@@ -554,6 +554,13 @@ Opt into installed English spelling service checks with
 
 ### Launcher and icons
 
+- General → Search → Activate aliases with Space defaults off. Set Clipboard History's alias to
+  `c`: Space inserts text while off; while on, `c` then Space opens Clipboard History and Escape
+  returns to `c`. Repeat with Search Files and an extension with a required inline argument.
+- Partial aliases and exact command titles keep Space as text. Move the selection to a nonmatching
+  row, select query text, move the caret into it, use Shift-Space, compose with a CJK IME, or focus an
+  argument field: none activates an alias. Open Actions and verify Space belongs to its search.
+- The alias preference survives relaunch, settings.json edits and a settings backup round trip.
 - Every installed app appears; Settings panes appear under System Settings; running apps show the dot
 - Icons render with no placeholder flash on reopen, and Settings ▸ Applications scrolls without hitching,
   even with the scrollbar thumb dragged from end to end in under a second

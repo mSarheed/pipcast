@@ -261,12 +261,83 @@ struct PaletteMenuClickTests {
         composition.insertText("日本", replacementRange: NSRange(location: NSNotFound, length: 0))
         check(!state.isComposing, "committing marked text releases the palette composition guard")
 
+        testSearchSpace(panel: panel, state: state)
+
         print("Palette menu click tests: \(failures) failure(s)")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    private static func testSearchSpace(panel: PalettePanel, state: PaletteState) {
+        let editor = AliasActivationEditor(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
+        panel.contentView = editor
+        panel.makeKeyAndOrderFront(nil)
+        panel.makeFirstResponder(editor)
+        state.menuOpen = false
+        var calls = 0
+        var consumes = true
+        panel.acceptsSearchSpace = { text in
+            check(text == "c", "the handler receives the editor's actual text")
+            calls += 1
+            return consumes
+        }
+        func sendSpace(modifiers: NSEvent.ModifierFlags = [], repeated: Bool = false) {
+            guard let event = NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: modifiers,
+                timestamp: 0, windowNumber: panel.windowNumber, context: nil,
+                characters: " ", charactersIgnoringModifiers: " ", isARepeat: repeated, keyCode: 49)
+            else { check(false, "Space event creation"); return }
+            panel.sendEvent(event)
+        }
+        func reset(selection: NSRange = NSRange(location: 1, length: 0)) {
+            editor.unmarkText()
+            editor.string = "c"
+            editor.setSelectedRange(selection)
+        }
+        reset()
+        sendSpace()
+        check(calls == 1 && editor.returns == 1 && editor.string == "c",
+              "accepted Space delivers Return without inserting text")
+        reset(selection: NSRange(location: 0, length: 0))
+        sendSpace()
+        check(calls == 1, "Space inside the query edits normally")
+        reset(selection: NSRange(location: 0, length: 1))
+        sendSpace()
+        check(calls == 1, "Space replacing selected text never activates")
+        reset()
+        sendSpace(modifiers: .shift)
+        check(calls == 1, "modified Space never activates")
+        reset()
+        sendSpace(repeated: true)
+        check(calls == 1, "key repeat never activates")
+        reset()
+        editor.setMarkedText("c", selectedRange: NSRange(location: 1, length: 0),
+                             replacementRange: NSRange(location: 0, length: 1))
+        check(editor.hasMarkedText(), "composition fixture owns marked text")
+        sendSpace()
+        check(calls == 1, "IME Space never reaches alias activation")
+        reset()
+        state.menuOpen = true
+        sendSpace()
+        check(calls == 1, "an open menu owns Space")
+        state.menuOpen = false
+        reset()
+        consumes = false
+        sendSpace()
+        check(calls == 2 && editor.string == "c ", "declined Space reaches native text editing")
+        panel.acceptsSearchSpace = nil
     }
 
     private static func textField(in view: NSView) -> NSTextField? {
         if let field = view as? NSTextField { return field }
         return view.subviews.lazy.compactMap { textField(in: $0) }.first
+    }
+}
+
+@MainActor
+private final class AliasActivationEditor: NSTextView {
+    var returns = 0
+
+    override func insertNewline(_ sender: Any?) {
+        returns += 1
     }
 }

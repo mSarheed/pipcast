@@ -115,6 +115,10 @@ final class AppSettings {
         didSet { defaults.set(searchScopes, forKey: Key.searchScopes.rawValue) }
     }
 
+    var activateAliasesWithSpace: Bool {
+        didSet { defaults.set(activateAliasesWithSpace, forKey: Key.activateAliasesWithSpace.rawValue) }
+    }
+
     var launcherShowsSuggestions: Bool {
         didSet {
             defaults.set(launcherShowsSuggestions, forKey: Key.launcherShowsSuggestions.rawValue)
@@ -717,6 +721,7 @@ final class AppSettings {
         // Unset seeds the defaults; a stored empty array is a deliberately cleared list.
         searchScopes =
             defaults.stringArray(forKey: Key.searchScopes.rawValue) ?? SearchScopes.defaults
+        activateAliasesWithSpace = defaults.bool(forKey: Key.activateAliasesWithSpace.rawValue)
         launcherShowsSuggestions =
             defaults.object(forKey: Key.launcherShowsSuggestions.rawValue) == nil
             || defaults.bool(forKey: Key.launcherShowsSuggestions.rawValue)
