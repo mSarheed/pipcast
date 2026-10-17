@@ -59,21 +59,24 @@ correct download.
 1. **Picks the version.** It reads the commits on `main`'s first-parent line since the last stable
    tag. A breaking change (`!` or a `BREAKING CHANGE:` footer) bumps major, or minor before 1.0; any
    `feat` bumps minor; anything else bumps patch. With no stable tag yet it takes `project.yml`'s
-   `MARKETING_VERSION`. A typed version overrides this, but must be above the last stable one.
+   `MARKETING_VERSION`. It never drops below the base of a beta published since that stable tag, since
+installed betas would read a lower version as a downgrade. A typed version overrides this, but must
+be above the last stable tag and at least that beta's base.
 2. **Writes `## <version>`** with one bullet per commit since the last stable tag, grouped by type:
    `feat` under New; `perf`, `refactor` and `style` under Improved; `fix` and `revert` under Fixed;
    everything else under Other. A bullet reads `**scope** — Description by @author in #PR`. Prose a
    person wrote above the section's first `###` is kept as its headline; otherwise it gets a count
    (`3 new features and 2 fixes.`). A stable release dates the heading; betas leave it undated, so
-   the section keeps growing across betas until the stable release.
+   the section keeps growing across betas until the stable release. When a later commit raises the
+version, the superseded undated section is folded into the new one, keeping its headline.
 3. **Sets `MARKETING_VERSION`** in `project.yml` and the generated project, so debug builds and
    `changelog-test` agree with the file.
 4. **Writes the release body.** A stable release publishes its whole section. A beta publishes only
    the commits since the previous beta, as Tinycast does, so its update window shows what is new
    since the build the user has. `publish-release.py` adds the install text below the marker.
 
-The commit is `chore(release): update the changelog for <version>`, and those commits never list
-themselves. Tags reachable only through Tinycast's history are ignored, and Pipcast's history
+The commit is `chore(release): update the changelog for <version>`, and only that exact subject is
+left out of the list. A breaking-change footer counts only at the start of a line. Tags reachable only through Tinycast's history are ignored, and Pipcast's history
 starts after `FORK_POINT`.
 
 So a commit subject is its changelog line: write it for users, in Conventional Commits form. A

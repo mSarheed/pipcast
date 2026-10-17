@@ -30,7 +30,8 @@ CONVENTIONAL = re.compile(r'^(?P<type>[a-z]+)(?:\((?P<scope>[^)]+)\))?(?P<breaki
 TRAILING_PR = re.compile(r'\s*\(#(\d+)\)$')
 MERGE_PR = re.compile(r'^Merge pull request #(\d+) from \S+$')
 # The workflow's own changelog commits; listing them would grow every release by one line.
-RELEASE_COMMIT = 'chore(release): '
+RELEASE_COMMIT = 'chore(release): update the changelog for '
+BREAKING_FOOTER = re.compile(r'^BREAKING[ -]CHANGE:', re.MULTILINE)
 
 
 def parse_version(text: str) -> tuple[int, int, int] | None:
@@ -79,7 +80,7 @@ def parse_commit(sha: str, subject: str, body: str) -> Commit:
     text = match['text'][:1].upper() + match['text'][1:]
     if match['scope']:
         text = f'**{match["scope"]}** — {text}'
-    breaking = bool(match['breaking']) or 'BREAKING CHANGE:' in body or 'BREAKING-CHANGE:' in body
+    breaking = bool(match['breaking']) or BREAKING_FOOTER.search(body) is not None
     return Commit(sha, group, text, breaking, pr)
 
 
@@ -176,20 +177,35 @@ def intro(lines: list[str]) -> str:
     return '' if is_generated_headline(' '.join(text.split())) else text
 
 
-def write_section(changelog: str, version: str, date: str | None, changes: list[Commit]) -> str:
-    kept = intro(section_bodies(changelog).get(version, []))
-    heading = f'## {version}' + (f' — {date}' if date else '')
-    section = f'{heading}\n\n{kept or headline(changes)}\n\n{grouped(changes)}\n'
+def write_section(
+    changelog: str, version: str, date: str | None, changes: list[Commit],
+    released: tuple[int, int, int] | None = None,
+) -> str:
+    """Replace `version`'s section, folding in any unreleased section a bigger bump superseded."""
     lines = changelog.splitlines()
     starts = [index for index, line in enumerate(lines) if HEADING.match(line)]
-    existing = next((index for index in starts if HEADING.match(lines[index]).group(1) == version), None)
-    if existing is not None:
-        end = next((index for index in starts if index > existing), len(lines))
-        lines[existing:end] = section.splitlines() + ([''] if end < len(lines) else [])
-    else:
-        at = starts[0] if starts else len(lines)
-        lines[at:at] = section.splitlines() + ['']
-    return '\n'.join(lines).rstrip('\n') + '\n'
+    sections = []
+    for position, start in enumerate(starts):
+        end = starts[position + 1] if position + 1 < len(starts) else len(lines)
+        found = HEADING.match(lines[start]).group(1)
+        # Only a stable release dates its heading, so an undated section never shipped as one.
+        unreleased = lines[start].strip() == f'## {found}' and (
+            released is None or parse_version(found) > released)
+        sections.append((start, end, found, unreleased))
+    replaced = [entry for entry in sections if entry[2] == version or (entry[3] and entry[2] != version)]
+    intros = [intro(lines[start + 1:end]) for start, end, found, _ in replaced if found == version]
+    intros += [intro(lines[start + 1:end]) for start, end, found, _ in replaced if found != version]
+    kept = next((text for text in intros if text), '')
+    heading = f'## {version}' + (f' — {date}' if date else '')
+    section = f'{heading}\n\n{kept or headline(changes)}\n\n{grouped(changes)}\n'
+    for start, end, _, _ in sorted(replaced, reverse=True):
+        del lines[start:end]
+    before = next((index for index, line in enumerate(lines) if HEADING.match(line)), len(lines))
+    at = before
+    while at > 0 and not lines[at - 1].strip():
+        at -= 1
+    lines[at:before] = [''] + section.splitlines() + ([''] if before < len(lines) else [])
+    return '\n'.join(lines).strip('\n') + '\n'
 
 
 def set_marketing_version(version: str) -> None:
@@ -241,8 +257,15 @@ def main() -> int:
     else:
         marketing = re.search(r'MARKETING_VERSION: "([^"]+)"', (ROOT / 'project.yml').read_text())
         version = parse_version(marketing.group(1))
+    # Installed betas would read anything below the outstanding beta's base as a downgrade.
+    floor = found[beta][0] if newer_beta else None
+    if floor and not args.version:
+        version = max(version, floor)
     if stable and version <= found[stable][0]:
         print(f'{format_version(version)} is not above {stable}.', file=sys.stderr)
+        return 2
+    if floor and version < floor:
+        print(f'{format_version(version)} is below {beta}.', file=sys.stderr)
         return 2
     base = format_version(version)
 
@@ -250,7 +273,8 @@ def main() -> int:
         resolve_authors(since_stable, args.repo)
     date = datetime.date.today().isoformat() if args.channel == 'stable' else None
     changelog = ROOT / 'CHANGELOG.md'
-    changelog.write_text(write_section(changelog.read_text(), base, date, since_stable))
+    changelog.write_text(write_section(
+        changelog.read_text(), base, date, since_stable, found[stable][0] if stable else None))
     set_marketing_version(base)
 
     # A beta's update window lists what changed since the previous beta, as Tinycast's does.
