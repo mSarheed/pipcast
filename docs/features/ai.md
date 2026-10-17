@@ -430,7 +430,11 @@ maps each `PaletteShortcut` to its action. AI Settings takes ⌥⌘, because ⌘
 Settings on every screen. Continuing closes the palette and carries the half-typed line into the
 window's composer with the conversation. Chat History is the palette's own browser over the same
 saved chats the window's sidebar lists: ↵ opens one in Quick AI, or in the window when the window
-already holds it, and Continue in AI Chat (`⌘J`) takes it to the window either way.
+already holds it, and Continue in AI Chat (`⌘J`) takes it to the window either way. The preview draws
+the selected chat's whole transcript, which takes longer than a key repeat, so once selections come
+less than 300 ms apart it waits for the list to rest — half again the pace it is stepping at, 60 to
+150 ms — and holding an arrow steps the list without drawing every chat it passes. Opening the
+screen and a lone press draw at once.
 
 ### AI Chat
 

@@ -131,6 +131,15 @@ struct ChatHistoryPreview: View {
     let chat: AIChatState
     let conversationID: UUID?
     @State private var session: ChatSession?
+    @State private var lastSelectionChange: ContinuousClock.Instant?
+    @State private var hasOpened = false
+
+    /// Selections closer together than this are stepping through the list, as a held arrow does.
+    private static let steppingInterval: Duration = .milliseconds(300)
+    /// Jitter in a fast key repeat must not land a step just after the wait has ended.
+    private static let shortestSettle: Duration = .milliseconds(60)
+    /// Deliberate presses near the stepping interval should barely feel the wait.
+    private static let longestSettle: Duration = .milliseconds(150)
 
     var body: some View {
         Group {
@@ -151,9 +160,24 @@ struct ChatHistoryPreview: View {
         }
         .task(id: conversationID) {
             session = nil
+            let now = ContinuousClock.now
+            let gap = lastSelectionChange.map { now - $0 }
+            // Opening the screen is not a selection, so it starts no stepping run.
+            if hasOpened { lastSelectionChange = now }
+            hasOpened = true
             guard let conversationID else { return }
             guard conversationID != chat.session.id || chat.session.messages.isEmpty else { return }
+            if let gap, gap < Self.steppingInterval {
+                do { try await Task.sleep(for: Self.settle(after: gap)) } catch { return }
+                // A newer selection cancels this task, so one still live owns `conversationID`.
+                guard !Task.isCancelled else { return }
+            }
             session = history.session(id: conversationID)
         }
+    }
+
+    /// Half again the stepping pace, so a held arrow's next step lands before a transcript draws.
+    private static func settle(after gap: Duration) -> Duration {
+        min(max(gap * 3 / 2, shortestSettle), longestSettle)
     }
 }

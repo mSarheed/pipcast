@@ -187,52 +187,52 @@ private struct ChatMessageView: View, @MainActor Equatable {
     let onChoose: ((String) -> Void)?
     @Environment(\.chatTextHighlight) private var highlight
 
-    @State private var hovered = false
-
-    /// The fence is the choices' carrier, never prose: it is left out of the text and the copy.
-    private var parts: (text: String, choices: [String]) {
-        message.role == .assistant ? ChatChoices.split(message.text) : (message.text, [])
+    /// The prose and the choices fence pulled out of it; split once per render, as it scans it all.
+    private struct Parts {
+        let text: String
+        let choices: [String]
+        /// Read only once the reply is done: a link half-streamed is not a source yet.
+        let references: [ChatReference]
     }
 
-    /// Read only once the reply is done: a link half-streamed is not a source yet.
-    private var references: [ChatReference] {
-        guard message.role == .assistant, message.state != .streaming else { return [] }
-        return ChatReferences.extract(from: parts.text)
+    /// The fence is the choices' carrier, never prose: it is left out of the text and the copy.
+    private var parts: Parts {
+        guard message.role == .assistant else {
+            return Parts(text: message.text, choices: [], references: [])
+        }
+        let split = ChatChoices.split(message.text)
+        let references =
+            message.state == .streaming ? [] : ChatReferences.extract(from: split.text)
+        return Parts(text: split.text, choices: split.choices, references: references)
     }
 
     /// The palette aligns a reply with its header's chevron; the window, with the composer's edge.
     private var replyInset: CGFloat { surface == .palette ? metrics.spacing.sm : 0 }
 
     var body: some View {
-        HStack {
+        let parts = parts
+        return HStack {
             if message.role == .user { Spacer(minLength: metrics.spacing.xxl) }
-            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: metrics.spacing.xxs) {
-                content
-                if message.state != .streaming { footer }
-            }
-            .contentShape(Rectangle())
-            .onHover { isHovered in
-                if isHovered {
-                    withAnimation(.easeOut(duration: Theme.Duration.chatFooter)) {
-                        hovered = true
-                    }
-                } else {
-                    hovered = false
-                }
+            ChatHoverFooter(
+                alignment: message.role == .user ? .trailing : .leading,
+                spacing: metrics.spacing.xxs
+            ) {
+                content(parts)
+            } footer: {
+                if message.state != .streaming { footer(parts) }
             }
             if message.role == .assistant { Spacer(minLength: surface == .palette ? metrics.spacing.xxl : 0) }
         }
     }
 
     /// Laid out at rest and only faded in, so a hover cannot reflow the transcript
-    private var footer: some View {
+    private func footer(_ parts: Parts) -> some View {
         HStack(spacing: metrics.spacing.sm) {
             if message.role == .user { timestamp }
             ChatCopyButton(text: parts.text)
             if let onRegenerate { RegenerateButton(action: onRegenerate) }
             if message.role == .assistant { timestamp }
         }
-        .opacity(hovered ? 1 : 0)
         // A reply's footer hugs the same edge as its text.
         .padding(.horizontal, message.role == .user ? metrics.spacing.md : replyInset)
     }
@@ -243,7 +243,7 @@ private struct ChatMessageView: View, @MainActor Equatable {
             .foregroundStyle(Theme.Colors.textTertiary)
     }
 
-    @ViewBuilder private var content: some View {
+    @ViewBuilder private func content(_ parts: Parts) -> some View {
         if message.text.isEmpty, message.searches.isEmpty, message.toolUses.isEmpty,
             message.reasoning.isEmpty, message.state == .streaming
         {
@@ -253,7 +253,7 @@ private struct ChatMessageView: View, @MainActor Equatable {
             }
             .padding(metrics.spacing.md)
         } else {
-            bubbleContent
+            bubbleContent(parts)
                 .font(metrics.typography.rowTitle)
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
@@ -267,7 +267,7 @@ private struct ChatMessageView: View, @MainActor Equatable {
         }
     }
 
-    private var bubbleContent: some View {
+    private func bubbleContent(_ parts: Parts) -> some View {
         VStack(alignment: message.role == .user ? .trailing : .leading, spacing: metrics.spacing.sm) {
             if !message.images.isEmpty {
                 // Wider than the stack's own rhythm: two 96pt tiles at `sm` read as one blob.
@@ -287,23 +287,25 @@ private struct ChatMessageView: View, @MainActor Equatable {
             if !message.text.isEmpty || !message.searches.isEmpty || !message.toolUses.isEmpty
                 || !message.reasoning.isEmpty
             {
-                rendered
+                rendered(parts)
             }
         }
     }
 
     /// Only a reply is markdown — what the user typed is shown back exactly as they typed it.
-    @ViewBuilder private var rendered: some View {
+    @ViewBuilder private func rendered(_ parts: Parts) -> some View {
         if message.role == .assistant {
-            let references = references
+            let references = parts.references
             let segments = message.segments
             VStack(alignment: .leading, spacing: metrics.spacing.lg) {
                 ForEach(Array(segments.enumerated()), id: \.offset) { offset, segment in
                     Group {
                         switch segment {
                         case .text(let text):
+                            // A reply that did nothing else is one segment, already split above.
+                            let prose = segments.count == 1 ? parts.text : ChatChoices.split(text).text
                             let blocks = MarkdownBlock.parse(
-                                ChatChoices.split(text).text,
+                                prose,
                                 midStream: message.isArriving(segmentAt: offset, of: segments.count))
                             ChatMarkdownText(
                                 blocks: blocks,
@@ -339,6 +341,32 @@ extension ChatMessageView {
         lhs.message == rhs.message && lhs.surface == rhs.surface && lhs.status == rhs.status
             && (lhs.onRegenerate == nil) == (rhs.onRegenerate == nil)
             && (lhs.onChoose == nil) == (rhs.onChoose == nil)
+    }
+}
+
+/// Owns the hover, so fading the footer in redraws the footer rather than re-rendering the reply.
+private struct ChatHoverFooter<Content: View, Footer: View>: View {
+    let alignment: HorizontalAlignment
+    let spacing: CGFloat
+    @ViewBuilder let content: Content
+    @ViewBuilder let footer: Footer
+    @State private var hovered = false
+
+    var body: some View {
+        VStack(alignment: alignment, spacing: spacing) {
+            content
+            footer.opacity(hovered ? 1 : 0)
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovered in
+            if isHovered {
+                withAnimation(.easeOut(duration: Theme.Duration.chatFooter)) {
+                    hovered = true
+                }
+            } else {
+                hovered = false
+            }
+        }
     }
 }
 

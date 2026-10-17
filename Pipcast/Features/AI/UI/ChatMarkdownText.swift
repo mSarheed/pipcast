@@ -68,7 +68,9 @@ final class ChatSelectableTextView: NSTextView {
     /// A second layout of the same storage, so SwiftUI's size probes never re-wrap the drawn one.
     private let measurer = NSLayoutManager()
     private let measuringContainer = NSTextContainer(size: .zero)
-    private var measured: (width: CGFloat?, size: CGSize)?
+    private var measured: [CGFloat?: CGSize] = [:]
+    /// A live resize asks a new width each frame; past this many the answers start over.
+    private static let measuredWidthLimit = 8
 
     init() {
         let storage = NSTextStorage()
@@ -107,21 +109,23 @@ final class ChatSelectableTextView: NSTextView {
         source = next
         let output = ChatMarkdownRenderer(next).render()
         rendered = output
-        measured = nil
+        measured = [:]
         textStorage?.setAttributedString(output.string)
         layoutOverlays()
-        needsDisplay = true
+        // Plain `needsDisplay` lays the text out now, at a width SwiftUI has yet to replace.
+        setNeedsDisplay(bounds, avoidAdditionalLayout: true)
     }
 
-    /// `nil` is the ideal width. SwiftUI asks the same width repeatedly, so the last answer is kept.
+    /// `nil` is the ideal width. SwiftUI cycles through several widths per pass, so each is kept.
     func measure(width: CGFloat?) -> CGSize {
-        if let measured, measured.width == width { return measured.size }
+        if let size = measured[width] { return size }
         measuringContainer.size = CGSize(
             width: width ?? .greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         measurer.ensureLayout(for: measuringContainer)
         let used = measurer.usedRect(for: measuringContainer)
         let size = CGSize(width: ceil(used.width), height: ceil(used.height))
-        measured = (width, size)
+        if measured.count >= Self.measuredWidthLimit { measured.removeAll(keepingCapacity: true) }
+        measured[width] = size
         return size
     }
 
