@@ -237,11 +237,12 @@ After changing release build or packaging scripts, run:
 
 ```sh
 python3 Scripts/test-release-merge.py
+python3 Scripts/test-release-notes.py
 ```
 
 This compiles small real arm64 and x86_64 executables, combines the app and all helpers, checks
 bundle metadata rejection, and verifies signatures, executable permissions and symlinks through
-the tar handoff. It uses ad-hoc signatures; Developer ID signing and Apple notarization are checked
+the tar handoff. The second checks how commits become changelog lines and the next version. It uses ad-hoc signatures; Developer ID signing and Apple notarization are checked
 by the release workflow with its configured credentials.
 
 ## Build and size checks

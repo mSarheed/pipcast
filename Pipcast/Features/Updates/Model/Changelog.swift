@@ -62,7 +62,7 @@ struct Changelog: Sendable {
             }
         }
         flush()
-        // `changelog-notes.py` refuses a repeated version, so a release never ships one.
+        // `release-notes.py` rewrites a version in place, so a release never ships one twice.
         var versions = Set<AppVersion>()
         self.init(entries: entries.filter { versions.insert($0.version).inserted })
     }
@@ -84,7 +84,7 @@ struct Changelog: Sendable {
         return lastSeen < running.release
     }
 
-    /// `## 0.4.0` or `## 0.4.0 — 2026-10-16`; matches `HEADING` in `Scripts/changelog-notes.py`.
+    /// `## 0.4.0` or `## 0.4.0 — 2026-10-16`; matches `HEADING` in `Scripts/release-notes.py`.
     private static func versionHeading(_ line: Substring) -> (AppVersion, DateComponents?)? {
         guard line.hasPrefix("## ") else { return nil }
         let words = line.dropFirst(3).split(whereSeparator: \.isWhitespace)

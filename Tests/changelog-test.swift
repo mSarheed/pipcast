@@ -23,7 +23,6 @@ struct ChangelogTests {
         decidesWhenThereIsNews()
         keepsAWrappedBulletWhole()
         shipsAnEntryForTheBuiltVersion()
-        agreesWithTheReleaseScript()
         announcesOncePerVersion()
         parsesQuickly()
 
@@ -169,32 +168,6 @@ struct ChangelogTests {
         expect(
             changelog.entries.allSatisfy { !ReleaseNotes.blocks(from: $0.notes).isEmpty },
             "every entry has notes")
-    }
-
-    /// The script publishes what the app shows, so both must cut the same section.
-    static func agreesWithTheReleaseScript() {
-        guard let markdown = try? String(contentsOfFile: "CHANGELOG.md", encoding: .utf8) else {
-            expect(false, "CHANGELOG.md is readable")
-            return
-        }
-        for entry in Changelog(markdown: markdown).entries {
-            let script = Process()
-            let output = Pipe()
-            script.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            script.arguments = ["python3", "Scripts/changelog-notes.py", entry.version.description]
-            script.standardOutput = output
-            guard (try? script.run()) != nil else {
-                expect(false, "Scripts/changelog-notes.py runs")
-                return
-            }
-            let data = output.fileHandleForReading.readDataToEndOfFile()
-            script.waitUntilExit()
-            let published = String(decoding: data, as: UTF8.self)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            expect(
-                script.terminationStatus == 0 && published == entry.notes,
-                "the release script publishes the notes the app shows for \(entry.version)")
-        }
     }
 
     static func announcesOncePerVersion() {

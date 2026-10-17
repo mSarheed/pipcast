@@ -1,7 +1,7 @@
 # Changelog
 
-What changed in each Pipcast release, newest first. Pipcast shows this file in What's New, and
-the release workflow publishes each version's section as that release's notes.
+What changed in each Pipcast release, newest first. The release workflow writes each version's
+section from its commits, and Pipcast shows this file in What's New.
 
 ## 0.1.0
 

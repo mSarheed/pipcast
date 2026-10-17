@@ -1,34 +1,60 @@
 name: Release
-run-name: Pipcast ${{ inputs.version }} · ${{ inputs.channel }}
+run-name: Pipcast ${{ inputs.version || 'next' }} · ${{ inputs.channel }}
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: Base version (for example 0.1.0)
-        required: true
-        type: string
       channel:
         type: choice
         options: [beta, stable]
         default: beta
+      version:
+        description: Base version such as 0.2.0; leave empty to derive it from the commits
+        required: false
+        type: string
 concurrency:
   group: pipcast-release
   cancel-in-progress: false
 permissions:
   contents: read
 jobs:
-  # Fails in seconds, before the long build: a release without changelog notes never starts.
-  changelog:
+  # Fails in seconds, before the long build: a release with nothing new never starts.
+  prepare:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      version: ${{ steps.notes.outputs.version }}
+      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v7
-      - name: Require CHANGELOG.md notes for this version
-        run: python3 Scripts/changelog-notes.py "$BASE_VERSION"
+        with:
+          fetch-depth: 0
+      - name: Write the changelog and pick the version
+        id: notes
+        run: python3 Scripts/release-notes.py --channel "$CHANNEL" --version "$VERSION" --repo "$GITHUB_REPOSITORY" --notes release-notes.md
         env:
-          BASE_VERSION: ${{ inputs.version }}
+          CHANNEL: ${{ inputs.channel }}
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+      - name: Commit the changelog
+        id: commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md project.yml Pipcast.xcodeproj/project.pbxproj
+          git diff --cached --quiet || git commit -m "chore(release): update the changelog for $VERSION"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ steps.notes.outputs.version }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
   build:
-    needs: changelog
+    needs: prepare
     runs-on: macos-26
     timeout-minutes: 90
     strategy:
@@ -36,12 +62,14 @@ jobs:
       matrix:
         architecture: [arm64, x86_64]
     env:
-      BASE_VERSION: ${{ inputs.version }}
+      BASE_VERSION: ${{ needs.prepare.outputs.version }}
       CHANNEL: ${{ inputs.channel }}
       ARCHITECTURE: ${{ matrix.architecture }}
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
       - name: Compile ${{ matrix.architecture }}
         run: ./Scripts/release-build.sh
       - uses: actions/upload-artifact@v7
@@ -51,7 +79,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   package:
-    needs: build
+    needs: [prepare, build]
     runs-on: macos-26
     timeout-minutes: 90
     strategy:
@@ -59,7 +87,7 @@ jobs:
       matrix:
         architecture: [arm64, universal]
     env:
-      BASE_VERSION: ${{ inputs.version }}
+      BASE_VERSION: ${{ needs.prepare.outputs.version }}
       CHANNEL: ${{ inputs.channel }}
       ARCHITECTURE: ${{ matrix.architecture }}
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
@@ -70,6 +98,8 @@ jobs:
       NOTARY_PRIVATE_KEY: ${{ secrets.NOTARY_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
       - uses: actions/download-artifact@v8
         with:
           name: compiled-arm64
@@ -89,20 +119,27 @@ jobs:
   publish:
     permissions:
       contents: write
-    needs: package
+    needs: [prepare, package]
     runs-on: macos-26
     timeout-minutes: 15
     env:
-      BASE_VERSION: ${{ inputs.version }}
+      BASE_VERSION: ${{ needs.prepare.outputs.version }}
       CHANNEL: ${{ inputs.channel }}
+      RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
       GH_TOKEN: ${{ github.token }}
       HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
       - uses: actions/download-artifact@v8
         with:
           pattern: pipcast-*
           path: dist
           merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}
       - name: Publish release and update Homebrew
         run: python3 Scripts/publish-release.py

@@ -1,11 +1,13 @@
 # Pipcast releases
 
-Releases are manual: Actions → Release → Run workflow. Choose `beta` or `stable` and a
-base version such as `0.1.0`. Beta versions append the workflow run number.
+Releases are manual: Actions → Release → Run workflow. Choose `beta` or `stable` and leave the
+version empty; the workflow derives it (see [Changelog](#changelog)). Type a base version such as
+`0.2.0` only to override it. Beta versions append the workflow run number.
 Only run this after signing and Homebrew credentials are configured.
 
-Before running it, add the version's section to `CHANGELOG.md` (see [Changelog](#changelog)).
-The workflow checks for it first and stops before building if it is missing.
+The first job writes the changelog, commits it to the dispatching branch, and every later job builds
+that commit. It stops before building when nothing has been merged since the previous release of
+the channel.
 
 The workflow compiles arm64 and x86_64 once each in parallel, then combines their main and helper
 executables into the universal app. Separate packaging jobs reuse the arm64 build, sign both apps
@@ -51,30 +53,28 @@ correct download.
 
 ## Changelog
 
-`CHANGELOG.md` at the repo root is the one changelog. The app bundles it for What's New, the
-`changelog` job in the Release workflow runs `Scripts/changelog-notes.py <version>` and stops the
-release when the version has no section, and `publish-release.py` publishes that section as the
-GitHub release body, above the install marker.
+`CHANGELOG.md` at the repo root is the one changelog, and nobody writes its sections by hand.
+`Scripts/release-notes.py`, run by the Release workflow's `prepare` job:
 
-```markdown
-## 0.2.0 — 2026-11-20
+1. **Picks the version.** It reads the commits on `main`'s first-parent line since the last stable
+   tag. A breaking change (`!` or a `BREAKING CHANGE:` footer) bumps major, or minor before 1.0; any
+   `feat` bumps minor; anything else bumps patch. With no stable tag yet it takes `project.yml`'s
+   `MARKETING_VERSION`. A typed version overrides this, but must be above the last stable one.
+2. **Writes `## <version>`** with one bullet per commit since the last stable tag, grouped by type:
+   `feat` under New; `perf`, `refactor` and `style` under Improved; `fix` and `revert` under Fixed;
+   everything else under Other. A bullet reads `**scope** — Description by @author in #PR`. Prose a
+   person wrote above the section's first `###` is kept as its headline; otherwise it gets a count
+   (`3 new features and 2 fixes.`). A stable release dates the heading; betas leave it undated, so
+   the section keeps growing across betas until the stable release.
+3. **Sets `MARKETING_VERSION`** in `project.yml` and the generated project, so debug builds and
+   `changelog-test` agree with the file.
+4. **Writes the release body.** A stable release publishes its whole section. A beta publishes only
+   the commits since the previous beta, as Tinycast does, so its update window shows what is new
+   since the build the user has. `publish-release.py` adds the install text below the marker.
 
-One line that sums up the release.
+The commit is `chore(release): update the changelog for <version>`, and those commits never list
+themselves. Tags reachable only through Tinycast's history are ignored, and Pipcast's history
+starts after `FORK_POINT`.
 
-### New
-
-- **Feature name** — what it lets you do, in a sentence.
-
-### Improved
-
-### Fixed
-```
-
-- One `## MAJOR.MINOR.PATCH` section per stable version, newest first; the date goes on when the
-  stable release is cut. A beta never gets a section of its own: it shows, and publishes, the
-  section of the version it leads to, so keep that section current as betas land.
-- Summarize the release for users. Lead each bullet with a bold feature name, keep to the changes
-  that matter, and leave the full commit history to GitHub's compare view.
-- Wrapping a bullet across lines is fine; a blank line ends it.
-- `changelog-test` fails while `project.yml`'s `MARKETING_VERSION` has no section, so bumping the
-  version and writing its notes land together.
+So a commit subject is its changelog line: write it for users, in Conventional Commits form. A
+squash merge's subject is the PR title, which is why the PR title matters.

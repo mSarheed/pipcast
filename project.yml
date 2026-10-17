@@ -54,7 +54,7 @@ targets:
         buildPhase: resources
       - path: LICENSE
         buildPhase: resources
-      # The one changelog: the app reads it, and the release workflow publishes each section.
+      # The one changelog: the release workflow writes each section, and the app reads it.
       - path: CHANGELOG.md
         buildPhase: resources
     dependencies:

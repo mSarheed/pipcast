@@ -71,8 +71,9 @@ versions this build has reached beside the selected one's notes, laid out by `Re
 GitHub releases page.
 
 - **What's New reads the build's own file, never the network.** The notes a user reads are the ones
-  this build shipped with, offline, and the release body on GitHub is published from the same section
-  ([release.md](../release.md#changelog)), so the two cannot disagree.
+  this build shipped with, offline. The Release workflow writes the section and commits it before
+  building, so the bundled file always covers the version being released
+  ([release.md](../release.md#changelog)).
 - **A beta reads the section of the release it leads to.** `AppVersion.release` maps
   `0.4.0-beta.3` to `0.4.0`; a beta never has a section of its own, and its row links to the release
   list because the tag does not exist yet. A section for a version this build has not reached is

@@ -139,13 +139,13 @@ feature's doc, under its own `## Invariants`.
 
 ## Before you trigger a release
 
-- **`CHANGELOG.md` gets the version's section first.** The Release workflow refuses to start
-  without a `## <version>` heading, publishes the section as the GitHub release notes, and the app
-  shows it in What's New. A beta shows the section of the version it leads to.
-- **Write the big picture, for users.** A one-line headline, then a few bullets under `### New`,
-  `### Improved` and `### Fixed`, each led by a bold feature name — the most important changes
-  summarized, never a list of every commit or PR. Date the heading (`## 0.2.0 — 2026-11-20`) when
-  cutting the stable release. Format and checks: [release.md](docs/release.md#changelog).
+- **Never hand-write a release's changelog.** The Release workflow writes `CHANGELOG.md`'s
+  `## <version>` section from every commit since the last stable release, grouped by Conventional
+  Commits type, commits it to `main`, and publishes it — so a commit subject *is* its changelog line.
+  Hand-written prose above the section's first `###` survives regeneration as its headline.
+- **Leave the version empty unless you mean to override it.** It is derived from the commits since
+  the last stable tag: a breaking change bumps major (minor before 1.0), a `feat` minor, anything
+  else patch. Details: [release.md](docs/release.md#changelog).
 
 ## Before you finish
 
