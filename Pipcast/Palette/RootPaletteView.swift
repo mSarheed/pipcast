@@ -408,14 +408,14 @@ struct RootPaletteView: View {
             }
             .modifier(ExtensionSelectionForwarder(screen: extensionScreen, selection: vm.selection))
             // A narrower list means the old index points at a different row, or at none.
-            .onChange(of: vm.clipboardFilter) { land() }
+            .onChange(of: vm.clipboardFilter) { land(restoringNavigation: true) }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
                 land()
                 fileSearch.search(vm.query, filter: vm.fileSearchFilter)
             }
             .onChange(of: vm.mode) {
-                vm.clipboardFilter = .all
+                if vm.restoredSelection == nil { vm.clipboardFilter = .all }
                 vm.fileSearchFilter = .all
                 vm.emojiCategoryFilter = .all
                 vm.emojiGridColumnsOverride = nil

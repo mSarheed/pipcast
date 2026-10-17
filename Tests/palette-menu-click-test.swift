@@ -202,6 +202,16 @@ struct PaletteMenuClickTests {
             check(false, "SwiftUI mounts its native text field")
         }
 
+        let composition = NSTextView(frame: view.bounds)
+        panel.contentView = composition
+        check(panel.makeFirstResponder(composition), "the native editor takes focus")
+        composition.setMarkedText(
+            "にほん", selectedRange: NSRange(location: 3, length: 0),
+            replacementRange: NSRange(location: NSNotFound, length: 0))
+        check(state.isComposing, "native marked text reaches the palette composition guard")
+        composition.insertText("日本", replacementRange: NSRange(location: NSNotFound, length: 0))
+        check(!state.isComposing, "committing marked text releases the palette composition guard")
+
         print("Palette menu click tests: \(failures) failure(s)")
         exit(failures == 0 ? 0 : 1)
     }

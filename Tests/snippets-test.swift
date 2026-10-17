@@ -13,6 +13,7 @@ struct SnippetsTests {
         _ = NSApplication.shared
         testIdentityAndRevision()
         testEditorSession()
+        try await testClipboardDraftLifecycle()
         testRaycastImport()
         try testMarkdownCodec()
         try testRepositoryStorage()
@@ -80,7 +81,16 @@ struct SnippetsTests {
             Snippet(
                 name: "Original", text: "Hello", keyword: "!hello", isEnabled: false,
                 showsConfirmation: true))
-        let editing = SnippetEditorSession(record: original)
+        let text = "\n  Hello 👩🏽‍💻\r\n你好 e\u{301}\n{clipboard}\n  "
+        let prefilled = SnippetEditorSession(record: nil, initialText: text)
+        check("prefilling preserves template bytes", Array(prefilled.text.utf8) == Array(text.utf8))
+        check(
+            "prefilling creates only an unnamed draft",
+            prefilled.record == nil && prefilled.name.isEmpty && prefilled.keyword.isEmpty
+                && !prefilled.canSave)
+        prefilled.name = "From Clipboard"
+        check("saving a prefilled draft keeps its text", prefilled.snippet.text == text)
+        let editing = SnippetEditorSession(record: original, initialText: "Ignored clipboard text")
         check("editing keeps the loaded record and source revision", editing.record == original)
         check("editing starts with every original option", editing.snippet == original.snippet)
         editing.name = "Changed"
@@ -107,6 +117,86 @@ struct SnippetsTests {
         check("Shift-Tab returns to the template", editing.focusedField == .template)
         editing.advanceFocus(backwards: true)
         check("form focus wraps through the existing options", editing.focusedField == .confirmation)
+    }
+
+    private static func testClipboardDraftLifecycle() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let repository = SnippetRepository(applicationSupportRoot: directory)
+        let store = SnippetsStore(repository: repository)
+        let settings = AppSettings()
+        let palette = PaletteState()
+        let core = AppCore()
+        let clipboard = ClipboardStore(directory: directory.appending(path: "Clipboard"))
+        let coordinator = SnippetCoordinator(
+            store: store, listener: SnippetKeywordListener(syntheticEventTag: 0),
+            injector: TextInjector(clipboardManager: ClipboardManager(), settings: settings),
+            clipboardStore: clipboard,
+            appIndex: AppIndex(), settings: settings, windowController: PaletteWindowController(),
+            paletteCoordinator: PaletteCoordinator(state: palette), palette: palette,
+            showMessage: { _, _ in }, core: core)
+        let text = "  First 👩🏽‍💻\n你好 e\u{301}\r\n{clipboard}\n"
+        clipboard.addText(text, sourceBundleID: nil)
+        clipboard.addText("Newer", sourceBundleID: nil)
+        clipboard.addText("Newest", sourceBundleID: nil)
+        let clip = clipboard.items[2]
+        palette.selection = 2
+        palette.clipboardFilter = .text
+        check("disabled snippets offer no action", !coordinator.canCreateSnippet(from: clip))
+        check("creating never enables snippets", !coordinator.createSnippet(from: clip) && !settings.snippetsEnabled)
+        await Task.yield()
+        check("creating asks for no consent", core.confirmationCount == 0 && Permissions.accessibilityRequests == 0)
+        settings.snippetsEnabled = true
+        for item in [ClipboardItem(imagePath: "/missing.png", sourceBundleID: nil),
+            ClipboardItem(filePath: "/example.txt", sourceBundleID: nil)] {
+            check("non-text clips offer no action", !coordinator.canCreateSnippet(from: item))
+            check("non-text clips cannot open a draft", !coordinator.createSnippet(from: item))
+        }
+        palette.isComposing = true
+        check("IME composition keeps its input", !coordinator.createSnippet(from: clip) && coordinator.editor == nil)
+        palette.isComposing = false
+        check("text clip opens the editor", coordinator.createSnippet(from: clip))
+        guard let draft = coordinator.editor else { return }
+        check("clipboard draft focuses Name", draft.focusedField == .name)
+        check("clipboard draft preserves exact bytes", Array(draft.text.utf8) == Array(text.utf8))
+        check(
+            "opening creates no snippet directory",
+            !FileManager.default.fileExists(atPath: repository.snippetsDirectory.path))
+        clipboard.addText("Copied while editing", sourceBundleID: nil)
+        coordinator.cancelSnippetEditing()
+        check(
+            "cancel follows the source clip after history changes",
+            palette.selection == 3 && palette.restoredSelection == 3
+                && clipboard.search(palette.query, filter: palette.clipboardFilter)[palette.selection].id == clip.id)
+        check("cancel releases the draft", coordinator.editor == nil && palette.mode == .clipboard)
+        check(
+            "cancel writes nothing",
+            !FileManager.default.fileExists(atPath: repository.snippetsDirectory.path))
+        _ = coordinator.createSnippet(from: clip)
+        guard let saving = coordinator.editor else { return }
+        saving.name = "Clipboard draft"
+        clipboard.addText("Copied before Save", sourceBundleID: nil)
+        try FileManager.default.createDirectory(at: repository.channelDirectory, withIntermediateDirectories: true)
+        try Data("blocked".utf8).write(to: repository.snippetsDirectory)
+        coordinator.requestSnippetSave()
+        await coordinator.saveSnippet(saving)
+        check("save failure preserves the draft", coordinator.editor === saving && saving.errorMessage != nil)
+        check("failed save allows retry", !saving.isSaving && saving.canSave && saving.text == text)
+        try FileManager.default.removeItem(at: repository.snippetsDirectory)
+        coordinator.requestSnippetSave()
+        await coordinator.saveSnippet(saving)
+        let snapshot = try repository.load()
+        check("retry saves the original template", snapshot.records.first?.snippet.text == text)
+        check("save releases the draft", coordinator.editor == nil && palette.mode == .clipboard)
+        check(
+            "save follows the source clip after history changes",
+            palette.selection == 4 && palette.restoredSelection == 4
+                && clipboard.search(palette.query, filter: palette.clipboardFilter)[palette.selection].id == clip.id)
+        _ = coordinator.createSnippet(from: clip)
+        clipboard.remove(clip)
+        coordinator.cancelSnippetEditing()
+        check("a removed source leaves the existing fallback row", palette.restoredSelection == 4)
+        check("enabled creation asks for no permission", core.confirmationCount == 0 && Permissions.accessibilityRequests == 0)
     }
 
     private static func testRaycastImport() {
@@ -2074,10 +2164,16 @@ final class ClipboardManager {
 @MainActor
 final class AppSettings {
     var snippetsEnabled = false
+    var snippetsShowInLauncher = true
+    var snippetsFolder: String?
 }
 
 enum Permissions {
-    static func ensureAccessibility() -> Bool { false }
+    @MainActor static var accessibilityRequests = 0
+    @MainActor @discardableResult static func ensureAccessibility() -> Bool {
+        accessibilityRequests += 1
+        return false
+    }
     static func isAccessibilityTrusted() -> Bool { false }
 }
 

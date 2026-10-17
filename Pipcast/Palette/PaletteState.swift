@@ -5,6 +5,7 @@ struct PaletteFrame: Equatable {
     let mode: PaletteMode
     let query: String
     let selection: Int
+    let clipboardFilter: ClipboardFilter
 }
 
 @MainActor
@@ -18,7 +19,7 @@ final class PaletteState {
     var selection: Int = 0
     /// True while an IME holds marked text, which leaves `query` empty. The panel publishes it.
     var isComposing = false
-    var clipboardFilter: ClipboardFilter = .all
+    var clipboardFilter: ClipboardFilter = .all { didSet { restoredSelection = nil } }
     var fileSearchFilter: FileSearchFilter = .all
     var emojiCategoryFilter: EmojiCategoryFilter = .all
     /// Nil means the configured default; zoom only overrides it for this picker session.
@@ -96,14 +97,21 @@ final class PaletteState {
 
     func push(mode: PaletteMode) {
         if !self.mode.isNativeEditor {
-            backStack.append(PaletteFrame(mode: self.mode, query: query, selection: selection))
+            backStack.append(PaletteFrame(
+                mode: self.mode, query: query, selection: selection, clipboardFilter: clipboardFilter))
         }
         replace(mode: mode)
+    }
+
+    func restoreSelection(_ index: Int) {
+        selection = index
+        restoredSelection = index
     }
 
     func pop(preservingSelection: Bool = false) -> Bool {
         guard let frame = backStack.popLast() else { return false }
         openScreen(frame.mode)
+        clipboardFilter = frame.clipboardFilter
         query = frame.query
         selection = frame.selection
         restoredSelection = preservingSelection ? frame.selection : nil
@@ -114,7 +122,8 @@ final class PaletteState {
 
     /// Tab's step deeper into the ring: the screen crossed from is the step back, query and all.
     func pushCarryingQuery(mode: PaletteMode) {
-        backStack.append(PaletteFrame(mode: self.mode, query: query, selection: selection))
+        backStack.append(PaletteFrame(
+            mode: self.mode, query: query, selection: selection, clipboardFilter: clipboardFilter))
         self.mode = mode
     }
 

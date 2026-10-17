@@ -124,8 +124,9 @@ it, while the Clipboard History hotkey does not. **The launcher is the exception
 root** — ⌘Space over an open clipboard opens the root search with nothing behind it, rather than
 stacking the launcher over the screen it replaced. Nothing per-feature encodes this.
 
-`PaletteState` holds the screens below `mode` as `[PaletteFrame]` — mode, query and selection, enough
-that returning looks like never having left — and offers four motions over it:
+`PaletteState` holds the screens below `mode` as `[PaletteFrame]` — mode, query, selection and clipboard
+type filter. Native editors use a preserving pop to restore the filter along with the row; ordinary
+mode changes still reset the filter. The stack offers four motions:
 
 | Motion                     | Meaning                                                                    |
 | -------------------------- | -------------------------------------------------------------------------- |

@@ -478,7 +478,17 @@ run quicklink-coordinator-test Pipcast/Features/Quicklinks/Model/Quicklink.swift
                            Pipcast/Features/Quicklinks/UI/QuicklinkArgumentsAccessory.swift \
                            Pipcast/Features/Snippets/Model/Snippet.swift \
                            Pipcast/Features/Snippets/Model/SnippetTemplateEngine.swift
-run slow snippets-test     Pipcast/Platform/NotificationToken.swift \
+run slow snippets-test     Tests/snippet-coordinator-fixtures.swift \
+                           Pipcast/Platform/AppPaths.swift \
+                           Pipcast/Features/Snippets/UI/SnippetCoordinator.swift \
+                           Pipcast/Features/Clipboard/Model/ClipboardStore.swift \
+                           Pipcast/Platform/Images/ImageDerivative.swift \
+                           Pipcast/Features/Clipboard/Model/ClipboardFilter.swift \
+                           Pipcast/Features/Clipboard/Model/ClipboardFileKind.swift \
+                           Pipcast/Features/Clipboard/Model/ColorValue.swift \
+                           Pipcast/Features/Clipboard/Model/ColorFormat.swift \
+                           Pipcast/Features/Clipboard/Model/ColorSpaces.swift \
+                           Pipcast/Platform/NotificationToken.swift \
                            Pipcast/Platform/HealthTicker.swift \
                            Pipcast/Platform/AccessibilityText.swift \
                            Pipcast/Features/Snippets/Model/*.swift \

@@ -8,6 +8,7 @@ final class SnippetEditorSession {
     }
 
     let record: StoredSnippet?
+    let sourceClipboardID: UUID?
     var name: String
     var keyword: String
     var text: String
@@ -18,12 +19,13 @@ final class SnippetEditorSession {
     var errorMessage: String?
     var isSaving = false
 
-    init(record: StoredSnippet?) {
+    init(record: StoredSnippet?, initialText: String = "", sourceClipboardID: UUID? = nil) {
         self.record = record
+        self.sourceClipboardID = sourceClipboardID
         let snippet = record?.snippet
         name = snippet?.name ?? ""
         keyword = snippet?.keyword ?? ""
-        text = snippet?.text ?? ""
+        text = snippet?.text ?? initialText
         isEnabled = snippet?.isEnabled ?? true
         showsConfirmation = snippet?.showsConfirmation ?? false
     }

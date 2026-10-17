@@ -44,6 +44,8 @@ enum PaletteShortcut: Equatable {
     case newItem
     /// ⌘E, the row opened in its editor.
     case edit
+    /// ⌘S, the row saved as a snippet.
+    case createSnippet
     /// ⌘D.
     case duplicate
     /// ⌘F, for a screen whose ⌘↵ already does something else.
@@ -82,6 +84,7 @@ enum PaletteShortcut: Equatable {
         if command, matches("r") { return .restart }
         if command, !shift, matches("n") { return .newItem }
         if command, !shift, !option, !control, matches("e") { return .edit }
+        if command, !shift, !option, !control, matches("s") { return .createSnippet }
         if command, !shift, matches("d") { return .duplicate }
         if command, option, matches(",") { return .settings }
         if command, matches("j") { return .continueInChat }
@@ -93,7 +96,7 @@ enum PaletteShortcut: Equatable {
         switch self {
         case .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
-            .hideApp, .restart, .edit, .duplicate, .showInFinder:
+            .hideApp, .restart, .edit, .createSnippet, .duplicate, .showInFinder:
             true
         case .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot, .continueInChat, .newItem,
             .settings, .copyCalculation:
@@ -105,7 +108,7 @@ enum PaletteShortcut: Equatable {
         switch self {
         case .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
-            .newItem, .settings, .edit, .duplicate, .showInFinder:
+            .newItem, .settings, .edit, .createSnippet, .duplicate, .showInFinder:
             true
         case .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot,
             .continueInChat:

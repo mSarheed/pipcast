@@ -95,6 +95,11 @@ struct PaletteShortcutTests {
         expect(resolve("e", command: true, shift: true), nil, "⇧⌘E is not the edit chord")
         expect(resolve("e", command: true, option: true), nil, "⌥⌘E is not the edit chord")
         expect(resolve("e", command: true, control: true), nil, "⌃⌘E is not the edit chord")
+        expect(resolve("s", command: true), .createSnippet, "⌘S creates a snippet from a row")
+        expect(resolve("s"), nil, "typing S stays with the field")
+        expect(resolve("s", command: true, shift: true), nil, "⇧⌘S is not Create Snippet")
+        expect(resolve("s", command: true, option: true), nil, "⌥⌘S is not Create Snippet")
+        expect(resolve("s", command: true, control: true), nil, "⌃⌘S is not Create Snippet")
         expect(resolve("d", command: true), .duplicate, "⌘D duplicates the row")
         expect(resolve("d", command: true, shift: true), nil, "⇧⌘D is not the duplicate chord")
         expect(resolve(",", command: true, option: true), .settings, "⌥⌘, opens the screen's settings")
@@ -107,7 +112,7 @@ struct PaletteShortcutTests {
         let expanded: [PaletteShortcut] = [
             .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
-            .hideApp, .restart, .edit, .duplicate, .showInFinder
+            .hideApp, .restart, .edit, .createSnippet, .duplicate, .showInFinder
         ]
         let anywhere: [PaletteShortcut] = [
             .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot(0), .continueInChat, .newItem,
@@ -123,7 +128,7 @@ struct PaletteShortcutTests {
         let closing: [PaletteShortcut] = [
             .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
-            .newItem, .settings, .edit, .duplicate, .showInFinder
+            .newItem, .settings, .edit, .createSnippet, .duplicate, .showInFinder
         ]
         let leaving: [PaletteShortcut] = [
             .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot(0),

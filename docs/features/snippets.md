@@ -249,6 +249,7 @@ screen has no rows: an empty library would otherwise open a browser with nothing
 
 `SnippetCoordinator` owns a `SnippetEditorSession`, presented by `SnippetEditorScreen` in
 `PaletteMode.snippetEditor`. **Create Snippet**, **Edit Snippet** (⌘E) in the browser or root search,
+the clipboard's **Create Snippet** action (⌘S),
 and the settings library's **New Snippet** and **Edit** buttons open this same editor; Settings has no
 second editor. The fields stay inside `Features/Snippets/UI/`, not in the palette shell or the extension form.
 
@@ -258,6 +259,8 @@ It uses the palette's searchable popup, keeping its existing placeholder groups.
 loaded record and its source revision; no file is created or changed before **Save Snippet**.
 The template grows with its text; only the whole form scrolls, never an individual field or column.
 A blank name disables Save.
+A clipboard draft preserves the selected text verbatim and initially focuses Name. It is available
+only while Snippets is enabled and never changes the feature switch or its consent.
 An IO or revision failure leaves the draft open and shows the error beside its fields.
 
 **⌘↵** saves; plain **↵** inserts a template line break. **Tab** and **Shift-Tab** walk the fields,

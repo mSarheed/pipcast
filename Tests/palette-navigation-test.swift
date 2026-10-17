@@ -171,6 +171,25 @@ struct PaletteNavigationTests {
             "closing a command editor restores its browser query and selection")
         expect(commands.pop() && commands.mode == .launcher, "the command browser returns to root search")
 
+        let clipboardDraft = searchingLauncher()
+        clipboardDraft.push(mode: .clipboard)
+        clipboardDraft.query = "reusable"
+        clipboardDraft.selection = 3
+        clipboardDraft.clipboardFilter = .text
+        clipboardDraft.push(mode: .snippetEditor)
+        clipboardDraft.noteEditingField(true)
+        expect(
+            clipboardDraft.pop(preservingSelection: true) && clipboardDraft.mode == .clipboard
+                && clipboardDraft.query == "reusable" && clipboardDraft.restoredSelection == 3
+                && clipboardDraft.clipboardFilter == .text && !clipboardDraft.isEditingField,
+            "closing a clipboard snippet draft restores query, selection, filter and search focus state")
+        clipboardDraft.restoreSelection(4)
+        expect(
+            clipboardDraft.selection == 4 && clipboardDraft.restoredSelection == 4,
+            "following a moved source replaces both the current and navigation-restored row")
+        clipboardDraft.clipboardFilter = .all
+        expect(clipboardDraft.restoredSelection == nil, "changing the filter lands a fresh selection")
+
         for mode: PaletteMode in [.snippetEditor, .quicklinkEditor, .eventEditor, .customCommandEditor] {
             let switched = searchingLauncher()
             switched.push(mode: mode)

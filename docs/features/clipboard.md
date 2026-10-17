@@ -248,6 +248,21 @@ bytes, so a text-dense scan can copy *partial* text under a success HUD, and an 
 extracts as empty and lands in **No text found**. The source row is not promoted — a copy is not a
 paste.
 
+## Create a snippet
+
+With Snippets enabled, a text entry offers **Create Snippet** in Actions and through **⌘S**.
+Links, email addresses and colors are text entries too; images and referenced files never offer it.
+The action opens the existing snippet editor with the exact captured text, including whitespace and
+Unicode, and focuses Name. It does not copy, paste, promote the clip, expand template placeholders,
+or write a snippet file before Save. Save and Cancel return to the clipboard query, filter and source
+entry, even if new clips arrived while editing. If the source entry was removed, the previous row index
+is clamped to the current list.
+A save failure keeps the draft open for correction or retry.
+
+`SnippetCoordinator` rechecks the feature switch and entry kind for both entry points. While snippets
+are disabled the action is absent and the shortcut does nothing; neither path enables snippets or
+requests keyword-monitoring consent. An active IME composition also leaves the shortcut unhandled.
+
 ## Type filter
 
 The clipboard header carries a `ClipboardFilterButton` at the trailing edge of the search field —
