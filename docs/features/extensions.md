@@ -601,8 +601,9 @@ global Show in launcher switch, or this extension's — because the ranker never
 
 ## Deeplinks
 
-Pipcast registers `raycast`, `com.raycast` and `pipcast` to receive extension links. An installed
-Raycast competes for its schemes, and macOS chooses which app receives a link.
+Pipcast registers its bundle identifier plus `raycast`, `com.raycast` and `pipcast` to receive
+extension links. An installed Raycast competes for its schemes, and macOS chooses which app receives
+a link.
 
 `raycast://extensions/<owner>/<extension>?source=webstore`, used by the Store website's Install
 buttons, opens Settings → Extensions and looks up that exact listing to offer the existing Install
@@ -612,15 +613,23 @@ opens their Settings pane so they can be enabled through the usual consent flow.
 `raycast://extensions/<owner>/<extension>/<command>` runs an installed command from outside the app —
 a browser link, another app, a Shortcut — and `pipcast://` mirrors it so our own links never depend
 on Raycast winning the scheme. Both accept Raycast's query parameters: `arguments` as URL-encoded
-JSON, `fallbackText`, and `launchType=background`, which only a no-view command receives — a view
+JSON, `context` as a URL-encoded JSON object passed unchanged as `props.launchContext`,
+`fallbackText`, and `launchType=background`, which only a no-view command receives — a view
 command always takes over the palette, so it launches as `userInitiated`. The owner is a hint: a
 scoped install matches by `owner/extension` first and falls back to the bare slug, so short links
-keep working. Anything else on a claimed scheme just reopens the palette, and an unknown command says
-so rather than failing silently. `ExtensionDeepLink` owns the claimed schemes and the parsing,
+keep working. Unknown or malformed links report through Pipcast's HUD. A malformed, non-object or
+duplicate `context` rejects the link; nested objects, arrays, booleans, numbers and null remain JSON
+values. `ExtensionDeepLink` owns the parsing and takes the current channel's scheme as an argument,
 covered by `Tests/ext-test.swift`. Two-segment links without `source=webstore` keep running commands
 as `<extension>/<command>`; three-segment command links keep running even with that parameter.
 An extension's own `open("raycast://…")` resolves through the same
 `ExtensionManager.resolve(_:)` instead of launching Raycast.
+
+The launcher's **Copy Deeplink** uses the current bundle identifier as its scheme, so Debug links
+(`io.github.msarheed.pipcast.app.dev://extensions/<owner>/<extension>/<command>`) target Debug's
+own installs. A manifest already scoped by owner keeps that scope; otherwise the manifest
+owner or author supplies it.
+Stable and beta use their own bundle identifiers; see [launcher deeplinks](launcher.md#deeplinks).
 
 For view commands, nonempty `fallbackText` also prefills the search field: lists and grids filter
 locally or receive it through `onSearchTextChange` when their handler mounts. It remains available

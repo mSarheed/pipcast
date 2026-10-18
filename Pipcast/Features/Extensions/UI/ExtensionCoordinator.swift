@@ -83,7 +83,19 @@ final class ExtensionCoordinator {
         runExtensionCommand(entry)
     }
 
-    /// A `raycast://extensions/…` link: the same command the launcher would run, by slug.
+    func deepLink(for entry: AppEntry, scheme: String) -> URL? {
+        guard let (owner, command) = extensions.resolve(entry) else { return nil }
+        var parts = URLComponents()
+        parts.scheme = scheme
+        parts.host = "extensions"
+        let name = owner.manifest.name
+        let scopedName =
+            name.contains("/") || owner.manifest.storeHandle.isEmpty
+            ? name : owner.manifest.storeHandle + "/" + name
+        parts.path = "/" + scopedName + "/" + command.name
+        return parts.url
+    }
+
     func runDeepLink(_ link: ExtensionDeepLink) {
         guard settings.extensionsEnabled else {
             core.showMessage(
@@ -97,7 +109,7 @@ final class ExtensionCoordinator {
         }
         run(
             owner, command: command, arguments: link.arguments, fallbackText: link.fallbackText,
-            launchType: link.launchType)
+            launchType: link.launchType, launchContext: link.launchContext)
     }
 
     // MARK: - Managing one extension from the launcher
@@ -184,7 +196,7 @@ final class ExtensionCoordinator {
     func runExtensionCommand(
         _ app: AppEntry, arguments: [String: String] = [:], fallbackText: String? = nil,
         launchType: ExtensionLaunchType = .userInitiated,
-        launchContext: [String: RenderValue] = [:]
+        launchContext: [String: RenderValue]? = nil
     ) {
         guard let (owner, command) = extensions.resolve(app) else { return }
         run(
@@ -195,7 +207,7 @@ final class ExtensionCoordinator {
     private func run(
         _ owner: InstalledExtension, command: ExtensionCommand, arguments: [String: String],
         fallbackText: String? = nil, launchType: ExtensionLaunchType = .userInitiated,
-        launchContext: [String: RenderValue] = [:]
+        launchContext: [String: RenderValue]? = nil
     ) {
         switch command.mode {
         case .view:

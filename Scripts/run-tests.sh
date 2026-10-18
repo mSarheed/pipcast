@@ -157,7 +157,7 @@ run app-installation-test  $L/SearchRelevance.swift $L/ScriptRomanization.swift 
 run launcher-file-test     $L/LauncherFileFormat.swift \
                            Pipcast/Features/Settings/Model/SettingsFileJSON.swift
 run launcher-settings-file-test \
-                           $L/LauncherFileFormat.swift $L/CommandID.swift $L/CommandCatalog.swift \
+                           $L/LauncherFileFormat.swift $L/CommandID.swift $L/CommandCatalog.swift $L/BuiltInDeepLink.swift \
                            Pipcast/Features/Launcher/Service/LauncherSettingsFile.swift \
                            Pipcast/Features/Launcher/Service/AliasStore.swift \
                            $L/SearchRelevance.swift \
@@ -371,7 +371,8 @@ run dictation-worker-test  Pipcast/Features/Dictation/Model/DictationModel.swift
                            Pipcast/Features/Dictation/Service/DictationModelStore.swift \
                            Pipcast/Features/Dictation/Service/DictationModelDownloader.swift \
                            Pipcast/Platform/ProcessExit.swift Pipcast/Platform/AppPaths.swift
-run hotkey-test            Pipcast/Features/HotKeys/Model/DoubleTapModifier.swift \
+run hotkey-test            Pipcast/Features/Launcher/Model/BuiltInDeepLink.swift \
+                           Pipcast/Features/HotKeys/Model/DoubleTapModifier.swift \
                            Pipcast/Features/HotKeys/Model/ModifierKey.swift \
                            Pipcast/Features/HotKeys/Model/ModifierKeyDetector.swift \
                            Pipcast/Features/HotKeys/Model/DoubleTapDetector.swift \
@@ -671,6 +672,15 @@ run ext-accessory-test     $E/Model/RenderNode.swift \
                            $E/Service/ExtensionStorage.swift
 run ext-sign-in-test       -parse-as-library $E/Service/ExtensionSignInSession.swift
 run slow ext-test          -parse-as-library \
+                           Pipcast/App/DeepLinkRoute.swift \
+                           Pipcast/Features/Quicklinks/Model/Quicklink.swift \
+                           Pipcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           $L/BuiltInDeepLink.swift $L/CommandID.swift \
+                           Pipcast/Features/HotKeys/Model/HotKeyAction.swift \
+                           Pipcast/Features/QuickActions/Model/BuiltInQuickAction.swift \
+                           Pipcast/Features/SystemActions/Model/SystemAction.swift \
+                           Pipcast/Features/WindowManagement/Model/WindowCommand.swift \
+                           Pipcast/Features/Snippets/Model/Snippet.swift \
                            Tests/ext-menu-bar-test.swift \
                            Tests/ext-fetch-test.swift \
                            $E/Model/ExtensionLaunchError.swift \

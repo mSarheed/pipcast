@@ -389,7 +389,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     func run(
         _ owner: InstalledExtension, command: ExtensionCommand, arguments: [String: String] = [:],
         fallbackText: String? = nil, launchType: ExtensionLaunchType = .userInitiated,
-        launchContext: [String: RenderValue] = [:]
+        launchContext: [String: RenderValue]? = nil
     ) async {
         guard isEnabled else { return }
         if command.mode == .menuBar || (command.mode == .noView && launchType == .background) {
@@ -464,7 +464,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     private func makeLaunchContext(
         owner: InstalledExtension, command: ExtensionCommand, arguments: [String: String],
         supportPath: URL, fallbackText: String? = nil, launchType: ExtensionLaunchType,
-        launchContext: [String: RenderValue] = [:]
+        launchContext: [String: RenderValue]? = nil
     ) -> ExtensionLaunchContext {
         let schemas = owner.manifest.preferences + command.preferences
         return ExtensionLaunchContext(
@@ -986,7 +986,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     /// `launchCommand` from a running command: same extension unless it names another.
     func launch(
         command name: String, extensionName: String?, arguments: [String: String],
-        fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]
+        fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]?
     ) throws {
         let owningName = extensionName ?? activeExtensionName
         guard let owningName, let owner = extensionNamed(owningName),
@@ -1007,6 +1007,6 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         }
         coordinator?.runExtensionCommand(
             entry(for: command, in: owner), arguments: link.arguments,
-            fallbackText: link.fallbackText, launchType: link.launchType)
+            fallbackText: link.fallbackText, launchType: link.launchType, launchContext: link.launchContext)
     }
 }

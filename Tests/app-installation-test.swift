@@ -27,6 +27,7 @@ struct AppInstallationTest {
             .appendingPathComponent("pipcast-installations-\(UUID())").resolvingSymlinksInPath()
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
+        testActivationTracking()
         try await testIndex(root)
         if ProcessInfo.processInfo.environment["PIPCAST_TEST_APP_LAUNCH"] == "1"
             || CommandLine.arguments.contains("--launch")
@@ -38,6 +39,24 @@ struct AppInstallationTest {
 
     private static func check(_ name: String, _ condition: Bool) {
         if !condition { failures += 1; print("FAIL: \(name)") }
+    }
+
+    private static func testActivationTracking() {
+        let monitor = RunningAppsMonitor()
+        let center = NSWorkspace.shared.notificationCenter
+        guard
+            let external = NSWorkspace.shared.runningApplications.first(where: {
+                $0.processIdentifier != NSRunningApplication.current.processIdentifier
+            })
+        else { return }
+        center.post(
+            name: NSWorkspace.didActivateApplicationNotification, object: NSWorkspace.shared,
+            userInfo: [NSWorkspace.applicationUserInfoKey: external])
+        check("activation records the external target", monitor.lastExternalApplication == external)
+        center.post(
+            name: NSWorkspace.didActivateApplicationNotification, object: NSWorkspace.shared,
+            userInfo: [NSWorkspace.applicationUserInfoKey: NSRunningApplication.current])
+        check("our activation preserves the external target", monitor.lastExternalApplication == external)
     }
 
     private static func makeApp(_ url: URL, id: String, version: String) throws {

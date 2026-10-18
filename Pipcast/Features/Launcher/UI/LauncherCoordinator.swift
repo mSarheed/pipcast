@@ -163,13 +163,17 @@ final class LauncherCoordinator {
     }
 
     /// The one funnel a built-in command runs through, from a palette row or its global shortcut.
-    func runCommand(_ id: CommandID) {
+    func runCommand(_ id: CommandID, openWindows: Bool = false) {
         switch id {
         case .quickAI:
             core.quickAICoordinator.show()
         case .aiChat:
             dismissPalette()
-            core.aiChatCoordinator.toggleWindow()
+            if openWindows {
+                core.aiChatCoordinator.showWindow(applyingOpenPolicy: true)
+            } else {
+                core.aiChatCoordinator.toggleWindow()
+            }
         case .fixGrammar:
             core.quickActionCoordinator.run(.fixGrammar)
         case .rewrite:
@@ -213,7 +217,11 @@ final class LauncherCoordinator {
             calendarCoordinator.createEvent()
         case .showNotes:
             dismissPalette()
-            notesCoordinator.toggle()
+            if openWindows {
+                notesCoordinator.show()
+            } else {
+                notesCoordinator.toggle()
+            }
         case .createNote:
             dismissPalette()
             notesCoordinator.createNote()
@@ -283,6 +291,27 @@ final class LauncherCoordinator {
     }
 
     // MARK: - Row actions
+
+    func deepLink(for app: AppEntry) -> URL? {
+        guard let scheme = Bundle.main.bundleIdentifier else { return nil }
+        switch app.kind {
+        case .command, .quickAction, .systemAction, .windowCommand:
+            return BuiltInDeepLink(entryID: app.id)?.url(scheme: scheme)
+        case .extensionCommand:
+            return extensionCoordinator.deepLink(for: app, scheme: scheme)
+        default:
+            return nil
+        }
+    }
+
+    func copyDeepLink(_ url: URL) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        guard Paster.copyPlainText(url.absoluteString) else {
+            core.showMessage(String(localized: "Couldn’t copy link"))
+            return
+        }
+        core.showMessage(String(localized: "Link copied"))
+    }
 
     func resetRanking(for app: AppEntry) {
         ranking.reset(itemKey: app.preferenceKey)

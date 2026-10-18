@@ -30,7 +30,7 @@ protocol ExtensionHostContext: AnyObject {
     func openWithPicker(path: String) async
     func launch(
         command: String, extensionName: String?, arguments: [String: String],
-        fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]
+        fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]?
     ) throws
     func launch(_ link: ExtensionDeepLink) throws
 }
@@ -502,7 +502,7 @@ final class ExtensionHostBridge: ExtensionHostAPI {
             try context?.launch(
                 command: name, extensionName: options["extensionName"]?.stringValue,
                 arguments: launchArguments, fallbackText: options["fallbackText"]?.stringValue,
-                launchType: launchType, launchContext: options["context"]?.objectValue ?? [:])
+                launchType: launchType, launchContext: options["context"]?.objectValue)
             return nil
 
         case "updateCommandMetadata":
@@ -525,7 +525,7 @@ final class ExtensionHostBridge: ExtensionHostAPI {
     private func open(target: String, application: String?) {
         let url = targetURL(for: target)
         // Extensions address Raycast by scheme; handing that to the workspace would launch Raycast.
-        if ExtensionDeepLink.claims(url) {
+        if ExtensionDeepLink.claims(url, scheme: Bundle.main.bundleIdentifier) {
             openRaycastURL(url)
             return
         }
@@ -546,12 +546,15 @@ final class ExtensionHostBridge: ExtensionHostAPI {
             completionHandler: nil)
     }
 
-    /// A command URL runs it when installed; every other Raycast URL just brings the palette back.
     private func openRaycastURL(_ url: URL) {
-        if let link = ExtensionDeepLink.parse(url: url), (try? context?.launch(link)) != nil {
-            return
+        switch DeepLinkRoute(url: url, scheme: Bundle.main.bundleIdentifier) {
+        case .launcher:
+            context?.reopenPalette()
+        case .extensionRoute(.command(let link)) where (try? context?.launch(link)) != nil:
+            break
+        default:
+            context?.showHUD(String(localized: "Unknown or invalid deeplink"))
         }
-        context?.reopenPalette()
     }
 
     private func applications(forPath path: String?) -> [[String: Any]] {

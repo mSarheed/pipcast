@@ -19,6 +19,7 @@ struct ExtensionDeepLink: Sendable, Equatable {
     let arguments: [String: String]
     let fallbackText: String?
     let launchType: ExtensionLaunchType
+    let launchContext: [String: RenderValue]?
 
     /// `owner/ext` first so a scoped manifest wins over a bare slug collision.
     var extensionCandidates: [String] {
@@ -32,27 +33,31 @@ struct ExtensionDeepLink: Sendable, Equatable {
         return manifestName.split(separator: "/").last?.lowercased() == extensionName.lowercased()
     }
 
-    static func claims(_ url: URL) -> Bool {
+    static func claims(_ url: URL, scheme ownScheme: String? = nil) -> Bool {
         guard let scheme = url.scheme?.lowercased() else { return false }
-        return ["raycast", "pipcast", "com.raycast", "raycastinternal"].contains(scheme)
+        return scheme == ownScheme?.lowercased()
+            || ["raycast", "pipcast", "com.raycast", "raycastinternal"].contains(scheme)
     }
 
-    static func parse(url: URL) -> ExtensionDeepLink? {
-        guard case .command(let link)? = route(url: url) else { return nil }
+    static func parse(url: URL, scheme: String? = nil) -> ExtensionDeepLink? {
+        guard case .command(let link)? = route(url: url, scheme: scheme) else { return nil }
         return link
     }
 
     /// Host and first path segment unify `raycast://extensions/…` and `com.raycast:/extensions/…`.
-    static func route(url: URL) -> Route? {
-        guard claims(url) else { return nil }
+    static func route(url: URL, scheme: String? = nil) -> Route? {
+        guard claims(url, scheme: scheme),
+            let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            parts.user == nil, parts.password == nil, parts.port == nil, parts.fragment == nil
+        else { return nil }
         var segments: [String] = []
         if let host = url.host, !host.isEmpty { segments.append(host) }
         segments += url.pathComponents.filter { $0 != "/" }
-        segments = segments.map { $0.removingPercentEncoding ?? $0 }
         guard segments.count >= 3, segments[0].lowercased() == "extensions" else { return nil }
         let body = Array(segments.dropFirst())
         guard body.count >= 2 else { return nil }
-        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        let items = parts.queryItems ?? []
+        guard items.filter({ $0.name.lowercased() == "context" }).count <= 1 else { return nil }
         if body.count == 2,
             items.contains(where: { $0.name.lowercased() == "source" && $0.value == "webstore" })
         {
@@ -79,10 +84,16 @@ struct ExtensionDeepLink: Sendable, Equatable {
         var arguments: [String: String] = [:]
         var fallbackText: String?
         var launchType = ExtensionLaunchType.userInitiated
+        var launchContext: [String: RenderValue]?
         for item in items {
             switch item.name.lowercased() {
             case "arguments":
                 if let raw = item.value { arguments = parseArguments(raw) }
+            case "context":
+                guard let raw = item.value, let data = raw.data(using: .utf8),
+                    let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                else { return nil }
+                launchContext = object.mapValues { RenderValue(json: $0, interpretingTags: false) }
             case "fallbacktext":
                 fallbackText = item.value
             case "launchtype", "launch_type":
@@ -94,7 +105,8 @@ struct ExtensionDeepLink: Sendable, Equatable {
         return .command(
             ExtensionDeepLink(
                 ownerOrAuthor: ownerOrAuthor, extensionName: extensionName, commandName: commandName,
-                arguments: arguments, fallbackText: fallbackText, launchType: launchType))
+                arguments: arguments, fallbackText: fallbackText, launchType: launchType,
+                launchContext: launchContext))
     }
 
     /// Raycast sends one URL-encoded JSON object; anything else means no arguments, not a failure.

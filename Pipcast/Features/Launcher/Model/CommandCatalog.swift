@@ -1,7 +1,6 @@
 import Foundation
 
 enum CommandCatalog {
-    /// Sorted by name for the `AppIndex` invariant; the URL is a placeholder.
     nonisolated static let all: [AppEntry] =
         CommandID.allCases
         .filter { !$0.isQueryDriven }
@@ -37,15 +36,12 @@ enum CommandCatalog {
         _ id: CommandID, url: URL? = nil, subtitle: String? = nil
     ) -> AppEntry {
         var entry = AppEntry(
-            id: id.rawValue, name: id.name, url: url ?? placeholderURL(id), bundleID: nil,
+            id: id.rawValue, name: id.name, url: url ?? BuiltInDeepLink.command(id).url(scheme: "pipcast")!,
+            bundleID: nil,
             kind: id.entryKind, settingsOwner: id.owner, subtitle: subtitle,
             alternateTitles: [id.englishName])
         entry.keywords = id.keywords
         return entry
-    }
-
-    nonisolated private static func placeholderURL(_ id: CommandID) -> URL {
-        URL(string: "pipcast://" + id.rawValue.replacingOccurrences(of: ":", with: "/"))!
     }
 }
 

@@ -53,7 +53,31 @@ struct DoubleTapDetectorTests {
         expect(fired == expected, "\(m) — fired \(fired.map(\.rawValue)), want \(expected.map(\.rawValue))")
     }
 
+    static func deepLinks() {
+        let scheme = "io.github.msarheed.pipcast.app.dev"
+        let ids =
+            CommandID.allCases.filter { !$0.isQueryDriven }.map(\.rawValue)
+            + SystemActionCatalog.all.map(\.entryID) + WindowCommandCatalog.all.map(\.entryID)
+        for id in ids {
+            let link = BuiltInDeepLink(entryID: id)!
+            let url = link.url(scheme: scheme)!
+            expect(BuiltInDeepLink(url: url, scheme: scheme) == link, "round trip: \(id)")
+            expect(BuiltInDeepLink(url: url, scheme: "pipcast") == nil, "channel: \(id)")
+        }
+        for path in [
+            "command/missing", "command/open-in-browser", "command/run-shell-command",
+            "command/open-camera/extra", "command/open-camera/", "command/open-camera?q=x",
+            "command/open-camera#fragment", "user@command/open-camera", "command:42/open-camera",
+            "command/", "window-command/missing", "system-action/missing", "command/open%2Fcamera"
+        ] {
+            expect(
+                BuiltInDeepLink(url: URL(string: scheme + "://" + path)!, scheme: scheme) == nil,
+                "reject malformed or unsupported route: \(path)")
+        }
+    }
+
     static func main() {
+        deepLinks()
         modifierGlyphs()
         commandActions()
         layoutCharacters()

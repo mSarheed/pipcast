@@ -828,7 +828,7 @@ struct ExtensionTests {
             let wrapped = Data(#"{"icon": \#(json)}"#.utf8)
             let props = (try? JSONSerialization.jsonObject(with: wrapped)) as? [String: Any]
             return ExtensionImage.actionIcon(
-                props?["icon"].map(RenderValue.init(json:)), assetsPath: assets, isDark: true,
+                props?["icon"].map { RenderValue(json: $0) }, assetsPath: assets, isDark: true,
                 isDestructive: isDestructive)
         }
 
@@ -876,6 +876,72 @@ struct ExtensionTests {
     }
 
     static func deepLinkChecks() {
+        let ownScheme = "org.example.channel"
+        for scheme in [ownScheme, "pipcast", "raycast", "com.raycast"] {
+            check(
+                "bare claimed scheme opens launcher",
+                DeepLinkRoute(url: URL(string: scheme + "://")!, scheme: ownScheme) == .launcher)
+        }
+        for scheme in [ownScheme, "pipcast"] {
+            check(
+                "built-in route resolves identity before extension routing",
+                DeepLinkRoute(
+                    url: URL(string: scheme + "://command/search-emoji")!, scheme: ownScheme)
+                    == .builtIn(.command(.searchEmoji)))
+        }
+        for raw in [
+            "https://", "org.example.channel://?query=1", "org.example.channel://#fragment",
+            "org.example.channel://command/missing", "raycast://command/search-emoji",
+            "org.example.other://command/search-emoji", "pipcast://user@command/search-emoji",
+            "pipcast://command:9/search-emoji", "pipcast://command/search-emoji?context={}"
+        ] {
+            check(
+                "invalid route rejects \(raw)",
+                DeepLinkRoute(url: URL(string: raw)!, scheme: ownScheme) == nil)
+        }
+        let extensionURL = URL(string: ownScheme + "://extensions/owner/demo/search")!
+        check(
+            "channel extension route passes through",
+            DeepLinkRoute(url: extensionURL, scheme: ownScheme)
+                == ExtensionDeepLink.route(url: extensionURL, scheme: ownScheme).map(
+                    DeepLinkRoute.extensionRoute))
+
+        var contextual = URLComponents(string: "pipcast://extensions/demo/search")!
+        let rawContext =
+            #"{"text":"a + b% & 日本語","nested":{"items":[true,3,null,{"$date":"literal","$fn":"data","extra":1}]}}"#
+        contextual.queryItems = [URLQueryItem(name: "context", value: rawContext)]
+        let contextualLink = ExtensionDeepLink.parse(url: contextual.url!)
+        let restored = contextualLink?.launchContext?.mapValues(\.jsonValue)
+        let expected = (try? JSONSerialization.jsonObject(with: Data(rawContext.utf8))) as? [String: Any]
+        check(
+            "deeplink context preserves nested JSON and tag-like keys",
+            restored.map { NSDictionary(dictionary: $0).isEqual(to: expected ?? [:]) } == true)
+        for invalid in ["not-json", "[]", "null", "42", ""] {
+            contextual.queryItems = [URLQueryItem(name: "context", value: invalid)]
+            check("invalid context rejects the link", ExtensionDeepLink.parse(url: contextual.url!) == nil)
+        }
+        contextual.queryItems = [URLQueryItem(name: "context", value: "{}")]
+        var emptyContext = launchContext()
+        emptyContext.launchContext = ExtensionDeepLink.parse(url: contextual.url!)?.launchContext
+        check(
+            "explicit empty context reaches launch props",
+            emptyContext.jsonString().contains("\"launchContext\":{}"))
+        check("absent context stays absent", !launchContext().jsonString().contains("\"launchContext\""))
+        contextual.queryItems = [
+            URLQueryItem(name: "context", value: "{}"),
+            URLQueryItem(name: "context", value: "{}")
+        ]
+        check("duplicate context rejects the link", ExtensionDeepLink.parse(url: contextual.url!) == nil)
+        contextual.queryItems = nil
+        for scheme in [
+            "io.github.msarheed.pipcast.app", "io.github.msarheed.pipcast.app.beta",
+            "io.github.msarheed.pipcast.app.dev", "org.example.custom-channel"
+        ] {
+            contextual.scheme = scheme
+            check(
+                "channel extension scheme parses",
+                ExtensionDeepLink.parse(url: contextual.url!, scheme: scheme) != nil)
+        }
         let canonical = ExtensionDeepLink.parse(
             url: URL(string: "raycast://extensions/linear/linear/create-issue")!)
         check(

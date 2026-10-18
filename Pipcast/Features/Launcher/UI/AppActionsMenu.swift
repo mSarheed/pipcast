@@ -18,6 +18,14 @@ enum AppActionsMenu {
         onHideFromSearch: @escaping () -> Void
     ) -> PopoverMenuContent {
         var items = leadingItems(app: app, searchQuery: searchQuery, core: core)
+        if let url = core.launcherCoordinator.deepLink(for: app) {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Copy Deeplink"), systemImage: "link"
+                ) {
+                    core.launcherCoordinator.copyDeepLink(url)
+                })
+        }
         // A query-driven row lives only for its query, so no preference could outlive it.
         let isPersistent = !CommandCatalog.isQueryDriven(app)
         if isPersistent {

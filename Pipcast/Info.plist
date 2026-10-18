@@ -31,6 +31,7 @@
 			<array>
 				<string>raycast</string>
 				<string>pipcast</string>
+				<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 				<string>com.raycast</string>
 			</array>
 		</dict>

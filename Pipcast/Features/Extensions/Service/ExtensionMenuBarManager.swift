@@ -31,7 +31,7 @@ final class ExtensionMenuBarManager: ExtensionRuntimeDelegate {
         let reference: ExtensionCommandRef
         var type: ExtensionLaunchType = .background
         var arguments: [String: String] = [:]
-        var context: [String: RenderValue] = [:]
+        var context: [String: RenderValue]?
         var scheduled = false
     }
 
@@ -92,7 +92,7 @@ final class ExtensionMenuBarManager: ExtensionRuntimeDelegate {
 
     func run(
         _ owner: InstalledExtension, command: ExtensionCommand, arguments: [String: String] = [:],
-        type: ExtensionLaunchType = .userInitiated, context: [String: RenderValue] = [:]
+        type: ExtensionLaunchType = .userInitiated, context: [String: RenderValue]? = nil
     ) {
         let reference = ExtensionCommandRef(extensionName: owner.manifest.name, commandName: command.name)
         if command.mode == .menuBar, type == .userInitiated, !metadata(reference).menuBarEnabled {

@@ -60,6 +60,7 @@ final class AppCore {
     let frequentEmoji = FrequentEmojiStore()
     let pinnedEmoji = PinnedEmojiStore()
     let runningApps = RunningAppsMonitor()
+    @ObservationIgnored private var deepLinkTask: Task<Void, Never>?
     let palette = PaletteState()
     let fileIndexer = FileIndexer()
     @ObservationIgnored private(set) lazy var fileSearch = FileSearchSession(index: fileIndexer.index)
@@ -423,11 +424,7 @@ final class AppCore {
             }
             hotKeys.displayName = { [weak self] action in self?.hotKeyDisplayName(for: action) }
             hotKeys.allowsAction = { [weak self] action in
-                guard let self, visibility.allowsHotKey(action) else { return false }
-                if action == .dictation { return settings.dictationEnabled }
-                // A disabled feature drops its commands from the launcher; their shortcuts go too.
-                guard case .command(let id) = action else { return true }
-                return appIndex.isCommandEnabled(id)
+                self?.allowsAction(action) ?? false
             }
             KeyShortcut.displayedHyperChord = { [settings] in
                 guard settings.hyperKey != .none else { return nil }
@@ -483,16 +480,92 @@ final class AppCore {
         paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
     }
 
+    private func allowsAction(_ action: HotKeyAction) -> Bool {
+        guard visibility.allowsHotKey(action) else { return false }
+        switch action {
+        case .command(let id): return appIndex.isCommandEnabled(id)
+        case .dictation: return settings.dictationEnabled
+        case .windowCommand: return settings.windowManagementEnabled
+        default: return true
+        }
+    }
+
     func handleOpenURL(_ url: URL) {
-        guard ExtensionDeepLink.claims(url) else { return }
-        guard let route = ExtensionDeepLink.route(url: url) else {
-            paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
+        guard ExtensionDeepLink.claims(url, scheme: Bundle.main.bundleIdentifier) else { return }
+        deepLinkTask?.cancel()
+        let windowTarget =
+            paletteCoordinator.isVisible
+            ? WindowTarget.behindPalette(
+                ownWindow: paletteCoordinator.previousOwnWindow, app: paletteCoordinator.targetApp)
+            : WindowTarget.current()
+        if case .own? = windowTarget {
+            dispatchOpenURL(url)
+            return
+        }
+        guard
+            NSWorkspace.shared.frontmostApplication?.processIdentifier
+                == NSRunningApplication.current.processIdentifier,
+            let target = runningApps.lastExternalApplication, !target.isTerminated
+        else {
+            dispatchOpenURL(url)
+            return
+        }
+        deepLinkTask = Task { [weak self] in
+            guard !Task.isCancelled else { return }
+            guard target.activate() else {
+                self?.showMessage(
+                    String(localized: "Couldn’t activate the target application"), tone: .danger)
+                return
+            }
+            for _ in 0..<50 {
+                guard !Task.isCancelled, !target.isTerminated else { return }
+                let frontmost = NSWorkspace.shared.frontmostApplication?.processIdentifier
+                if frontmost == target.processIdentifier {
+                    self?.dispatchOpenURL(url)
+                    return
+                }
+                guard frontmost == NSRunningApplication.current.processIdentifier else { return }
+                do { try await Task.sleep(for: .milliseconds(10)) } catch { return }
+            }
+            self?.showMessage(String(localized: "Couldn’t activate the target application"), tone: .danger)
+        }
+    }
+
+    private func dispatchOpenURL(_ url: URL) {
+        guard let route = DeepLinkRoute(url: url, scheme: Bundle.main.bundleIdentifier) else {
+            showMessage(String(localized: "Unknown or invalid deeplink"), tone: .danger)
             return
         }
         switch route {
-        case .command(let link):
+        case .launcher:
+            paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
+        case .builtIn(let link):
+            guard allowsAction(link.action) else {
+                showMessage(String(localized: "This command is disabled"), tone: .danger)
+                return
+            }
+            switch link {
+            case .command(.quit):
+                Task { [weak self] in
+                    guard let self,
+                        await confirm(
+                            title: CommandID.quit.name, message: nil, symbol: "power",
+                            confirmTitle: CommandID.quit.name), allowsAction(.command(.quit))
+                    else { return }
+                    launcherCoordinator.runCommand(.quit)
+                }
+            case .command(let command):
+                if paletteCoordinator.isVisible {
+                    paletteCoordinator.hidePalette(
+                        restoreFocus: paletteCoordinator.previousOwnWindow?.isVisible == true)
+                }
+                launcherCoordinator.runCommand(command, openWindows: true)
+            case .systemAction(let id): systemActionCoordinator.runSystemAction(id: id)
+            case .windowCommand(let id): windowCommandCoordinator.runWindowCommand(id: id)
+            }
+        case .extensionRoute(.command(let link)):
             extensionCoordinator.runDeepLink(link)
-        case .storeInstall(let install):
+        case .extensionRoute(.storeInstall(let install)):
             extensionCoordinator.showStoreInstall(install)
         }
     }
@@ -577,6 +650,7 @@ final class AppCore {
     }
 
     func prepareForTermination() {
+        deepLinkTask?.cancel()
         if settings.dictationEnabled { dictationCoordinator.prepareForTermination() }
         settingsFile?.flush()
         clipboardTextIndexer?.stop()

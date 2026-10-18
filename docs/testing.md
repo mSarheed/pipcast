@@ -146,7 +146,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `form-input-test` | Native field/textarea sizing, editing alignment, placeholders, Tab, Unicode selection, undo and code fonts |
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
 | `palette-menu-click-test` | `Palette/PalettePanel.swift` — complete click-away presses, subsequent control activation and native marked-text tracking |
-| `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `ModifierKey.swift`, `ModifierKeyDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HIDKeyMapping.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
+| `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `ModifierKey.swift`, `ModifierKeyDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HIDKeyMapping.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and command/deeplink→action mapping in `Launcher/Model/CommandID.swift` and `BuiltInDeepLink.swift` |
 | `hyper-key-test` | `HotKeys/Model/HIDKeyMapping.swift`, `HyperKeyConflictPolicy.swift`, `Service/KeyboardRemapper.swift` — mapping ownership, refused writes, crash recovery, device reconnection, Caps Lock and 🎤 remaps sharing a keyboard, conflict severities, Modifier Keys and Karabiner parsing |
 | `hotkey-dispatch-test` | `HotKeys/Service/HotKeyManager.swift` — Secure Input side isolation, shared Control registrations, press/release routing, recording and cancellation; isolated preferences and simulated Carbon registration |
 | `dictation-test` | `Dictation/Model/DictationModel.swift`, `DictationTextFormatter.swift` — model paths and text formatting |
@@ -180,7 +180,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `ext-refresh-test` | `Extensions/Model/ExtensionRefreshPolicy.swift` — interval parsing, due dates, backoff, subtitle fallback, indicator state, Refresh Now refusals |
 | `ext-version-test` | `Extensions/Service/ExtensionVersionStore.swift` — what an update check reports, adopts and forgets |
 | `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` — round-trip, failure runs, uninstall |
-| `ext-test` | the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
+| `ext-test` | `App/DeepLinkRoute` ordering and validation, extension context, the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
 | `ext-sign-in-test` | `Extensions/Service/ExtensionSignInSession.swift` — cancellation without a browser callback, late callback isolation, retry, refused starts and pre-cancelled runs |
 | `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
 | `ext-tab-test` | `Extensions/UI/ExtensionTabKeys.swift` — native back-tab, Form-only normalization and repeat swallowing, modifiers, window ownership, IME and teardown |
@@ -1025,6 +1025,22 @@ Opt into installed English spelling service checks with
 - Every command under Settings ▸ Extensions has Add Alias, and Record Hotkey when the mode is
   supported; an alias set there finds the command from its start and shows the chip
 - Hiding the extension from the launcher, or turning off Show in launcher, dims its alias fields
+
+### Command deeplinks
+
+- Copy Deeplink in a built-in or installed extension's launcher actions copies the current channel's
+  bundle-identifier scheme without executing the command; applications and query-driven rows omit it.
+- With Pipcast's windows closed, open Clipboard History, Emoji, Camera and a window command from an
+  external app. The existing feature gates, permissions and confirmations still apply. Paste returns
+  to that app; window commands act on its window. Repeat a screen link while it is open: it stays open.
+- Leave Pipcast Settings open behind an external app and deliver Clipboard History or a window
+  command using `open -g`: the external app remains the target. With an activating link, a Pipcast
+  window that macOS restores to key becomes the target instead. A visible palette retains its
+  recorded target, and a genuinely focused Pipcast panel remains a valid target.
+- A bare channel URL opens the launcher; unknown commands and malformed links show a HUD. Quit asks
+  through Pipcast's dialog, and cancelling it leaves Pipcast running.
+- An extension link's URL-encoded JSON `context` reaches `launchContext`, including nested values and
+  an explicit empty object. Malformed or duplicate context rejects the link without running a command.
 
 ### File Search folder navigation
 

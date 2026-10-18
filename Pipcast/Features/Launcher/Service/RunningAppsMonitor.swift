@@ -3,6 +3,8 @@ import AppKit
 @MainActor
 @Observable
 final class RunningAppsMonitor {
+    @ObservationIgnored private(set) var lastExternalApplication: NSRunningApplication?
+    @ObservationIgnored private var activationObserver: NotificationCenter.ObservationToken?
     private(set) var runningBundleIDs: Set<String> = []
     private var runningAppPaths: Set<String> = []
     @ObservationIgnored private var observers: [NotificationToken] = []
@@ -10,6 +12,12 @@ final class RunningAppsMonitor {
     init() {
         refresh()
         let center = NSWorkspace.shared.notificationCenter
+        recordActivation(NSWorkspace.shared.frontmostApplication)
+        activationObserver = center.addObserver(
+            of: NSWorkspace.shared, for: .didActivateApplication
+        ) { [weak self] message in
+            self?.recordActivation(message.application)
+        }
         for name in [
             NSWorkspace.didLaunchApplicationNotification,
             NSWorkspace.didTerminateApplicationNotification
@@ -19,6 +27,16 @@ final class RunningAppsMonitor {
             }
             observers.append(NotificationToken(token, center: center))
         }
+    }
+
+    deinit {
+        if let activationObserver { NSWorkspace.shared.notificationCenter.removeObserver(activationObserver) }
+    }
+
+    private func recordActivation(_ application: NSRunningApplication?) {
+        guard let application, application.processIdentifier != NSRunningApplication.current.processIdentifier
+        else { return }
+        lastExternalApplication = application
     }
 
     func isRunning(_ app: AppEntry) -> Bool {

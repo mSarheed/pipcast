@@ -53,7 +53,7 @@ final class ExtensionMenuBarHost: ExtensionHostContext {
 
     func launch(
         command: String, extensionName: String?, arguments: [String: String],
-        fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]
+        fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]?
     ) throws {
         try manager?.launch(
             command: command, extensionName: extensionName ?? owner.manifest.name,

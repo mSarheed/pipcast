@@ -92,10 +92,10 @@ enum RenderValue: Sendable, Hashable {
 
     /// How host-call arguments cross from the JS queue to the main actor as `Sendable`.
     static func arguments(from json: String) -> [RenderValue] {
-        ExtensionRuntime.jsonArray(from: json).map(RenderValue.init(json:))
+        ExtensionRuntime.jsonArray(from: json).map { RenderValue(json: $0) }
     }
 
-    init(json: Any) {
+    init(json: Any, interpretingTags: Bool = true) {
         switch json {
         case let value as String:
             self = .string(value)
@@ -107,16 +107,16 @@ enum RenderValue: Sendable, Hashable {
                 self = .number(value.doubleValue)
             }
         case let value as [Any]:
-            self = .array(value.map(RenderValue.init(json:)))
+            self = .array(value.map { RenderValue(json: $0, interpretingTags: interpretingTags) })
         case let value as [String: Any]:
-            if let handler = value["$fn"] as? String {
+            if interpretingTags, let handler = value["$fn"] as? String {
                 self = .handler(handler)
-            } else if let iso = value["$date"] as? String {
+            } else if interpretingTags, let iso = value["$date"] as? String {
                 self = .date(RenderValue.parseDate(iso) ?? Date())
-            } else if let node = RenderNode(json: value), node.isElement {
+            } else if interpretingTags, let node = RenderNode(json: value), node.isElement {
                 self = .node(node)
             } else {
-                self = .object(value.mapValues(RenderValue.init(json:)))
+                self = .object(value.mapValues { RenderValue(json: $0, interpretingTags: interpretingTags) })
             }
         default:
             self = .null
@@ -166,7 +166,7 @@ struct RenderNode: Sendable, Hashable, Identifiable {
         else { return nil }
         self.init(
             id: id, type: type,
-            props: rawProps.mapValues(RenderValue.init(json:)),
+            props: rawProps.mapValues { RenderValue(json: $0) },
             children: rawChildren.compactMap { ($0 as? [String: Any]).flatMap(RenderNode.init(json:)) })
     }
 

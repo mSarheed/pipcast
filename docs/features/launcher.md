@@ -55,6 +55,53 @@ reports notification-dependent checks as skipped when the session cannot deliver
 - **`Model/SearchScopes.swift` and `Model/LauncherRankingStore.swift` are pure too** — the ranking store
   takes its clock via `now` and its path via `fileURL`, for `scopes-test` and `ranking-test`.
 
+## Deeplinks
+
+Every non-query-driven built-in command has a stable URL derived from its existing entry ID:
+replace the identity's colon with a slash, under the receiving app's bundle-identifier scheme.
+For example, `command:open-camera` becomes
+`io.github.msarheed.pipcast.app://command/open-camera`. Other examples are
+`…://command/clipboard-history`, `…://command/search-emoji`,
+`…://system-action/lock-screen` and `…://window-command/left-half`.
+The catalogs remain the only command lists; titles and translations never affect URLs.
+
+Stable uses `io.github.msarheed.pipcast.app`, beta uses `io.github.msarheed.pipcast.app.beta`,
+and Debug uses `io.github.msarheed.pipcast.app.dev`. The existing `pipcast://` scheme also accepts
+built-in routes, but installed copies can compete for that alias. Use the canonical channel scheme
+when targeting a particular build, for example:
+
+```sh
+open 'io.github.msarheed.pipcast.app.dev://command/search-emoji'
+```
+
+**Copy Deeplink** in the launcher's ⌘K menu copies the selected built-in or installed extension
+command's channel-specific URL without running it. Query-driven commands, applications and user-created
+commands without a supported route do not offer it. Unlisted built-in commands remain addressable;
+disabled categories and features retain their existing gates, permissions and confirmations.
+Unknown commands, malformed links and disabled built-in commands report through Pipcast's HUD.
+Built-in routes accept exactly one path component, with no query, fragment, credentials or port.
+A bare channel URL or `pipcast://` opens the launcher. Quit asks for confirmation through Pipcast's
+own dialog. Other commands keep their existing permission and confirmation paths. Repeated links open the
+screen again; they do not toggle it closed.
+When opening a link brings Pipcast forward, macOS can restore its last key window before delivery.
+If that leaves a movable Pipcast window with focus, commands use it as their window/paste target;
+this can be a window that was behind another app before the link opened. When the palette is already
+visible, its recorded target is retained. Otherwise, dispatch reactivates the last external application
+recorded by the running-app monitor before commands capture their target.
+
+For scripts targeting another app's window or a paste, use `open -g` to deliver the link without
+activating Pipcast. Leader Key also delivers links without activation. Commands then capture the
+current target, including a focused Pipcast panel if one is in use:
+
+```sh
+open -g 'io.github.msarheed.pipcast.app.dev://window-command/left-half'
+```
+
+A newer link cancels an activation still in flight, and a user switching elsewhere abandons it.
+A pending Quit dialog keeps its answer even if another link arrives.
+`App/DeepLinkRoute` resolves bare, built-in and extension routes for both URL entry points; the
+extension bridge accepts only the launcher and extension commands.
+
 ## Search scopes
 
 `SearchScopes` (`Launcher/Model/SearchScopes.swift`) owns the paths; the list is user-editable in
