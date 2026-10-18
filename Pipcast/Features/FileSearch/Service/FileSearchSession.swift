@@ -90,6 +90,10 @@ final class FileSearchSession {
         recentTask = Task { [weak self] in await self?.run(.recent) }
     }
 
+    func waitUntilRecentRefreshed() async {
+        await recentTask?.value
+    }
+
     func cancel() {
         guard request != nil else { return }
         revision &+= 1

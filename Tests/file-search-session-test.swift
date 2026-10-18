@@ -38,7 +38,7 @@ actor FileSearchProbe {
     }
 
     func waitUntilPaused() async -> Bool {
-        let deadline = ContinuousClock.now.advanced(by: .seconds(1))
+        let deadline = ContinuousClock.now.advanced(by: FileSearchSessionTests.deadline)
         while pausedContinuation == nil, ContinuousClock.now < deadline {
             try? await Task.sleep(for: .milliseconds(5))
         }
@@ -47,6 +47,13 @@ actor FileSearchProbe {
             return false
         }
         return true
+    }
+
+    func waitUntilIdle() async {
+        let deadline = ContinuousClock.now.advanced(by: FileSearchSessionTests.deadline)
+        while active > 0, ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
     }
 
     func resumePausedSearch() {
@@ -59,6 +66,8 @@ actor FileSearchProbe {
 @main
 @MainActor
 struct FileSearchSessionTests {
+    /// Generous, since only a hung operation should reach it, however loaded the runner is.
+    nonisolated static let deadline: Duration = .seconds(10)
     nonisolated(unsafe) static var failures = 0
     static func expect(_ condition: @autoclosure () -> Bool, _ message: String) {
         if !condition() {
@@ -117,7 +126,7 @@ struct FileSearchSessionTests {
         guard await probe.waitUntilPaused() else { return expect(false, "recent refresh starts") }
         session.cancel()
         await probe.resumePausedSearch()
-        try? await Task.sleep(for: .milliseconds(20))
+        await session.waitUntilRecentRefreshed()
         session.search("")
         expect(!session.results.isEmpty, "launcher cancellation preserves an index-requested recent refresh")
         let snapshot = await probe.snapshot()
@@ -218,7 +227,7 @@ struct FileSearchSessionTests {
         session.search("queued")
         session.cancel()
         await probe.resumePausedSearch()
-        try? await Task.sleep(for: .milliseconds(60))
+        await probe.waitUntilIdle()
 
         let snapshot = await probe.snapshot()
         expect(snapshot.calls == ["running"], "cancelling drops the queued search")
@@ -263,7 +272,7 @@ struct FileSearchSessionTests {
         let probe = FileSearchProbe()
         let session = makeSession(probe: probe)
         session.refresh()
-        try? await Task.sleep(for: .milliseconds(150))
+        await session.waitUntilRecentRefreshed()
         session.search("")
         expect(
             session.state == .ready && !session.results.isEmpty,
@@ -284,7 +293,7 @@ struct FileSearchSessionTests {
         session.search("report")
         await waitUntil { session.state == .ready }
         session.refreshRecent()
-        try? await Task.sleep(for: .milliseconds(150))
+        await session.waitUntilRecentRefreshed()
         expect(session.results.first?.name == "report", "a Recent refresh leaves the open list alone")
         session.cancel()
         session.search("")
@@ -328,7 +337,7 @@ struct FileSearchSessionTests {
     }
 
     static func waitUntil(_ condition: @escaping @MainActor () -> Bool) async {
-        let deadline = ContinuousClock.now.advanced(by: .seconds(1))
+        let deadline = ContinuousClock.now.advanced(by: deadline)
         while !condition(), ContinuousClock.now < deadline {
             try? await Task.sleep(for: .milliseconds(5))
         }
