@@ -337,7 +337,7 @@ struct FileSearchSessionTests {
     }
 
     static func waitUntil(_ condition: @escaping @MainActor () -> Bool) async {
-        let deadline = ContinuousClock.now.advanced(by: deadline)
+        let deadline = ContinuousClock.now.advanced(by: Self.deadline)
         while !condition(), ContinuousClock.now < deadline {
             try? await Task.sleep(for: .milliseconds(5))
         }
