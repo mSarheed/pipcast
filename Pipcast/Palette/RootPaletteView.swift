@@ -370,8 +370,7 @@ struct RootPaletteView: View {
                     value: core.isDimmingPaletteForDialog
                 )
                 .clipShape(RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous)),
-                resolution: resolution),
-            selection: sel)
+                resolution: resolution))
     }
 
     /// The emoji grid's observers, split out so `stateObservers` stays within type-checker reach.
@@ -520,9 +519,7 @@ struct RootPaletteView: View {
 
     /// Split from `body`: one chain of this length is past what the type-checker will infer.
     @ViewBuilder
-    private func keyHandlers(
-        _ content: some View, selection sel: Int
-    ) -> some View {
+    private func keyHandlers(_ content: some View) -> some View {
         content
             // Repeat included: holding the key keeps stepping, as the bare-key form does.
             .onKeyPress(keys: [.downArrow], phases: [.down, .repeat]) { press in
@@ -631,7 +628,7 @@ struct RootPaletteView: View {
                     screen: {
                         guard !menuOpen, vm.mode == .extensionCommand else { return nil }
                         return screen as? ExtensionCommandScreen
-                    }, selection: sel)
+                    }, selection: { selection(in: $0) })
             )
             .onKeyPress(phases: .down) { press in
                 guard press.modifiers.contains(.command),

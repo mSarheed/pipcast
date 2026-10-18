@@ -4,7 +4,7 @@ import SwiftUI
 struct ExtensionShortcutKeys: ViewModifier {
     /// Resolved per press: SwiftUI keeps stale key handlers, and a captured screen keeps its rows.
     let screen: () -> ExtensionCommandScreen?
-    let selection: Int
+    let selection: (ExtensionCommandScreen) -> Int
 
     func body(content: Content) -> some View {
         content.onKeyPress(phases: .down) { press in
@@ -12,7 +12,7 @@ struct ExtensionShortcutKeys: ViewModifier {
             return screen.dispatchShortcut(
                 key: ASCIIKeyboardLayout.keyEquivalent(fallingBackTo: press.key),
                 modifiers: press.modifiers,
-                at: selection) ? .handled : .ignored
+                at: selection(screen)) ? .handled : .ignored
         }
     }
 }
