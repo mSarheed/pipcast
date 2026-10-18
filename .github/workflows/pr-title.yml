@@ -1,0 +1,23 @@
+name: PR title
+# The squash-merge subject is the PR title, and the changelog is generated from those subjects.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+permissions: {}
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check the title follows Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+          if printf '%s' "$TITLE" | grep -Eq "^($types)(\([a-z0-9._/-]+\))?!?: [^ ].*[^.]$"; then
+            exit 0
+          fi
+          echo "::error::PR title must follow Conventional Commits, e.g. 'fix(extensions): fall back after a missing executable'."
+          echo "Allowed types: ${types//|/, }. Lowercase, imperative, no trailing period."
+          echo "Edit the title and this check re-runs. See AGENTS.md § Conventions."
+          exit 1

@@ -13,7 +13,7 @@ Check existing [issues](https://github.com/mSarheed/pipcast/issues) and
 - **Design.** New UI must look like it shipped with the app — spacing, type, radii and motion from the
   existing tokens ([`docs/ui.md`](docs/ui.md)). If you genuinely need a new one, justify it in the PR.
 - **No bloat.** Pipcast stays small on purpose — quality over quantity. A clean patch still gets
-  declined if the feature isn't worth its weight, so open an issue and settle that before you build.
+  declined if the feature isn't worth its weight. Unsure whether something fits? Ask in an issue.
 - **Never break the Non-negotiables** in [`AGENTS.md`](AGENTS.md).
 
 ## Setup
@@ -27,18 +27,15 @@ Check existing [issues](https://github.com/mSarheed/pipcast/issues) and
 
 ## Before submitting
 
-- **A linked issue marked `approved`.** Put `Closes #<number>` in the PR description. A PR that
-  doesn't close an `approved` issue is closed automatically the moment it opens. It reopens on its
-  own when the linked issue is approved; if the link was missing, fix it and reopen the PR.
-  Anyone may open the PR, not only the issue's author. Docs-only changes (`*.md`, `docs/`) skip
-  the check.
+- **The PR title follows [Conventional Commits](https://www.conventionalcommits.org/)**, e.g.
+  `fix(launcher): keep the selection after a refresh`. PRs are squash-merged, so the title becomes
+  the commit on `main` and the line in the changelog. A check fails until it matches.
 - The whole bar in [`docs/testing.md`](docs/testing.md#definition-of-done) passes — harnesses, lint,
-  purity, a clean build. Engine changes come with new cases. There is no CI, so **run
-  `./Scripts/run-tests.sh`, `./Scripts/lint.sh` and a build locally**. CodeRabbit reviews every PR
-  and flags lint violations on the diff, but it does not run the harnesses or build the app.
-- Leak-tested and memory-measured. Numbers in the PR.
+  purity, a clean build. Engine changes come with new cases. CI runs all four on every PR; run them
+  locally first so it stays green. CodeRabbit reviews the Swift diff on top of that.
+- Runtime changes are leak-tested and memory-measured. Numbers in the PR.
 - You actually used the app, on your path and the ones next to it.
-- Rebased on `main`, squashed into logical commits.
+- Rebased on `main`.
 - Anything in [`docs/`](docs/) your change makes wrong is fixed.
 - **Read your own diff top to bottom before you open the PR.** Most review comments are things the
   author would have caught on a second pass.
@@ -48,12 +45,12 @@ Check existing [issues](https://github.com/mSarheed/pipcast/issues) and
 
 ## Pull requests
 
-- Fill in the [PR template](.github/PULL_REQUEST_TEMPLATE.md) — every section, or say why it doesn't
-  apply.
+- Fill in the [PR template](.github/PULL_REQUEST_TEMPLATE.md); delete the sections that don't apply.
+- If it fixes or implements an issue, put `Closes #<number>` in the description. No issue is needed
+  to open a PR.
 - **Visual change → side-by-side before/after video. Mandatory.** Same window size, same actions.
   An "after"-only clip doesn't count; stills don't substitute.
 - Non-visual → say what you tested.
-- Include the memory numbers, idle and peak.
 - Flag anything surprising, and any tradeoff you made on purpose.
 
 ## Code style
@@ -64,9 +61,8 @@ are all there, and they apply to a human contributor exactly as they do to an ag
 concurrency and the performance budgets. [`docs/ui.md`](docs/ui.md) before any new view or restyle. Look before "fixing" something that looks
 wrong — it may be deliberate.
 
-One thing that is only about contributing, and so is not in those docs:
-
-- Behaviour you didn't mean to change, didn't change. Say so explicitly in the PR if it did.
+One thing that is only about contributing, and so is not in those docs: behaviour you didn't mean
+to change, didn't change. Say so explicitly in the PR if it did.
 
 ## Bugs
 

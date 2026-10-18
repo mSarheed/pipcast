@@ -89,8 +89,7 @@ The full docs index is at [docs/README.md](docs/README.md). AI agents should sta
 ## Contribute
 
 Report bugs and ideas in [Issues](https://github.com/mSarheed/pipcast/issues). Before opening a
-PR, read [CONTRIBUTING.md](CONTRIBUTING.md). Features need an approved issue first. Pipcast has
-no donations and no paid features.
+PR, read [CONTRIBUTING.md](CONTRIBUTING.md). Pipcast has no donations and no paid features.
 
 ## License
 

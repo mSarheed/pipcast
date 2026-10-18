@@ -133,7 +133,8 @@ feature's doc, under its own `## Invariants`.
 - **Debug builds are their own channel** — `Pipcast Dev.app` / `io.github.msarheed.pipcast.app.dev` — so a local run
   never shares prefs, caches, TCC grants or the login item with an installed copy. Anything newly
   persisted must stay keyed by `Bundle.main.bundleIdentifier`.
-- **Commit subjects, PR titles and squash merges follow [Conventional Commits](https://www.conventionalcommits.org/)**:
+- **Commit subjects, PR titles and squash merges follow [Conventional Commits](https://www.conventionalcommits.org/)**
+  (a CI check enforces the PR title):
   `<type>[optional scope]: <description>`, e.g. `fix(extensions): fall back after a missing executable`.
   Types are `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` and
   `revert`; the scope is the feature or area touched. Keep the description lowercase and imperative,

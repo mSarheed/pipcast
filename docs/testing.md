@@ -15,9 +15,9 @@ The mechanical bar, in one place so it cannot drift. All five pass before a chan
 | A clean build | `xcodebuild … -configuration Debug CODE_SIGNING_ALLOWED=NO`, zero **new** warnings |
 | Docs still true | any doc your change made wrong, fixed in the same commit |
 
-There is no CI: every item is on you, run locally. CodeRabbit reviews each PR, but it is a reviewer,
-not a gate. Each is expanded below; the manual sweep at the end of this file is the sixth, judged by
-what you touched.
+CI (`.github/workflows/ci.yml`) runs the first four on every PR and push to `main`; run them locally
+first anyway. CodeRabbit reviews each PR on top. Each is expanded below; the manual sweep at the end
+of this file is the sixth, judged by what you touched.
 
 ## The harnesses
 
@@ -251,7 +251,7 @@ by the release workflow with its configured credentials.
 
 ## Build and size checks
 
-A clean build is part of the bar; nothing builds the app for you, so this is on you.
+A clean build is part of the bar. CI builds Debug only, so the Release build is on you.
 
 ```sh
 xcodegen generate                 # only after editing project.yml

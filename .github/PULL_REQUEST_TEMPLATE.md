@@ -1,34 +1,22 @@
-## Related issue
-
-Closes #
+<!-- Title: Conventional Commits, e.g. `fix(launcher): keep the selection after a refresh`.
+     It becomes the squash commit and the changelog line. -->
 
 ## What changed
 
 <!-- What it does and how it works. Call out anything non-obvious in the diff. -->
 
-## Memory footprint
+Closes #
 
-<!-- Required. Under 100 MB always, and back to baseline after the palette closes. -->
+## Testing
 
-| Step                    | Memory |
-| ----------------------- | ------ |
-| Idle after launch       |        |
-| Palette open            |        |
-| Feature in use (peak)   |        |
-| Palette closed, settled |        |
+<!-- Which Tests/ harnesses you ran or added, and what you exercised by hand in the app. -->
 
-Leak-tested:
+## Memory
+
+<!-- Runtime changes only: idle and peak, and memory back to baseline after the palette closes.
+     Delete for docs, tooling or tests-only changes. -->
 
 ## Demo
 
-<!-- Visual change → side-by-side before/after video. Same window size, same actions.
-     "After"-only clips and stills don't count. Delete this section if nothing visual changed. -->
-
-## Drawbacks
-
-<!-- Tradeoffs made on purpose, and anything you're unsure about. "None" is a valid answer. -->
-
-## Tests & validation
-
-<!-- Which Tests/ harnesses you ran and any cases you added, plus what you exercised by hand.
-     Commands: docs/development.md § Tests. -->
+<!-- Visual changes only: side-by-side before/after video, same window size, same actions.
+     Delete if nothing visual changed. -->
