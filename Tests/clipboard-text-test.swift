@@ -9,6 +9,8 @@ import PDFKit
 struct ClipboardTextTests {
     static var failures = 0
     static var passes = 0
+    /// Background work can starve for minutes behind a CI runner's parallel compiles.
+    static let testPriority: TaskPriority = .userInitiated
 
     static func main() async throws {
         let directory = FileManager.default.temporaryDirectory
@@ -192,7 +194,7 @@ struct ClipboardTextTests {
         var idle = false
         var calls = 0
         let indexer = ClipboardTextIndexer(
-            store: store, delay: .milliseconds(10), canRun: { idle },
+            store: store, delay: .milliseconds(10), priority: testPriority, canRun: { idle },
             extract: { _ in
                 await MainActor.run { calls += 1 }
                 try await Task.sleep(for: .milliseconds(80))
@@ -238,7 +240,8 @@ struct ClipboardTextTests {
         var calls = 0
         var failing = true
         let indexer = ClipboardTextIndexer(
-            store: store, delay: .milliseconds(10), retryDelay: 0.05, canRun: { true },
+            store: store, delay: .milliseconds(10), retryDelay: 0.05, priority: testPriority,
+            canRun: { true },
             extract: { _ in
                 let shouldFail = await MainActor.run {
                     calls += 1; return failing

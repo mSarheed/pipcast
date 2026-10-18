@@ -8,6 +8,7 @@ final class ClipboardTextIndexer {
     private let extract: @Sendable (ClipboardItem) async throws -> String
     private let retryDelay: TimeInterval
     private let delay: Duration
+    private let priority: TaskPriority
     private var task: Task<Void, Never>?
     private var isEnabled = false
     private var waitingForRetry = false
@@ -17,12 +18,13 @@ final class ClipboardTextIndexer {
 
     init(
         store: ClipboardStore, delay: Duration = .milliseconds(250), retryDelay: TimeInterval = 30,
-        canRun: @escaping () -> Bool,
+        priority: TaskPriority = .background, canRun: @escaping () -> Bool,
         extract: @escaping @Sendable (ClipboardItem) async throws -> String = ClipboardTextWorker.extract
     ) {
         self.store = store
         self.delay = delay
         self.retryDelay = retryDelay
+        self.priority = priority
         self.canRun = canRun
         self.extract = extract
     }
@@ -57,7 +59,7 @@ final class ClipboardTextIndexer {
         }
         guard task == nil else { return }
         let delay = delay
-        task = Task(priority: .background) { [weak self] in
+        task = Task(priority: priority) { [weak self] in
             defer {
                 self?.task = nil
                 self?.waitingForRetry = false
@@ -81,7 +83,7 @@ final class ClipboardTextIndexer {
                 }
                 let generation = self.store.extractionGeneration
                 let extract = self.extract
-                let worker = Task.detached(priority: .background) { try await extract(item) }
+                let worker = Task.detached(priority: self.priority) { try await extract(item) }
                 do {
                     let text = try await withTaskCancellationHandler {
                         try await worker.value
