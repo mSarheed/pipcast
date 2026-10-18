@@ -55,7 +55,7 @@ system-wide chord, and HIToolbox's TIS APIs remain the public input-source mecha
 | add or restyle any view                                     | [ui.md](docs/ui.md)                                          |
 | touch one feature's internals                               | [features/](docs/features/) — each opens with its invariants |
 | package or ship a build                                     | [release.md](docs/release.md)                                |
-| open a pull request as an outside contributor               | [CONTRIBUTING.md](CONTRIBUTING.md#before-submitting)         |
+| open a pull request as an outside contributor               | [CONTRIBUTING.md](CONTRIBUTING.md)                           |
 
 ## Non-negotiables
 
