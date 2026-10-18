@@ -183,9 +183,10 @@ struct QuicklinkEditorView: View {
 
     private var iconMenu: some View {
         HStack(spacing: metrics.spacing.sm) {
-            SymbolImage(
-                name: editor.iconSymbol ?? QuicklinkDestination.detect(editor.link)?.defaultSymbol
+            QuicklinkGlyph(
+                symbol: editor.iconSymbol ?? QuicklinkDestination.detect(editor.link)?.defaultSymbol
                     ?? Quicklink.sfSymbol,
+                websiteIcon: editor.iconSymbol == nil ? automaticWebsiteIcon : nil,
                 size: metrics.scaled(Theme.Typography.menuSymbolSize))
             menuChevron(for: iconMenuFrame)
         }
@@ -212,10 +213,16 @@ struct QuicklinkEditorView: View {
         .accessibilityAction { showIconMenu() }
     }
 
+    /// Read, never fetched: typing a link must not send its host anywhere.
+    private var automaticWebsiteIcon: URL? { coordinator.websiteIcon(forLink: editor.link) }
+
     private func showIconMenu() {
+        let automaticIcon: PopoverMenuIcon =
+            automaticWebsiteIcon.flatMap { try? Data(contentsOf: $0) }
+            .map { .thumbnail(id: UUID(), data: $0) } ?? .symbol(Quicklink.sfSymbol)
         let items =
             [
-                PopoverMenuItem(title: String(localized: "Automatic"), systemImage: Quicklink.sfSymbol) {
+                PopoverMenuItem(title: String(localized: "Automatic"), icon: automaticIcon) {
                     editor.iconSymbol = nil
                 }
             ]

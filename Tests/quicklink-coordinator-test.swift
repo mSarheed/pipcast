@@ -22,6 +22,9 @@ struct QuicklinkCoordinatorTests {
         try editing()
         try await deleting()
         try revealing()
+        try await websiteIcons()
+        try await websiteIconRefresh()
+        try await websiteIconsInFlight()
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
     }
@@ -329,6 +332,164 @@ struct QuicklinkCoordinatorTests {
         expect(QuicklinkLauncher.opened.count == 1, "one destination opens")
     }
 
+    static func websiteIcons() async throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        let coordinator = fixture.coordinator
+        fixture.store.onChange = { _ in coordinator.applyQuicklinksPresence() }
+        coordinator.applyWebsiteIcons()
+        coordinator.addImportedQuicklinks([
+            Quicklink(name: "GitHub", link: "github.com/search?q={argument}")
+        ])
+        try await drain()
+        expect(fixture.google.requests.isEmpty, "off, quicklinks make no network request")
+        expect(coordinator.websiteIcon(for: fixture.link) == nil, "off, every icon stays automatic")
+
+        fixture.settings.quicklinkFetchesWebsiteIcons = true
+        coordinator.applyWebsiteIcons()
+        try await settle { fixture.websiteIcons.files.count == 2 }
+        expect(
+            fixture.google.requests.sorted() == ["example.com", "github.com"],
+            "turning it on fetches once per distinct web host")
+        expect(coordinator.websiteIcon(for: fixture.link) != nil, "a stored icon replaces the automatic one")
+        coordinator.applyWebsiteIcons()
+        try await drain()
+        expect(fixture.google.requests.count == 2, "re-applying an unchanged setting fetches nothing")
+
+        var chosen = fixture.link
+        chosen.iconSymbol = "star"
+        expect(coordinator.websiteIcon(for: chosen) == nil, "a chosen symbol wins over the website icon")
+
+        fixture.google.unknown = ["unknown.example"]
+        coordinator.addImportedQuicklinks([
+            Quicklink(name: "Unknown", link: "https://unknown.example/"),
+            Quicklink(name: "Templated host", link: "https://{argument}.example.org/x"),
+            Quicklink(name: "Deeplink", link: "spotify://track/1"),
+            Quicklink(name: "Folder", link: "~/Documents")
+        ])
+        try await settle { fixture.google.requests.count == 3 }
+        try await drain()
+        expect(fixture.google.requests.count == 3, "only the new web host is fetched")
+        expect(
+            fixture.websiteIcons.files["unknown.example"] == nil,
+            "a site Google doesn't know stores nothing")
+
+        coordinator.editQuicklink(nil)
+        coordinator.editor?.name = "Swift"
+        coordinator.editor?.link = "https://swift.org"
+        coordinator.saveQuicklink()
+        try await settle { fixture.websiteIcons.files["swift.org"] != nil }
+        expect(fixture.google.requests.last == "swift.org", "saving a new web host fetches it")
+
+        guard let github = fixture.store.quicklinks.first(where: { $0.name == "GitHub" }) else {
+            return expect(false, "the imported quicklink is stored")
+        }
+        await coordinator.deleteQuicklink(id: github.id)
+        expect(
+            fixture.websiteIcons.files["github.com"] == nil,
+            "deleting the last quicklink for a host removes its icon")
+
+        fixture.settings.quicklinkFetchesWebsiteIcons = false
+        coordinator.applyWebsiteIcons()
+        expect(
+            fixture.websiteIcons.files.isEmpty
+                && !FileManager.default.fileExists(atPath: fixture.iconFolder.path),
+            "turning it off removes every stored icon")
+        expect(coordinator.websiteIcon(for: fixture.link) == nil, "off brings the automatic icon back")
+    }
+
+    static func websiteIconRefresh() async throws {
+        let fixture = try Fixture(link: "https://unknown.example/")
+        defer { fixture.cleanUp() }
+        let coordinator = fixture.coordinator
+        fixture.settings.quicklinkFetchesWebsiteIcons = true
+        coordinator.applyWebsiteIcons()
+        expect(fixture.google.requests.isEmpty, "launch with the setting on fetches nothing")
+        guard let known = fixture.store.quicklinks.first(where: { $0.id != fixture.link.id }) else {
+            return expect(false, "the fixture holds a second quicklink")
+        }
+        coordinator.refreshWebsiteIcon(id: known.id)
+        try await settle { fixture.websiteIcons.files["example.com"] != nil }
+        let first = fixture.websiteIcons.files["example.com"]
+        coordinator.refreshWebsiteIcon(id: known.id)
+        try await settle { fixture.websiteIcons.files["example.com"] != first }
+        let second = fixture.websiteIcons.files["example.com"]
+        expect(
+            fixture.google.requests == ["example.com", "example.com"],
+            "refresh fetches a host again even when it is stored")
+        expect(
+            first != nil && second != nil && first != second
+                && !FileManager.default.fileExists(atPath: first?.path ?? ""),
+            "refresh replaces the stored icon under a new name")
+        expect(fixture.core.messages.isEmpty, "a successful refresh shows nothing")
+
+        fixture.google.unknown = ["unknown.example"]
+        expect(coordinator.canRefreshWebsiteIcon(fixture.link), "a web quicklink offers a refresh")
+        coordinator.refreshWebsiteIcon(id: fixture.link.id)
+        try await settle { !fixture.core.messages.isEmpty }
+        expect(fixture.core.messages == ["Couldn’t fetch website icon"], "a failed refresh is reported")
+        fixture.settings.quicklinkFetchesWebsiteIcons = false
+        expect(!coordinator.canRefreshWebsiteIcon(fixture.link), "off, no refresh is offered")
+    }
+
+    static func websiteIconsInFlight() async throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        let coordinator = fixture.coordinator
+        let google = fixture.google
+        fixture.store.onChange = { _ in coordinator.applyQuicklinksPresence() }
+        fixture.settings.quicklinkFetchesWebsiteIcons = true
+        coordinator.applyWebsiteIcons()
+
+        google.holding = true
+        coordinator.refreshWebsiteIcon(id: fixture.link.id)
+        try await settle { google.requests.count == 1 }
+        fixture.settings.quicklinkFetchesWebsiteIcons = false
+        coordinator.applyWebsiteIcons()
+        google.release()
+        try await drain()
+        expect(
+            fixture.websiteIcons.files.isEmpty
+                && !FileManager.default.fileExists(atPath: fixture.iconFolder.path),
+            "a fetch that outlives turning it off writes nothing")
+        expect(fixture.core.messages.isEmpty, "switching off mid-refresh is not reported as a failure")
+
+        google.holding = true
+        fixture.settings.quicklinkFetchesWebsiteIcons = true
+        coordinator.applyWebsiteIcons()
+        try await settle { google.requests.count == 2 }
+        fixture.settings.quicklinkFetchesWebsiteIcons = false
+        coordinator.applyWebsiteIcons()
+        fixture.settings.quicklinkFetchesWebsiteIcons = true
+        coordinator.applyWebsiteIcons()
+        try await settle { google.requests.count == 3 }
+        google.release()
+        try await settle { fixture.websiteIcons.files["example.com"] != nil }
+        let folder = fixture.iconFolder.path
+        let stored = (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? []
+        expect(stored.count == 1, "off then on keeps only the second fetch's icon")
+
+        google.holding = true
+        coordinator.refreshWebsiteIcon(id: fixture.link.id)
+        try await settle { google.requests.count == 4 }
+        for quicklink in fixture.store.quicklinks {
+            await coordinator.deleteQuicklink(id: quicklink.id)
+        }
+        google.release()
+        try await drain()
+        expect(
+            fixture.websiteIcons.files["example.com"] == nil,
+            "a fetch for a host no quicklink uses any more writes nothing")
+    }
+
+    /// Polls rather than sleeping a fixed time, so a loaded runner can't outrun the fetch.
+    static func settle(until done: @MainActor () -> Bool) async throws {
+        for _ in 0..<400 where !done() { try await Task.sleep(for: .milliseconds(5)) }
+    }
+
+    /// Asserting that nothing happens can only wait; the fake answers within a few main-actor turns.
+    static func drain() async throws { try await Task.sleep(for: .milliseconds(20)) }
+
     static func expect(_ condition: Bool, _ message: String) {
         if condition {
             passes += 1
@@ -349,6 +510,9 @@ struct QuicklinkCoordinatorTests {
         let core = AppCore()
         let palette: PaletteCoordinator
         let coordinator: QuicklinkCoordinator
+        let google = FakeFaviconService()
+        let websiteIcons: QuicklinkFaviconStore
+        var iconFolder: URL { directory.appendingPathComponent("Icons") }
 
         init(link: String = "https://example.com/?q={selection}") throws {
             QuicklinkLauncher.opened = []
@@ -357,8 +521,13 @@ struct QuicklinkCoordinatorTests {
             self.link = try store.add(
                 Quicklink(name: "Wikipedia", link: link, openWithBundleID: "com.example.browser"))
             palette = PaletteCoordinator(window: window, state: core.palette)
+            let google = google
+            websiteIcons = QuicklinkFaviconStore(
+                folder: directory.appendingPathComponent("Icons"),
+                download: { await google.answer($0) })
             coordinator = QuicklinkCoordinator(
-                store: store, settings: settings, appIndex: AppIndex(), injector: injector,
+                store: store, websiteIcons: websiteIcons, settings: settings, appIndex: AppIndex(),
+                injector: injector,
                 hotKeys: HotKeyManager(), favorites: FavoritesStore(), visibility: VisibilityStore(),
                 ranking: LauncherRankingStore(), aliases: AliasStore(), windowController: window,
                 paletteCoordinator: palette,
@@ -377,6 +546,31 @@ struct QuicklinkCoordinatorTests {
     }
 }
 
+/// Answers like Google: image bytes for a known host, nothing for one it has no icon for.
+@MainActor
+final class FakeFaviconService {
+    var requests: [String] = []
+    var unknown: Set<String> = []
+    /// Parks every answer until `release`, so a test can change things while a fetch is out.
+    var holding = false
+    private var held: [CheckedContinuation<Void, Never>] = []
+
+    func answer(_ url: URL) async -> Data? {
+        let host = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+            .first { $0.name == "domain" }?.value ?? ""
+        requests.append(host)
+        if holding { await withCheckedContinuation { held.append($0) } }
+        return unknown.contains(host) ? nil : Data(host.utf8)
+    }
+
+    func release() {
+        let parked = held
+        held = []
+        holding = false
+        for continuation in parked { continuation.resume() }
+    }
+}
+
 // Platform collaborators are inert so the shipped coordinator never opens apps or reads selections.
 @MainActor
 final class AppSettings {
@@ -385,6 +579,7 @@ final class AppSettings {
     var quicklinkPassesSelectedText = false
     var quicklinkOpensNewWindow = false
     var quicklinkConfirmsBeforeDelete = false
+    var quicklinkFetchesWebsiteIcons = false
     var interfaceSize = InterfaceSize()
 }
 
@@ -393,7 +588,7 @@ enum CommandID { case createQuicklink, searchQuicklinks, importQuicklinks, expor
 
 @MainActor
 final class AppIndex {
-    func setQuicklinks(_ links: [Quicklink]) {}
+    func setQuicklinks(_ links: [Quicklink], websiteIcon: (Quicklink) -> URL?) {}
     func setCommandsVisible(_ commands: Set<CommandID>, _ visible: Bool) {}
     func setCommandsListed(_ commands: Set<CommandID>, _ listed: Bool) {}
 }
@@ -534,9 +729,14 @@ enum QuicklinkLauncher {
 }
 
 struct InlineArgument { let id: String; let title: String; let options: [String]; let isOptional: Bool }
+@MainActor
+enum QuicklinkGlyph {
+    static func rowIcon(symbol: String, websiteIcon: URL?) -> NSImage { NSImage() }
+}
+
 struct InlineArgumentFields: View {
     let arguments: [InlineArgument]
-    let symbol: String?
+    let icon: NSImage?
     let value: (String) -> Binding<String>
     let focused: FocusState<String?>.Binding
     let openOptions: (String) -> Void

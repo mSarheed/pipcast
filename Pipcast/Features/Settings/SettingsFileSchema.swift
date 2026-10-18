@@ -70,6 +70,11 @@ enum SettingsFileSchema {
         case .quicklinkOpensNewWindow: return bind(settings, \.quicklinkOpensNewWindow)
         case .quicklinkPassesSelectedText: return bind(settings, \.quicklinkPassesSelectedText)
         case .quicklinkConfirmsBeforeDelete: return bind(settings, \.quicklinkConfirmsBeforeDelete)
+        // The file can turn it off but never on: only the toggle may decide to contact Google.
+        case .quicklinkFetchesWebsiteIcons:
+            return bind(settings, \.quicklinkFetchesWebsiteIcons) {
+                $0 && settings.quicklinkFetchesWebsiteIcons
+            }
         case .quicklinkCommands: return launcher.commandsBinding(for: key, owner: .quicklinks)
         case .appleShortcutsEnabled: return bind(settings, \.appleShortcutsEnabled)
         case .aiEnabled: return bind(settings, \.aiEnabled)

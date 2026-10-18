@@ -14,7 +14,7 @@ struct InlineArgumentFields: View {
     @Environment(\.metrics) private var metrics
     let arguments: [InlineArgument]
     /// The row's glyph, anchoring the strip to it; nil where that row is already listed.
-    let symbol: String?
+    let icon: NSImage?
     /// Binding factory keyed by argument id — the values live in `PaletteState.commandArguments`.
     let value: (String) -> Binding<String>
     @FocusState.Binding var focused: String?
@@ -26,8 +26,8 @@ struct InlineArgumentFields: View {
 
     var body: some View {
         HStack(spacing: metrics.spacing.xs) {
-            if let symbol {
-                Image(nsImage: IconCache.symbolIcon(named: symbol))
+            if let icon {
+                Image(nsImage: icon)
                     .resizable()
                     .frame(width: Self.height(metrics), height: Self.height(metrics))
             }

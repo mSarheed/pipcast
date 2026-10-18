@@ -15,7 +15,7 @@ every shortcut without re-registering.
 - **Quicklinks are authored data, and their store never deletes.** A database that will not open is
   **reported, never discarded** — `ClipboardStore`'s delete-and-recreate is only sound because history is
   regenerable, and a link library is not. The database lives in **Application Support**, not Caches.
-- **`Model/` stays Foundation-only (plus SQLite3) and pure** for `quicklink-test` — the home directory is
+- **`Model/` stays Foundation-only (plus SQLite3 and ImageIO) and pure** for `quicklink-test` — the home directory is
   injected, never read. `Service/QuicklinkLauncher` owns every `NSWorkspace` call.
 - **Drawing an argument field reads nothing.** The header's chips come from
   `SnippetTemplateEngine.declaredArguments(in:)`, a parse of the template alone, so moving the
@@ -27,6 +27,9 @@ every shortcut without re-registering.
   attached — name, link, alias, shortcut, favorite slot, ranking — stays exactly as it was. The
   **Settings → Quicklinks** row is the one place that turns it back on, through the checkbox launcher
   items and custom commands carry: last in the row, dimming the alias field and shortcut recorder.
+- **Website icons are opt-in, and off keeps nothing.** With **Fetch website icons** off, no quicklink
+  contacts the network and no favicon is stored. Only the toggle turns it on: backups leave it out,
+  and `settings.json` can only turn it off.
 - **There is one template engine.** Quicklinks expand through `SnippetTemplateEngine` rather than a
   second parser, which is what makes `| raw` mean something — it opts a value out of the automatic
   percent-encoding a URL destination asks for. `{selectedText}` is accepted as an alias for
@@ -54,7 +57,8 @@ shadow: a one-letter "scheme" is a Windows drive letter, and a `scheme:` whose r
 digits is a `host:port`. A literal space is rescued by encoding it; anything else illegal is a real
 error, since blanket re-encoding would corrupt the `%xx` the template engine already produced.
 
-The detected kind decides the icon a row draws when the quicklink has no icon of its own, and
+The detected kind decides the icon a row draws when the quicklink has no icon of its own and no
+[website icon](#website-icons), and
 `usesURLEncoding` decides whether substituted values are percent-encoded. That question is answered
 from the link's **prefix**, not from a parsed destination, because the encoding has to be chosen
 before the placeholders are resolved.
@@ -184,7 +188,8 @@ disagree. **Pinned means the top of the Quicklinks section**, not above Applicat
 position in root search would need a second `AppEntry.Kind`, which the kind invariant forbids for one
 feature. The Search Quicklinks screen gives pins their own section, like the clipboard's.
 A root-search row's ⌘K menu adds **Copy Link** (`⌃⌘C`), copying the saved destination exactly,
-**Edit Quicklink** (`⌘E`), opening the same editor as Search Quicklinks, and **Hide from Root Search**
+**Edit Quicklink** (`⌘E`), opening the same editor as Search Quicklinks, **Refresh Website Icon** while
+[website icons](#website-icons) are on, and **Hide from Root Search**
 (`⇧⌘H`), which clears `showsInRootSearch` rather than writing
 `VisibilityStore` — the editor's toggle is its undo, and the row stays in Search Quicklinks.
 
@@ -196,8 +201,8 @@ the selected quicklink's glyph over an Information block (name, link, the app it
 shortcut, when it was created). Like Calculator History it stays out of the Tab cycle and exits via the
 back chevron or a bare backspace.
 Its ⌘K menu carries Open (`↵`), Open With Default App (`⌘↵`, only when a handler is saved), Copy Link (`⌃⌘C`),
-Edit (`⌘E`), Create (`⌘N`), Duplicate (`⌘D`), Pin/Unpin (`⌘.`), Show in Finder (`⌘F`, only for a resolved path), and
-Delete (`⌃X`). `QuicklinkCoordinator` owns each action, so a chord and its menu row can't drift.
+Refresh Website Icon (only while website icons are on, for a web link), Edit (`⌘E`), Create (`⌘N`),
+Duplicate (`⌘D`), Pin/Unpin (`⌘.`), Show in Finder (`⌘F`, only for a resolved path), and Delete (`⌃X`). `QuicklinkCoordinator` owns each action, so a chord and its menu row can't drift.
 Root-search visibility is not offered here: the launcher row hides itself, and the editor restores it.
 Edit and Create also work with the menu closed; ⌘N works when the browser has no rows.
 
@@ -231,6 +236,48 @@ Saving uses the existing store's validation and normalisation. Editing preserves
 enabled flag, creation date and existing pin stamp, so its alias, shortcut and order survive. An error
 stays in the form without discarding the draft. Save/cancel returns to the preceding palette screen,
 including its query and selected row; an editor opened directly from settings closes instead.
+
+## Website icons
+
+**Settings → Quicklinks → Behaviour → Fetch website icons** (off by default) lets a website quicklink
+draw its favicon instead of the globe. The first rule that applies picks the icon:
+
+1. A symbol chosen in the editor, whether the setting is on or off.
+2. The website icon, when the setting is on and one is stored for the link's host.
+3. The automatic symbol for the link's kind.
+
+The editor's **Automatic** entry and the closed icon button show the stored favicon, so Automatic
+previews what it will draw. The icon replaces the symbol in the same slot everywhere a quicklink is
+drawn — launcher and fallback rows, the argument strip beside root search, Search Quicklinks and its
+detail pane, the editor and the Settings library — as a full-colour image that looks the same in light
+and dark.
+
+`QuicklinkFavicon.host(of:)` reads the host off the **saved template**: only `http`/`https` links and
+bare domains have one, and a placeholder in the host (`{argument}.example.com`) means none, while one
+in the path or query is fine. Only the host is sent, to
+`https://www.google.com/s2/favicons?domain=<host>&sz=64`, on the private `.ephemeral`, cacheless
+session. Google answers a site it doesn't know with a **404 carrying its own globe**, so only a 200
+whose body decodes as an image is kept; anything else stores nothing and stays silent.
+
+There is one request per host not yet stored, made only:
+
+- after **saving** a quicklink, never while its link is being typed;
+- when the setting is **turned on**, for every existing web quicklink;
+- after **importing** quicklinks, from a Pipcast export or Raycast;
+- from **Refresh Website Icon** in either ⌘K menu, which fetches the host again and replaces its icon.
+  It is the one fetch whose failure is reported, as "Couldn’t fetch website icon" — unless the
+  quicklink was deleted or the setting turned off meanwhile, and never while that host is already
+  being fetched.
+
+Never in the background, at launch or on a timer: `applyWebsiteIcons` only records the setting at
+launch, so a host Google doesn't know is not asked for again each time Pipcast starts.
+
+`QuicklinkFaviconStore` keeps one file per host in **Caches**, never in the database, backups or
+exports. A file is named `<host>@<uuid>.png` and a refresh writes a new name, because every icon cache
+is keyed by path and would otherwise keep drawing the old bitmap; at launch the newest file per host
+wins, so a crash mid-refresh leaves no orphan. An icon is deleted when no quicklink
+uses its host any more, and turning the setting off deletes them all; a fetch still in flight then
+writes nothing.
 
 ## Storage
 

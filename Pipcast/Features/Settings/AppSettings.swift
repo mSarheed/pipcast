@@ -664,6 +664,14 @@ final class AppSettings {
         }
     }
 
+    /// Off by default: on sends each web quicklink's host to Google once.
+    var quicklinkFetchesWebsiteIcons: Bool {
+        didSet {
+            defaults.set(
+                quicklinkFetchesWebsiteIcons, forKey: Key.quicklinkFetchesWebsiteIcons.rawValue)
+        }
+    }
+
     /// Whether the support window may reopen itself; off means never ask again.
     var supportRemindersEnabled: Bool {
         didSet { defaults.set(supportRemindersEnabled, forKey: Key.supportReminders.rawValue) }
@@ -901,6 +909,8 @@ final class AppSettings {
         quicklinkConfirmsBeforeDelete =
             defaults.object(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue) == nil
             || defaults.bool(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue)
+        quicklinkFetchesWebsiteIcons = defaults.bool(
+            forKey: Key.quicklinkFetchesWebsiteIcons.rawValue)
         supportRemindersEnabled =
             defaults.object(forKey: Key.supportReminders.rawValue) == nil
             || defaults.bool(forKey: Key.supportReminders.rawValue)

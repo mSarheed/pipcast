@@ -290,13 +290,16 @@ extension AppEntry {
             bundleID: nil, kind: .customCommand, symbolName: command.iconSymbol)
     }
 
-    init(_ quicklink: Quicklink) {
+    init(_ quicklink: Quicklink, websiteIcon: URL?) {
         self.init(
             id: quicklink.entryID, name: quicklink.name,
             url: URL(string: "pipcast://quicklink/" + quicklink.id.uuidString)!,
             bundleID: nil, kind: .quicklink,
             symbolName: quicklink.iconSymbol
-                ?? QuicklinkDestination.detect(quicklink.link)?.defaultSymbol)
+                ?? QuicklinkDestination.detect(quicklink.link)?.defaultSymbol,
+            iconOverride: websiteIcon.map {
+                .artwork(path: $0.path, extent: IconCache.appIconExtent)
+            })
     }
 
     /// No bundle id: that would key every shortcut's alias and ranking to the Shortcuts app.
@@ -485,12 +488,12 @@ final class AppIndex {
     }
 
     /// Replaces the quicklink slice; a toggle can't split its entries from their section.
-    func setQuicklinks(_ quicklinks: [Quicklink]) {
+    func setQuicklinks(_ quicklinks: [Quicklink], websiteIcon: (Quicklink) -> URL?) {
         let entries =
             quicklinks
             .filter { $0.isEnabled && $0.showsInRootSearch }
             .sorted(by: Quicklink.precedes)
-            .map(AppEntry.init)
+            .map { AppEntry($0, websiteIcon: websiteIcon($0)) }
         guard entries != quicklinkEntries else { return }
         quicklinkEntries = entries
         publishEntries()

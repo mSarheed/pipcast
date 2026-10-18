@@ -59,7 +59,7 @@ struct QuicklinksSettingsView: View {
             } else {
                 ForEach(results) { quicklink in
                     QuicklinkSettingsRow(
-                        quicklink: quicklink,
+                        quicklink: quicklink, websiteIcon: coordinator.websiteIcon(for: quicklink),
                         isEnabled: Binding(
                             get: { quicklink.isEnabled },
                             set: {
@@ -85,6 +85,10 @@ struct QuicklinksSettingsView: View {
             Toggle(isOn: $settings.quicklinkOpensNewWindow) {
                 SettingsRowTitle(.quicklinksBehaviour, "Open in a new window")
                 Text("Where the app supports it.")
+            }
+            Toggle(isOn: $settings.quicklinkFetchesWebsiteIcons) {
+                SettingsRowTitle(.quicklinksBehaviour, "Fetch website icons")
+                Text("Shows each website's icon, fetched once from Google.")
             }
             Toggle(isOn: $settings.quicklinkPassesSelectedText) {
                 SettingsRowTitle(.quicklinksBehaviour, "Pass selected text as argument")
@@ -132,14 +136,15 @@ struct QuicklinksSettingsView: View {
 
 private struct QuicklinkSettingsRow: View {
     let quicklink: Quicklink
+    let websiteIcon: URL?
     @Binding var isEnabled: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
         SettingsRow(title: quicklink.name, subtitle: quicklink.link) {
-            SymbolImage(
-                name: quicklink.symbol,
+            QuicklinkGlyph(
+                symbol: quicklink.symbol, websiteIcon: websiteIcon,
                 size: Theme.Size.settingsRowIcon - Theme.Spacing.xs
             )
             .frame(width: SettingsListMetrics.iconSize, height: SettingsListMetrics.iconSize)

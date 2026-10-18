@@ -505,12 +505,16 @@ run uninstall-test         Pipcast/Features/Uninstall/Model/UninstallTarget.swif
                            Pipcast/Features/Uninstall/Model/UninstallPlan.swift
 run quicklink-test         Pipcast/Features/Quicklinks/Model/Quicklink.swift \
                            Pipcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Pipcast/Features/Quicklinks/Model/QuicklinkFavicon.swift \
                            Pipcast/Features/Quicklinks/Model/QuicklinkStore.swift \
                            Pipcast/Features/Quicklinks/Model/QuicklinkArchive.swift \
                            Pipcast/Features/Quicklinks/Model/RaycastQuicklinkImport.swift \
                            Pipcast/Features/Quicklinks/UI/QuicklinkEditorSession.swift
 run quicklink-coordinator-test Pipcast/Features/Quicklinks/Model/Quicklink.swift \
                            Pipcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Pipcast/Features/Quicklinks/Model/QuicklinkFavicon.swift \
+                           Pipcast/Features/Quicklinks/Service/QuicklinkFaviconStore.swift \
+                           Pipcast/Platform/AppPaths.swift \
                            Pipcast/Features/Quicklinks/Model/QuicklinkStore.swift \
                            Pipcast/Features/Quicklinks/Model/QuicklinkArchive.swift \
                            Pipcast/Features/Quicklinks/UI/QuicklinkCoordinator.swift \

@@ -110,6 +110,7 @@ struct QuicklinkListScreen: PaletteScreen {
                 Rectangle().fill(Theme.Colors.separator).frame(width: Theme.Size.hairline)
                 QuicklinkPreview(quicklink: selected)
             }
+            .environment(core.quicklinkCoordinator)
         }
     }
 }
@@ -144,6 +145,14 @@ enum QuicklinkActionsMenu {
             ) {
                 core.quicklinkCoordinator.copyQuicklink(id: quicklink.id)
             })
+        if core.quicklinkCoordinator.canRefreshWebsiteIcon(quicklink) {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Refresh Website Icon"), systemImage: "arrow.clockwise"
+                ) {
+                    core.quicklinkCoordinator.refreshWebsiteIcon(id: quicklink.id)
+                })
+        }
         items.append(
             PopoverMenuItem(
                 title: String(localized: "Edit Quicklink"), systemImage: "pencil", startsSection: true,

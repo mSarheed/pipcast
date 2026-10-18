@@ -88,6 +88,7 @@ private struct QuicklinkRow: View {
     let quicklink: Quicklink
     let selected: Bool
     @Environment(HotKeyManager.self) private var hotKeys
+    @Environment(QuicklinkCoordinator.self) private var coordinator
     @State private var hovered = false
 
     /// Selection wins over hover when a row is both; otherwise hover shows its fainter layer.
@@ -100,7 +101,9 @@ private struct QuicklinkRow: View {
     var body: some View {
         IconCache.observeStyle()
         return HStack(spacing: metrics.spacing.lg) {
-            Image(nsImage: IconCache.symbolIcon(named: quicklink.symbol))
+            Image(
+                nsImage: QuicklinkGlyph.rowIcon(
+                    symbol: quicklink.symbol, websiteIcon: coordinator.websiteIcon(for: quicklink)))
                 .resizable()
                 .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
             VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
@@ -139,13 +142,16 @@ private struct QuicklinkRow: View {
 
 struct QuicklinkPreview: View {
     @Environment(\.metrics) private var metrics
+    @Environment(QuicklinkCoordinator.self) private var coordinator
     let quicklink: Quicklink?
 
     var body: some View {
         if let quicklink {
             VStack(alignment: .leading, spacing: 0) {
                 Spacer(minLength: 0)
-                SymbolImage(name: quicklink.symbol, size: Self.glyphSize)
+                QuicklinkGlyph(
+                    symbol: quicklink.symbol, websiteIcon: coordinator.websiteIcon(for: quicklink),
+                    size: Self.glyphSize)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, metrics.spacing.xl)
                 Spacer(minLength: 0)

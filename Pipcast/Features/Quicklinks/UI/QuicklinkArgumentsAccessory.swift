@@ -22,11 +22,16 @@ enum QuicklinkArgumentsAccessory {
         guard !arguments.isEmpty else { return nil }
 
         // Its own screen already shows the row the fields belong to, so the glyph would repeat it.
-        let symbol = placement == .afterQuery ? quicklink.symbol : nil
+        let icon =
+            placement == .afterQuery
+            ? QuicklinkGlyph.rowIcon(
+                symbol: quicklink.symbol,
+                websiteIcon: core.quicklinkCoordinator.websiteIcon(for: quicklink))
+            : nil
         let value = { (name: String) in binding(quicklink: quicklink, name: name, vm: vm) }
         return PaletteHeaderAccessory(
             width: InlineArgumentFields.totalWidth(
-                for: arguments, hasIcon: symbol != nil, metrics: metrics),
+                for: arguments, hasIcon: icon != nil, metrics: metrics),
             fieldNames: arguments.map(\.id),
             firstIncompleteField: arguments.first {
                 !$0.isOptional && value($0.id).wrappedValue.isEmpty
@@ -41,7 +46,7 @@ enum QuicklinkArgumentsAccessory {
             // Identity per row, so which fields were left unanswered resets on the next one.
             view: AnyView(
                 InlineArgumentFields(
-                    arguments: arguments, symbol: symbol, value: value, focused: focus,
+                    arguments: arguments, icon: icon, value: value, focused: focus,
                     openOptions: onOpenOptions, onSubmit: onSubmit
                 )
                 .id(quicklink.entryID))

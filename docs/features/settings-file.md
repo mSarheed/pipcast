@@ -16,6 +16,9 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
 - **A capability grant never has a key.** Snippets, Extensions, Calendar access, Auto Join, Camera
   Preview, Quick Actions, MCP and clipboard text recognition are switched on only in the app, which
   asks first. `settings-file-test` checks those paths stay absent.
+- **A consent the file mirrors can only be withdrawn there.** `quicklinks.fetchesWebsiteIcons` is
+  written like any key, but its binding refuses `true` while the app has it off, so the file turns
+  website icons off and never on.
 - **`SettingsFileSchema`'s switch is exhaustive.** A new `SettingsFileKey` case fails to build until it
   is bound to a property.
 - **A bad edit never costs a setting.** A key the file leaves out keeps its value; a value Pipcast

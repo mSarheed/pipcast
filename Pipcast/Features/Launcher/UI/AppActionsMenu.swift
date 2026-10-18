@@ -104,6 +104,14 @@ enum AppActionsMenu {
                 ) {
                     core.quicklinkCoordinator.copyQuicklink(id: quicklink.id)
                 })
+            if core.quicklinkCoordinator.canRefreshWebsiteIcon(quicklink) {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Refresh Website Icon"), systemImage: "arrow.clockwise"
+                    ) {
+                        core.quicklinkCoordinator.refreshWebsiteIcon(id: quicklink.id)
+                    })
+            }
             items.append(
                 PopoverMenuItem(
                     title: String(localized: "Edit Quicklink"), systemImage: "pencil", shortcut: "⌘E"

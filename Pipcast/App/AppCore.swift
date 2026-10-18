@@ -10,6 +10,7 @@ final class AppCore {
     let appIndex: AppIndex
     let customCommands = CustomCommandStore()
     let quicklinks = QuicklinkStore()
+    let quicklinkWebsiteIcons = QuicklinkFaviconStore()
     let windowLayouts = WindowLayoutStore()
     let customWindowSizes = CustomWindowSizeStore()
     let rooms = RoomStore()
@@ -109,7 +110,7 @@ final class AppCore {
         },
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var quicklinkCoordinator = QuicklinkCoordinator(
-        store: quicklinks, settings: settings,
+        store: quicklinks, websiteIcons: quicklinkWebsiteIcons, settings: settings,
         appIndex: appIndex, injector: textInjector, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         windowController: windowController,
@@ -337,6 +338,7 @@ final class AppCore {
             // Before `hotKeys.start` even when off: the prune reads it. docs/features/quicklinks.md
             quicklinks.load()
             quicklinkCoordinator.applyQuicklinksPresence()
+            quicklinkCoordinator.applyWebsiteIcons()
             appleShortcutCoordinator.applyPresence()
             paletteCoordinator.onLauncherShown = { [weak self] in
                 self?.appleShortcutCoordinator.refresh()
@@ -681,6 +683,9 @@ final class AppCore {
                 _ = $0.quicklinksEnabled
                 _ = $0.quicklinksShowInLauncher
             }, reproject: { $0.quicklinkCoordinator.applyQuicklinksPresence() })
+        track(
+            { _ = $0.quicklinkFetchesWebsiteIcons },
+            reproject: { $0.quicklinkCoordinator.applyWebsiteIcons() })
         track(
             { _ = $0.appleShortcutsEnabled },
             reproject: { $0.appleShortcutCoordinator.applyPresence() })

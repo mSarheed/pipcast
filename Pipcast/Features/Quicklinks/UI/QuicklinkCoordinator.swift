@@ -5,6 +5,7 @@ import AppKit
 final class QuicklinkCoordinator {
     private(set) var editor: QuicklinkEditorSession?
     private let store: QuicklinkStore
+    private let websiteIcons: QuicklinkFaviconStore
     private let settings: AppSettings
     private let appIndex: AppIndex
     private let injector: TextInjector
@@ -22,9 +23,12 @@ final class QuicklinkCoordinator {
 
     /// The quicklink whose ⌘↵ override must survive the trip to the header's argument fields.
     private var pendingDefaultAppOverride: UUID?
+    /// Nil until launch applies it, so only a real switch to on fetches anything.
+    @ObservationIgnored private var appliedWebsiteIcons: Bool?
 
     init(
         store: QuicklinkStore,
+        websiteIcons: QuicklinkFaviconStore,
         settings: AppSettings,
         appIndex: AppIndex,
         injector: TextInjector,
@@ -39,6 +43,7 @@ final class QuicklinkCoordinator {
         core: AppCore
     ) {
         self.store = store
+        self.websiteIcons = websiteIcons
         self.settings = settings
         self.appIndex = appIndex
         self.injector = injector
@@ -61,12 +66,79 @@ final class QuicklinkCoordinator {
             cancelQuicklinkEditing()
         }
         let visible = settings.quicklinksEnabled && settings.quicklinksShowInLauncher
-        appIndex.setQuicklinks(visible ? store.quicklinks : [])
+        appIndex.setQuicklinks(visible ? store.quicklinks : [], websiteIcon: websiteIcon(for:))
+        // An unopened database lists nothing, which would read as every host being gone.
+        if store.isAvailable, !websiteIcons.files.isEmpty {
+            websiteIcons.prune(keeping: websiteHosts(of: store.quicklinks))
+        }
         let commands: Set<CommandID> = [
             .createQuicklink, .searchQuicklinks, .importQuicklinks, .exportQuicklinks
         ]
         appIndex.setCommandsVisible(commands, settings.quicklinksEnabled)
         appIndex.setCommandsListed(commands, settings.quicklinksShowInLauncher)
+    }
+
+    // MARK: - Website icons
+
+    /// Off keeps nothing; launch only records the setting, so it never contacts Google.
+    func applyWebsiteIcons() {
+        let isOn = settings.quicklinkFetchesWebsiteIcons
+        defer { appliedWebsiteIcons = isOn }
+        guard isOn else {
+            websiteIcons.removeAll()
+            if appliedWebsiteIcons == true { applyQuicklinksPresence() }
+            return
+        }
+        if appliedWebsiteIcons == false { fetchWebsiteIcons(for: store.quicklinks) }
+    }
+
+    /// The favicon a quicklink draws: a chosen symbol always wins over it.
+    func websiteIcon(for quicklink: Quicklink) -> URL? {
+        quicklink.iconSymbol == nil ? websiteIcon(forLink: quicklink.link) : nil
+    }
+
+    func websiteIcon(forLink link: String) -> URL? {
+        guard settings.quicklinkFetchesWebsiteIcons, let host = QuicklinkFavicon.host(of: link)
+        else { return nil }
+        return websiteIcons.files[host]
+    }
+
+    func canRefreshWebsiteIcon(_ quicklink: Quicklink) -> Bool {
+        settings.quicklinkFetchesWebsiteIcons && QuicklinkFavicon.host(of: quicklink.link) != nil
+    }
+
+    /// One request per host not yet stored; a failure stays silent and keeps the automatic icon.
+    private func fetchWebsiteIcons(for quicklinks: [Quicklink]) {
+        guard settings.quicklinkFetchesWebsiteIcons else { return }
+        for host in websiteHosts(of: quicklinks) where websiteIcons.files[host] == nil {
+            Task { await fetchWebsiteIcon(host: host) }
+        }
+    }
+
+    /// The user asked, so unlike the automatic fetches a failure is reported.
+    func refreshWebsiteIcon(id: UUID) {
+        guard let quicklink = store.quicklink(id: id), canRefreshWebsiteIcon(quicklink),
+            let host = QuicklinkFavicon.host(of: quicklink.link), !websiteIcons.isFetching(host)
+        else { return }
+        Task {
+            // After a delete or switching off, a failure is no longer the user's problem.
+            guard await !fetchWebsiteIcon(host: host), let current = store.quicklink(id: id),
+                canRefreshWebsiteIcon(current)
+            else { return }
+            core.showMessage(String(localized: "Couldn’t fetch website icon"), tone: .danger)
+        }
+    }
+
+    @discardableResult
+    private func fetchWebsiteIcon(host: String) async -> Bool {
+        guard await websiteIcons.fetch(host: host) else { return false }
+        // Also prunes it straight away if its last quicklink went while it was being fetched.
+        applyQuicklinksPresence()
+        return true
+    }
+
+    private func websiteHosts(of quicklinks: [Quicklink]) -> Set<String> {
+        Set(quicklinks.compactMap { QuicklinkFavicon.host(of: $0.link) })
     }
 
     // MARK: - Opening
@@ -346,6 +418,8 @@ final class QuicklinkCoordinator {
                 draft.isEnabled = current.isEnabled
                 try updateQuicklink(draft)
             }
+            // After the save, never while typing, so a half-typed domain never leaves the Mac.
+            fetchWebsiteIcons(for: [draft])
             cancelQuicklinkEditing()
         } catch {
             editor.errorMessage = error.localizedDescription
@@ -434,7 +508,9 @@ final class QuicklinkCoordinator {
     @discardableResult
     func addImportedQuicklinks(_ incoming: [Quicklink]) -> [Quicklink] {
         let merge = QuicklinkArchive.merge(incoming, into: store.quicklinks)
-        return store.append(merge.additions)
+        let added = store.append(merge.additions)
+        fetchWebsiteIcons(for: added)
+        return added
     }
 
     func importQuicklinks() async {

@@ -259,6 +259,9 @@ enum SettingsSearchCatalog {
             .quicklinksBehaviour, "Open in a new window",
             keywords: ["browser", "tab"]),
         .init(
+            .quicklinksBehaviour, "Fetch website icons",
+            keywords: ["favicon", "icon", "google", "website"]),
+        .init(
             .quicklinksBehaviour, "Pass selected text as argument",
             keywords: ["selection", "hotkey", "shortcut", "argument"]),
         .init(

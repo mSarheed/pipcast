@@ -62,6 +62,7 @@ enum AppSettingsKey: String, CaseIterable {
     case quicklinkOpensNewWindow = "quicklinkOpensNewWindow"
     case quicklinkPassesSelectedText = "quicklinkPassesSelectedText"
     case quicklinkConfirmsBeforeDelete = "quicklinkConfirmsBeforeDelete"
+    case quicklinkFetchesWebsiteIcons = "quicklinkFetchesWebsiteIcons"
     case appleShortcutsEnabled = "appleShortcutsEnabled"
     case extensionsEnabled = "extensionsEnabled"
     case extensionsShowInLauncher = "extensionsShowInLauncher"

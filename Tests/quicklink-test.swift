@@ -15,6 +15,7 @@ struct QuicklinkTests {
         pathDetection()
         encodingChoice()
         placeholderDetection()
+        websiteIconHosts()
         displayOrder()
         editorDrafts()
         editorInput()
@@ -121,6 +122,40 @@ struct QuicklinkTests {
         expect(
             !QuicklinkDestination.containsPlaceholder("https://x.com/{unterminated"),
             "an unclosed brace is not a placeholder")
+    }
+
+    static func websiteIconHosts() {
+        let host = QuicklinkFavicon.host(of:)
+        expect(host("https://GitHub.com/a?b=c") == "github.com", "only the lowercased host is kept")
+        expect(host("github.com/search?q={argument}") == "github.com", "a bare host earns an icon")
+        expect(
+            host("https://user:secret@example.com:8080/x") == "example.com",
+            "credentials and the port never reach the host")
+        expect(
+            host("https://google.com/search?q={argument}") == "google.com",
+            "a placeholder in the path or query is fine")
+        expect(host("https://{argument}.example.com") == nil, "a placeholder in the host fetches nothing")
+        expect(host("{argument}") == nil, "a link that is all placeholder fetches nothing")
+        for link in ["spotify://track/1", "mailto:a@example.com", "~/Notes", "/Applications", "smb://nas/x"] {
+            expect(host(link) == nil, "\(link) keeps its own icon")
+        }
+        let request = QuicklinkFavicon.requestURL(forHost: "github.com")?.absoluteString
+        expect(
+            request == "https://www.google.com/s2/favicons?domain=github.com&sz=64",
+            "the request carries the host alone")
+        let name = QuicklinkFavicon.fileName(forHost: "github.com", version: UUID())
+        expect(QuicklinkFavicon.host(fromFileName: name) == "github.com", "a stored file names its host")
+        expect(QuicklinkFavicon.host(fromFileName: ".DS_Store") == nil, "a stray file names no host")
+
+        let onePixel = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        let png = Data(base64Encoded: onePixel) ?? Data()
+        expect(QuicklinkFavicon.acceptedImage(png, statusCode: 200) == png, "a decodable 200 is kept")
+        expect(
+            QuicklinkFavicon.acceptedImage(png, statusCode: 404) == nil,
+            "Google's 404 globe is not a favicon")
+        expect(
+            QuicklinkFavicon.acceptedImage(Data("<html>".utf8), statusCode: 200) == nil,
+            "a 200 that isn't an image is not a favicon")
     }
 
     // MARK: - Model

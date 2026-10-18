@@ -169,7 +169,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `uninstall-test` | all five pure files in `Uninstall/Model/` |
 | `uninstall-coordinator-test` | Confirmation and the post-confirmation quit gate; recorded quit and Trash effects only |
 | `quicklink-test` | all of `Quicklinks/Model/`, plus editor drafts and placeholder selection |
-| `quicklink-coordinator-test` | Opening and requested arguments, launcher editing, current enabled-state preservation, deletion during editing and feature gates; no platform effects or on-screen focus checks |
+| `quicklink-coordinator-test` | Opening and requested arguments, launcher editing, current enabled-state preservation, deletion during editing and feature gates, and website icons — when each is fetched, refresh, pruning, turning off, and fetches still in flight — through a fake download; no platform effects or on-screen focus checks |
 | `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
 | `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus clipboard draft/save lifecycle through the coordinator, Actions Return composition through `Palette/MenuPanel.swift`, editor drafts, placeholder selection and `Platform/HealthTicker.swift` |
 | `notes-test` | all of `Notes/Model/` and `Notes/Service/`, including the Markdown parser, edit plans and reveal policy, plus the real fuzzy matcher and signposts |
@@ -739,6 +739,10 @@ Opt into installed English spelling service checks with
   type a query, use the arrows and press Return; the palette must accept keyboard input again
 - Pin, duplicate, delete and Open with Default all behave; import and export round-trip
 - Display order is pinned first by pin time, then by name
+- With **Fetch website icons** off, no quicklink makes a network request. Turning it on gives
+  `github.com` its icon in the launcher, Search Quicklinks, the editor and Settings; an unknown domain
+  keeps the globe. A chosen symbol overrides the icon, Automatic brings it back, Refresh Website Icon
+  offline shows "Couldn’t fetch website icon", and turning it off restores every globe
 
 ### Apple Shortcuts
 
