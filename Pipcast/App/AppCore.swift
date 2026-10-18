@@ -493,13 +493,18 @@ final class AppCore {
     func handleOpenURL(_ url: URL) {
         guard ExtensionDeepLink.claims(url, scheme: Bundle.main.bundleIdentifier) else { return }
         deepLinkTask?.cancel()
+        let injectionTarget =
+            paletteCoordinator.isVisible
+            ? InjectionTarget.behindPalette(
+                ownWindow: paletteCoordinator.previousOwnWindow, app: paletteCoordinator.targetApp)
+            : nil
         let windowTarget =
             paletteCoordinator.isVisible
             ? WindowTarget.behindPalette(
                 ownWindow: paletteCoordinator.previousOwnWindow, app: paletteCoordinator.targetApp)
             : WindowTarget.current()
         if case .own? = windowTarget {
-            dispatchOpenURL(url)
+            dispatchOpenURL(url, injectionTarget: injectionTarget)
             return
         }
         guard
@@ -507,7 +512,7 @@ final class AppCore {
                 == NSRunningApplication.current.processIdentifier,
             let target = runningApps.lastExternalApplication, !target.isTerminated
         else {
-            dispatchOpenURL(url)
+            dispatchOpenURL(url, injectionTarget: injectionTarget)
             return
         }
         deepLinkTask = Task { [weak self] in
@@ -521,7 +526,7 @@ final class AppCore {
                 guard !Task.isCancelled, !target.isTerminated else { return }
                 let frontmost = NSWorkspace.shared.frontmostApplication?.processIdentifier
                 if frontmost == target.processIdentifier {
-                    self?.dispatchOpenURL(url)
+                    self?.dispatchOpenURL(url, injectionTarget: injectionTarget)
                     return
                 }
                 guard frontmost == NSRunningApplication.current.processIdentifier else { return }
@@ -531,7 +536,7 @@ final class AppCore {
         }
     }
 
-    private func dispatchOpenURL(_ url: URL) {
+    private func dispatchOpenURL(_ url: URL, injectionTarget: InjectionTarget?) {
         guard let route = DeepLinkRoute(url: url, scheme: Bundle.main.bundleIdentifier) else {
             showMessage(String(localized: "Unknown or invalid deeplink"), tone: .danger)
             return
@@ -559,7 +564,7 @@ final class AppCore {
                     paletteCoordinator.hidePalette(
                         restoreFocus: paletteCoordinator.previousOwnWindow?.isVisible == true)
                 }
-                launcherCoordinator.runCommand(command, openWindows: true)
+                launcherCoordinator.runCommand(command, openWindows: true, injectionTarget: injectionTarget)
             case .systemAction(let id): systemActionCoordinator.runSystemAction(id: id)
             case .windowCommand(let id): windowCommandCoordinator.runWindowCommand(id: id)
             }

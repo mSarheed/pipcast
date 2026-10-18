@@ -163,7 +163,9 @@ final class LauncherCoordinator {
     }
 
     /// The one funnel a built-in command runs through, from a palette row or its global shortcut.
-    func runCommand(_ id: CommandID, openWindows: Bool = false) {
+    func runCommand(
+        _ id: CommandID, openWindows: Bool = false, injectionTarget: InjectionTarget? = nil
+    ) {
         switch id {
         case .quickAI:
             core.quickAICoordinator.show()
@@ -175,13 +177,13 @@ final class LauncherCoordinator {
                 core.aiChatCoordinator.toggleWindow()
             }
         case .fixGrammar:
-            core.quickActionCoordinator.run(.fixGrammar)
+            core.quickActionCoordinator.run(.fixGrammar, injectionTarget: injectionTarget)
         case .rewrite:
-            core.quickActionCoordinator.run(.rewrite)
+            core.quickActionCoordinator.run(.rewrite, injectionTarget: injectionTarget)
         case .translate:
-            core.quickActionCoordinator.run(.translate)
+            core.quickActionCoordinator.run(.translate, injectionTarget: injectionTarget)
         case .summarize:
-            core.quickActionCoordinator.run(.summarize)
+            core.quickActionCoordinator.run(.summarize, injectionTarget: injectionTarget)
         case .calculatorHistory:
             paletteCoordinator.togglePalette(mode: .calculatorHistory)
         case .clipboardHistory:
@@ -307,7 +309,7 @@ final class LauncherCoordinator {
     func copyDeepLink(_ url: URL) {
         paletteCoordinator.hidePalette(restoreFocus: false)
         guard Paster.copyPlainText(url.absoluteString) else {
-            core.showMessage(String(localized: "Couldn’t copy link"))
+            core.showMessage(String(localized: "Couldn’t copy link"), tone: .danger)
             return
         }
         core.showMessage(String(localized: "Link copied"))

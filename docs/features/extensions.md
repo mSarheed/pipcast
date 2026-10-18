@@ -692,8 +692,8 @@ interval floor instead of sixty.
 **`raycast://` URLs** — extensions address Raycast by scheme; the most common is a bare
 `open("raycast://")` to bring the window back after something stole focus (1Password's auth flow does
 this). `ExtensionHostBridge` keeps those inside Pipcast: `raycast://extensions/<author>/<extension>/<command>`
-runs that command when it's installed, anything else reopens the palette. Handing them to the workspace
-would launch Raycast itself.
+runs that command when it's installed, and a bare URL reopens the palette. Unsupported or malformed
+routes report through Pipcast's HUD. Handing them to the workspace would launch Raycast itself.
 
 **`OAuth`** — `PKCEClient` builds the RFC 7636 request in JS, and `@raycast/utils`' `OAuthService`
 runs on top of it unchanged. The browser step is `ExtensionSignInSession`: providers have Raycast's

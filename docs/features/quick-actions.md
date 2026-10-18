@@ -25,7 +25,8 @@ selectable Markdown renderer with AI Chat.
 - **One funnel, whichever way an action started.** A shortcut and a launcher row both land on
   `QuickActionCoordinator.run(_:)`, which captures the target **before** hiding the palette. An
   external app remains the usual target; a selected passage in the Notes editor is captured directly
-  from its text view. Hiding there rather than at each caller keeps the two paths identical.
+  from its text view. A deeplink that arrives while the palette is visible passes the target captured
+  before dismissal; other callers capture it in the coordinator.
 - **Enabling is consent, and it is the only place Accessibility is requested.** The toggle confirms
   through `DialogController` first and then calls `Permissions.ensureAccessibility()`, the pattern
   `SnippetCoordinator.setSnippetsEnabled` established. Everything else — a shortcut press, a

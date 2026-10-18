@@ -175,13 +175,14 @@ final class QuickActionCoordinator {
         run(.custom(action))
     }
 
-    func run(_ action: QuickAction) {
+    func run(_ action: QuickAction, injectionTarget: InjectionTarget? = nil) {
         guard settings.quickActionsEnabled, running == nil else { return }
         let source =
-            paletteCoordinator.isVisible
-            ? InjectionTarget.behindPalette(
-                ownWindow: paletteCoordinator.previousOwnWindow, app: paletteCoordinator.targetApp)
-            : InjectionTarget.current()
+            injectionTarget
+            ?? (paletteCoordinator.isVisible
+                ? InjectionTarget.behindPalette(
+                    ownWindow: paletteCoordinator.previousOwnWindow, app: paletteCoordinator.targetApp)
+                : InjectionTarget.current())
         let target: Target
         if let editor = source?.ownEditor as? NoteTextView {
             target = .note(
@@ -189,7 +190,7 @@ final class QuickActionCoordinator {
                     editor: editor, document: core.notesCoordinator.editorInput,
                     range: editor.selectedRange(), text: editor.injectableSelection))
         } else {
-            target = .external(paletteCoordinator.targetApp)
+            target = .external(source?.externalApp ?? paletteCoordinator.targetApp)
         }
         if paletteCoordinator.isVisible {
             paletteCoordinator.hidePalette(restoreFocus: source?.ownEditor is NoteTextView)
