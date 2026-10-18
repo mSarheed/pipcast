@@ -81,13 +81,22 @@ typealias MenuPanelClipPath =
             },
             activate: { popover.items[$0].action() },
             isSelectable: { popover.items[$0].isSelectable },
-            clipPath: { bounds, metrics, corner in
-                PopoverMenu.SurfaceShape(
-                    attachment: corner.popoverAttachment, radius: metrics.radius.menuPanel,
-                    attachedRadius: metrics.size.menuButton / 2
-                ).path(in: bounds).cgPath
-            },
+            clipPath: Self.popoverClipPath,
             motion: .palette)
+    }
+
+    /// A panel with no rows, worn in the popover's glass so it hangs where the menu did.
+    init(surface: @escaping (PopoverMenu.Attachment) -> AnyView) {
+        self.init(
+            rowCount: 0, view: { surface($0.popoverAttachment) }, activate: { _ in },
+            clipPath: Self.popoverClipPath, motion: .palette)
+    }
+
+    private static let popoverClipPath: MenuPanelClipPath = { bounds, metrics, corner in
+        PopoverMenu.SurfaceShape(
+            attachment: corner.popoverAttachment, radius: metrics.radius.menuPanel,
+            attachedRadius: metrics.size.menuButton / 2
+        ).path(in: bounds).cgPath
     }
 }
 

@@ -46,5 +46,6 @@ struct AppleShortcutsSettingsView: View {
         } header: {
             SettingsSectionHeader(.appleShortcutsShortcuts)
         }
+        .revealsLauncherItem(in: .appleShortcutsShortcuts, query: $query)
     }
 }

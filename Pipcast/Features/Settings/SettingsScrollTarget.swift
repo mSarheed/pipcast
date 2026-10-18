@@ -90,6 +90,8 @@ private struct SettingsScrollTarget: ViewModifier {
         // This pane may have just mounted, so let its `Form` lay the anchor out before scrolling.
         await Task.yield()
         withAnimation(.easeOut(duration: Theme.Duration.settingsReveal)) {
+            // A row no pane can mark, like one in a filtered list, still lands on its section.
+            proxy.scrollTo(SettingsTarget.section(request.target.anchor), anchor: .center)
             proxy.scrollTo(request.target, anchor: .center)
         }
         navigation.beginFlash(request.target)

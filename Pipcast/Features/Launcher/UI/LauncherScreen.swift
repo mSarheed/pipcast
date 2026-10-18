@@ -16,6 +16,7 @@ struct LauncherScreen: PaletteScreen {
     let now: Date
     let openActions: () -> Void
     let openArgumentOptions: (String) -> Void
+    let openConfiguration: (AppEntry) -> Void
     /// Called when an action reorders the list, so the highlight scrolls back into view.
     let scrollToFollow: () -> Void
 
@@ -48,7 +49,7 @@ struct LauncherScreen: PaletteScreen {
         currencyRates: CurrencyRateStore, core: AppCore, vm: PaletteState, running: Bool,
         meeting: MeetingEvent?, whatsNew: Changelog.Entry?, now: Date,
         openActions: @escaping () -> Void, openArgumentOptions: @escaping (String) -> Void,
-        scrollToFollow: @escaping () -> Void
+        openConfiguration: @escaping (AppEntry) -> Void, scrollToFollow: @escaping () -> Void
     ) {
         self.appIndex = appIndex
         self.favorites = favorites
@@ -59,6 +60,7 @@ struct LauncherScreen: PaletteScreen {
         self.now = now
         self.openActions = openActions
         self.openArgumentOptions = openArgumentOptions
+        self.openConfiguration = openConfiguration
         self.scrollToFollow = scrollToFollow
 
         // Listed even when hidden from search: the shortcut that opened it must still be answered.
@@ -270,7 +272,8 @@ struct LauncherScreen: PaletteScreen {
                     // Reset can move the item; keep the highlight on the item whose action ran.
                     if let index = rows.firstIndex(of: .entry(app)) { vm.selection = index }
                 },
-                onHideFromSearch: { _ = hideFromSearch(at: selection) })
+                onHideFromSearch: { _ = hideFromSearch(at: selection) },
+                onConfigure: { openConfiguration(app) })
         case .file(let result):
             return FileSearchActionsMenu.content(result: result, core: core, target: vm.pasteTarget)
         case .fallback(let fallback, let app):
@@ -351,6 +354,7 @@ struct LauncherScreen: PaletteScreen {
         case .restart: return restart(at: selection)
         case .edit: return editItem(at: selection)
         case .copyPath: return copyQuicklink(at: selection)
+        case .configureCommand: return configure(at: selection)
         case .numberSlot(let index): return launchFavorite(at: index)
         case .copyCalculation: return copyCalculation(at: selection)
         case .openInApp, .showDetails:
@@ -358,6 +362,15 @@ struct LauncherScreen: PaletteScreen {
             return MeetingActionsMenu.perform(shortcut, meeting: meeting, core: core)
         default: return false
         }
+    }
+
+    /// ⇧⌘, — mirrors the Configure Command row, so it answers only where that row is offered.
+    private func configure(at selection: Int) -> Bool {
+        guard let app = entry(at: selection), CommandConfigurationMenu.isConfigurable(app) else {
+            return false
+        }
+        openConfiguration(app)
+        return true
     }
 
     private func copyQuicklink(at selection: Int) -> Bool {

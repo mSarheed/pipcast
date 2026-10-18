@@ -60,6 +60,7 @@ struct RootPaletteView: View {
                 meeting: core.calendarCoordinator.cardedMeeting,
                 whatsNew: core.changelogCoordinator.pinnedRelease, now: meetingClock.now,
                 openActions: openActions, openArgumentOptions: openArgumentOptions,
+                openConfiguration: { open(.configureCommand($0), highlighting: 0) },
                 scrollToFollow: { scroll = ScrollIntent(kind: .follow) })
         case .uninstall:
             return UninstallScreen(
@@ -300,8 +301,40 @@ struct RootPaletteView: View {
             return extensionCommandScreen?.searchAccessoryMenu(
                 searchQuery: ActionMenuSearchQuery(vm.menuQuery),
                 menuSelection: $menuSelection, onActivate: activateMenuItem)
+        case .configureCommand(let entry):
+            return configureCommandMenu(entry)
+        case .setAlias(let entry):
+            let alias = core.aliases.alias(for: entry.preferenceKey)
+            return PaletteMenuContent(surface: { attachment in
+                AnyView(
+                    CommandAliasPanel(
+                        entry: entry, alias: alias, attachment: attachment,
+                        onSave: { saveAlias($0, for: entry) }, onClose: closeMenus
+                    )
+                    .id(vm.menuPresentationToken))
+            })
+        case .setHotkey(let entry, _, _):
+            return PaletteMenuContent(surface: { attachment in
+                AnyView(CommandHotkeyPanel(entry: entry, attachment: attachment, onClose: closeMenus))
+            })
         case nil: return nil
         }
+    }
+
+    private func configureCommandMenu(_ entry: AppEntry) -> PaletteMenuContent {
+        let filtered = CommandConfigurationMenu.content(
+            entry: entry, core: core,
+            setHotkey: { action in
+                let previous = core.hotKeys.binding(for: action)
+                open(.setHotkey(entry, action, previous: previous), highlighting: 0)
+            },
+            setAlias: { open(.setAlias(entry), highlighting: 0) }
+        ).matching(ActionMenuSearchQuery(vm.menuQuery))
+        return PaletteMenuContent(
+            popover: filtered.content, selection: $menuSelection,
+            search: PopoverMenu.Search(
+                placeholder: String(localized: "Search for actions…"), placement: .bottom),
+            onActivate: activateMenuItem, preferredSelection: filtered.bestMatch)
     }
 
     /// What one render resolved: building a screen is a list build, so the header reads this.
@@ -411,7 +444,10 @@ struct RootPaletteView: View {
             .onChange(of: openMenu) {
                 guard menuOpen else { return }
                 syncMenuPanel(presenting: true)
+                // Only once the panel is key: the capture cancels whenever a window resigns.
+                if case .setHotkey(_, let action, _) = openMenu { core.hotKeys.recordingAction = action }
             }
+            .onChange(of: core.hotKeys.recordingAction) { hotkeyRecordingChanged() }
             // The hosted tree is its own hierarchy, so the highlight has to be pushed into it.
             .onChange(of: menuSelection) { syncMenuPanel(presenting: false) }
             .onChange(of: vm.menuQuery) { menuQueryChanged() }
@@ -1162,6 +1198,10 @@ struct RootPaletteView: View {
     }
 
     private func closeMenus() {
+        // Recording pauses every hotkey, so it can't outlive the panel narrating it.
+        if case .setHotkey(_, let action, _) = openMenu, core.hotKeys.recordingAction == action {
+            core.hotKeys.recordingAction = nil
+        }
         menuPanel.hide()
         if menuOpen { searchFocused = !screen.hidesSearchField }
         openMenu = nil
@@ -1213,6 +1253,8 @@ struct RootPaletteView: View {
             escapeMenu()
             return true
         }
+        // The panel's own field takes every other key, ↵ included.
+        if openMenu?.isConfigurationPanel == true { return false }
         if vm.mode.isNativeEditor,
             (hostWindow as? PalettePanel)?.onCommandShortcut?(event) == true
         {
@@ -1283,6 +1325,20 @@ struct RootPaletteView: View {
         return false
     }
 
+    private func saveAlias(_ alias: String, for entry: AppEntry) {
+        closeMenus()
+        CommandConfigurationMenu.saveAlias(alias, for: entry, core: core)
+    }
+
+    /// The recorder ends itself — a binding, Escape, ⌫ or a click away — and the panel goes too.
+    private func hotkeyRecordingChanged() {
+        guard case .setHotkey(_, let action, let previous) = openMenu,
+            core.hotKeys.recordingAction != action
+        else { return }
+        closeMenus()
+        CommandConfigurationMenu.confirmHotkey(action, previous: previous, core: core)
+    }
+
     private func escapeMenu() {
         if vm.menuQuery.isEmpty {
             closeMenus()
@@ -1315,7 +1371,7 @@ struct RootPaletteView: View {
     private var menuCorner: MenuPanelCorner? {
         switch openMenu {
         case .app: .bottomLeading
-        case .actions: .bottomTrailing
+        case .actions, .configureCommand, .setAlias, .setHotkey: .bottomTrailing
         case .argumentOptions: .belowHeaderTrailing
         case .inputOptions(let corner): corner
         case .clipboardFilter, .fileSearchFilter, .emojiCategory, .aiModel, .aiReasoning,
@@ -1597,6 +1653,16 @@ private enum OpenMenu: Equatable {
     case aiModel
     case aiReasoning
     case aiAttachments
+    case configureCommand(AppEntry)
+    case setAlias(AppEntry)
+    case setHotkey(AppEntry, HotKeyAction, previous: HotKeyBinding?)
+
+    var isConfigurationPanel: Bool {
+        switch self {
+        case .setAlias, .setHotkey: true
+        default: false
+        }
+    }
 }
 
 /// Reads visibility in its own body, so a summon never re-renders the palette's.

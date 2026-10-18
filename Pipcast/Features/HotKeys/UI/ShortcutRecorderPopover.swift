@@ -12,6 +12,31 @@ struct ShortcutRecorderAnchorKey: PreferenceKey {
 struct ShortcutRecorderPopover: View {
     let placement: CalloutPlacement
 
+    var body: some View {
+        ShortcutCaptureReadout()
+            .offset(y: Theme.Spacing.sm + 1)
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .padding(placement.caretEdge == .top ? .top : .bottom, Theme.Size.calloutCaretHeight)
+            .frame(
+                width: Theme.Size.shortcutPopover.width, height: Theme.Size.shortcutPopover.height
+            )
+            .overlay(alignment: .topLeading) {
+                KeyCapChip(text: String(localized: "esc"), scale: .compact)
+                    .opacity(0.7)
+                    .padding(.leading, Theme.Spacing.md)
+                    .padding(
+                        .top,
+                        Theme.Spacing.sm
+                            + (placement.caretEdge == .top ? Theme.Size.calloutCaretHeight : 0))
+            }
+            .glassEffect(
+                .regular, in: CalloutShape(caretEdge: placement.caretEdge, caretX: placement.caretX))
+    }
+}
+
+/// The live recording — prompt, held keys or conflict — wherever the recording is narrated.
+struct ShortcutCaptureReadout: View {
     @Environment(HotKeyManager.self) private var hotKeys
     private var capture: ShortcutCaptureSession { hotKeys.capture }
 
@@ -51,24 +76,6 @@ struct ShortcutRecorderPopover: View {
                 .truncationMode(.tail)
                 .frame(height: Theme.Size.shortcutPopoverLine)
         }
-        .offset(y: Theme.Spacing.sm + 1)
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.sm)
-        .padding(placement.caretEdge == .top ? .top : .bottom, Theme.Size.calloutCaretHeight)
-        .frame(
-            width: Theme.Size.shortcutPopover.width, height: Theme.Size.shortcutPopover.height
-        )
-        .overlay(alignment: .topLeading) {
-            KeyCapChip(text: String(localized: "esc"), scale: .compact)
-                .opacity(0.7)
-                .padding(.leading, Theme.Spacing.md)
-                .padding(
-                    .top,
-                    Theme.Spacing.sm
-                        + (placement.caretEdge == .top ? Theme.Size.calloutCaretHeight : 0))
-        }
-        .glassEffect(
-            .regular, in: CalloutShape(caretEdge: placement.caretEdge, caretX: placement.caretX))
     }
 
     private var state: State {

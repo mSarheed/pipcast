@@ -308,9 +308,9 @@ re-written so `github.com` and `https://…` mean the same thing here as they do
 entry is an ordinary `.command`, so `VisibilityStore` still gates it — Commands off hides the row —
 and its `url` carries the destination instead of the catalog's `pipcast://` placeholder. Nothing
 learns from it and nothing pins it: `LauncherCoordinator.launch` records no visit for a contextual
-row, since a pasted URL is not a term any row should rank under; and ⇧⌘F and ⇧⌘H are both refused,
-because a favorite — or a hidden-item key — the empty query can never resolve is dead state a backup
-would then carry.
+row, since a pasted URL is not a term any row should rank under; and ⇧⌘F, ⇧⌘H and ⇧⌘, are all
+refused, because a favorite, a hidden-item key, an alias or a hotkey the empty query can never resolve
+is dead state a backup would then carry.
 
 The row prints `AppEntry.subtitle` beside its name — the one field for an entry whose name alone
 can't say what it acts on.
@@ -400,10 +400,21 @@ memos on the store's revision.
 A launcher row shows its entry's alias as a small chip after the name, so what a badge-bearing
 result will answer to is visible without opening anything.
 
-Editing lives in Settings only — an alias is one-time configuration like a shortcut, not a
-per-invocation action, so the ⌘K menu stays out of it. Visibility is the one exception, and only in
-one direction: an unwanted result is noticed while searching, so ⌘K can hide a row, but putting it
-back is still the pane's checkbox. Every pane built
+An alias or hotkey is usually decided on while the row is selected, so ⌘K › **Configure Command…**
+(⇧⌘,) reaches both without leaving the palette. `CommandConfigurationMenu` offers it exactly where
+Settings already does: **Set Alias…** wherever a pane has an `AliasField` (not snippets, meetings or
+query-driven rows), **Set Hotkey…** wherever it has a `ShortcutRecorder` (`AppEntry.hotKeyAction`,
+plus `.extensionCommand(entryID:)`), and **Open Command Settings** for both. Set Alias… replaces the
+menu with a field in the same corner: ↵ saves through `AliasStore`, a blank field removes the alias,
+and Esc or a click away discards it. Set Hotkey… starts `HotKeyManager`'s one capture session once
+the panel is key — its conflict handling, ⌫ removal and Esc are the Settings recorder's own — and
+the panel closes when the recording ends. Either confirms through the message pill. Open Command
+Settings opens `AppEntry.settingsTab`; a list with a filter field is narrowed to the row's name
+(`revealsLauncherItem`), other panes scroll to the section listing it, and an extension command
+reveals its extension's row.
+
+Visibility is one-way from ⌘K: an unwanted result is noticed while searching, so ⌘K can hide a
+row, but putting it back is still the pane's checkbox. Every pane built
 on `LauncherItemsSection` puts an `AliasField` on each row, dressed like the `ShortcutRecorder`
 beside it; edits store as typed and trim when the field loses focus, and a blank means none. That
 list filters by **membership only**, keeping the index's name order — re-ranking it per keystroke

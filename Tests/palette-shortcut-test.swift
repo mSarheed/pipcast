@@ -104,6 +104,9 @@ struct PaletteShortcutTests {
         expect(resolve("d", command: true, shift: true), nil, "⇧⌘D is not the duplicate chord")
         expect(resolve(",", command: true, option: true), .settings, "⌥⌘, opens the screen's settings")
         expect(resolve(",", command: true), nil, "⌘, stays the app's own Settings")
+        expect(
+            resolve(",", command: true, shift: true), .configureCommand,
+            "⇧⌘, configures the selected command")
 
         expect(resolve("k", command: true), nil, "⌘K belongs to the Actions menu")
         expect(resolve("p", command: true), nil, "⌘P belongs to the header filter")
@@ -112,7 +115,7 @@ struct PaletteShortcutTests {
         let expanded: [PaletteShortcut] = [
             .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
-            .hideApp, .restart, .edit, .createSnippet, .duplicate, .showInFinder
+            .hideApp, .restart, .edit, .createSnippet, .duplicate, .showInFinder, .configureCommand
         ]
         let anywhere: [PaletteShortcut] = [
             .commandDelete, .delete, .deleteAll, .pin, .numberSlot(0), .continueInChat, .newItem,
@@ -132,7 +135,7 @@ struct PaletteShortcutTests {
         ]
         let leaving: [PaletteShortcut] = [
             .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .numberSlot(0),
-            .continueInChat
+            .continueInChat, .configureCommand
         ]
         for shortcut in closing {
             expect(shortcut.closesMenu, "\(shortcut) closes an open menu")

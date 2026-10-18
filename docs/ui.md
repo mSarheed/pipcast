@@ -866,6 +866,8 @@ narrated by `ShortcutRecorderPopover`, a small **132 × 82** callout above it: c
 shortcut"), live held keys with their reported side, a pending second modifier tap, or a conflict
 (rejected caps + owner, orange).
 
+- **The readout is shared.** `ShortcutCaptureReadout` is the callout's caps-and-label body, and
+  the palette's Set Hotkey… panel shows the same view, so both narrate one capture session alike.
 - **An ancestor draws it.** The open recorder publishes its bounds via `ShortcutRecorderAnchorKey`;
   `.shortcutRecorderPopoverHost()` sits on `SettingsDetailView` — one host above every pane's
   `Form`, and on `OnboardingView`. An overlay on the row would be clipped by the scroll view. A

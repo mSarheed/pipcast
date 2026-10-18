@@ -52,6 +52,8 @@ enum PaletteShortcut: Equatable {
     case showInFinder
     /// ⌥⌘,, the screen's own settings; ⌘, alone stays the app's.
     case settings
+    /// ⇧⌘,, the row's alias, hotkey and Settings entry.
+    case configureCommand
     /// ⌘J, Quick AI handing its conversation to the AI Chat window.
     case continueInChat
     /// ⌘., which AppKit binds to `cancelOperation:`, so it arrives as a token instead of a key.
@@ -87,6 +89,7 @@ enum PaletteShortcut: Equatable {
         if command, !shift, !option, !control, matches("s") { return .createSnippet }
         if command, !shift, matches("d") { return .duplicate }
         if command, option, matches(",") { return .settings }
+        if command, shift, matches(",") { return .configureCommand }
         if command, matches("j") { return .continueInChat }
         return nil
     }
@@ -96,7 +99,7 @@ enum PaletteShortcut: Equatable {
         switch self {
         case .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
-            .hideApp, .restart, .edit, .createSnippet, .duplicate, .showInFinder:
+            .hideApp, .restart, .edit, .createSnippet, .duplicate, .showInFinder, .configureCommand:
             true
         case .commandDelete, .delete, .deleteAll, .pin, .numberSlot, .continueInChat, .newItem,
             .settings, .copyCalculation:
@@ -110,8 +113,9 @@ enum PaletteShortcut: Equatable {
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
             .newItem, .settings, .edit, .createSnippet, .duplicate, .showInFinder:
             true
+        // Configure swaps the open menu for its own, so closing here would take that one down.
         case .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .numberSlot,
-            .continueInChat:
+            .continueInChat, .configureCommand:
             false
         }
     }

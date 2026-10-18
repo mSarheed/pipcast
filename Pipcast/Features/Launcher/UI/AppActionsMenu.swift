@@ -15,7 +15,7 @@ enum AppActionsMenu {
     static func content(
         app: AppEntry, searchQuery: String, core: AppCore, running: Bool,
         favorites: FavoriteActions, onResetRanking: @escaping () -> Void,
-        onHideFromSearch: @escaping () -> Void
+        onHideFromSearch: @escaping () -> Void, onConfigure: @escaping () -> Void
     ) -> PopoverMenuContent {
         var items = leadingItems(app: app, searchQuery: searchQuery, core: core)
         // A query-driven row lives only for its query, so no preference could outlive it.
@@ -64,6 +64,12 @@ enum AppActionsMenu {
             items.append(
                 PopoverMenuItem(
                     title: title, systemImage: "eye.slash", shortcut: "⇧⌘H", action: onHideFromSearch))
+        }
+        if CommandConfigurationMenu.isConfigurable(app) {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Configure Command…"), systemImage: "gearshape",
+                    startsSection: true, shortcut: "⇧⌘,", action: onConfigure))
         }
         if running, app.kind == .application {
             items.append(

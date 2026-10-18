@@ -52,6 +52,7 @@ struct LauncherItemsSection: View {
             SettingsSectionHeader(anchor)
         }
         .settingsEnabled(visibility.isKindEnabled(kind))
+        .revealsLauncherItem(in: anchor, query: $query)
     }
 }
 
@@ -128,5 +129,24 @@ struct LauncherItemRow: View {
             get: { visibility.isItemVisible(entry) },
             set: { visibility.setItemVisible($0, for: entry) }
         )
+    }
+}
+
+extension View {
+    /// ⌘K › Open Command Settings names a row by its title; a filterable list narrows to it.
+    func revealsLauncherItem(in anchor: SettingsAnchor, query: Binding<String>) -> some View {
+        modifier(LauncherItemReveal(anchor: anchor, query: query))
+    }
+}
+
+private struct LauncherItemReveal: ViewModifier {
+    let anchor: SettingsAnchor
+    @Binding var query: String
+    @Environment(SettingsNavigationState.self) private var navigation
+
+    func body(content: Content) -> some View {
+        content.onChange(of: navigation.scrollRequest, initial: true) {
+            if case .row(anchor, let name)? = navigation.scrollRequest?.target { query = name }
+        }
     }
 }
