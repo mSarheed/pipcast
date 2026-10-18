@@ -89,12 +89,11 @@ private struct SettingsScrollTarget: ViewModifier {
         guard let request = navigation.scrollRequest, request.target.tab == tab else { return }
         // This pane may have just mounted, so let its `Form` lay the anchor out before scrolling.
         await Task.yield()
+        let target = request.target.revealed
         withAnimation(.easeOut(duration: Theme.Duration.settingsReveal)) {
-            // A row no pane can mark, like one in a filtered list, still lands on its section.
-            proxy.scrollTo(SettingsTarget.section(request.target.anchor), anchor: .center)
-            proxy.scrollTo(request.target, anchor: .center)
+            proxy.scrollTo(target, anchor: .center)
         }
-        navigation.beginFlash(request.target)
+        navigation.beginFlash(target)
         // Cancelled means a later jump replaced this one, and it owns the light now.
         do {
             try await Task.sleep(for: .seconds(Theme.Duration.settingsFlash))
@@ -102,7 +101,7 @@ private struct SettingsScrollTarget: ViewModifier {
             return
         }
         withAnimation(.easeOut(duration: Theme.Duration.settingsFlashOut)) {
-            navigation.endFlash(request.target)
+            navigation.endFlash(target)
         }
         // Released last: it keys this task, so clearing it earlier would cancel the reveal itself.
         navigation.clear(request)

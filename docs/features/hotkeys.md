@@ -371,4 +371,5 @@ Setting `recordingAction` is what starts and stops the capture, so there is exac
 `ShortcutCaptureSession` (`HotKeys/Service/`) for the app rather than one per row — which is what lets the
 callout above the field render the live state from outside the row that opened it. The field itself
 only ever shows the binding; the prompt, the live preview and the conflict message all live in the
-callout. See [ui.md](../ui.md#the-shortcut-recorder-callout).
+callout. The palette's ⌘K › Configure Command › Set Hotkey… panel drives the same session and shows
+the same `ShortcutCaptureReadout`. See [ui.md](../ui.md#the-shortcut-recorder-callout).

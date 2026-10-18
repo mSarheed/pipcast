@@ -13,7 +13,6 @@ enum CommandConfigurationMenu {
 
     /// The action Settings' recorder binds for the row; an extension command's is keyed by entry.
     static func hotKeyAction(for entry: AppEntry) -> HotKeyAction? {
-        guard !CommandCatalog.isQueryDriven(entry) else { return nil }
         if entry.kind == .extensionCommand { return .extensionCommand(entryID: entry.id) }
         return entry.hotKeyAction
     }
@@ -66,28 +65,37 @@ enum CommandConfigurationMenu {
     }
 
     static func saveAlias(_ alias: String, for entry: AppEntry, core: AppCore) {
-        let hadAlias = core.aliases.alias(for: entry.preferenceKey) != nil
+        let previous = core.aliases.alias(for: entry.preferenceKey)
         core.aliases.setAlias(
             alias.trimmingCharacters(in: .whitespacesAndNewlines), for: entry.preferenceKey)
-        if core.aliases.alias(for: entry.preferenceKey) != nil {
-            core.showMessage(String(localized: "Alias saved"))
-        } else if hadAlias {
-            core.showMessage(String(localized: "Alias removed"))
-        }
+        let saved = core.aliases.alias(for: entry.preferenceKey)
+        guard saved != previous else { return }
+        core.showMessage(
+            saved == nil ? String(localized: "Alias removed") : String(localized: "Alias saved"))
     }
 
     /// Called once the recording ends; an unchanged binding means it was cancelled.
     static func confirmHotkey(_ action: HotKeyAction, previous: HotKeyBinding?, core: AppCore) {
         let binding = core.hotKeys.binding(for: action)
         guard binding != previous else { return }
-        core.showMessage(
-            binding == nil ? String(localized: "Hotkey removed") : String(localized: "Hotkey saved"))
+        guard let binding else {
+            core.showMessage(String(localized: "Hotkey removed"))
+            return
+        }
+        // Settings warns beside the field; here the pill is the only place left to say it.
+        if binding.usesModifierTapMonitor, !Permissions.isAccessibilityTrusted() {
+            core.showMessage(
+                String(localized: "Modifier-only hotkeys need Accessibility access. Click to grant it."),
+                tone: .danger, onClick: Permissions.openAccessibilitySettings)
+            return
+        }
+        core.showMessage(String(localized: "Hotkey saved"))
     }
 }
 
 extension AppEntry {
     /// The pane that draws this row's alias and hotkey controls.
-    var settingsTab: SettingsTab? {
+    fileprivate var settingsTab: SettingsTab? {
         if let settingsOwner { return settingsOwner }
         switch kind {
         case .application: return .applications
@@ -105,13 +113,15 @@ extension AppEntry {
     }
 
     /// A filterable list is narrowed to the row's name; elsewhere the section listing it is shown.
-    var settingsTarget: SettingsTarget? {
+    fileprivate var settingsTarget: SettingsTarget? {
+        if let settingsOwner, kind == .command { return ownedCommandSection(in: settingsOwner) }
         switch kind {
-        case .application: return .row(.applicationsApplications, name)
-        case .systemSettings: return .row(.systemSettingsSystemSettings, name)
-        case .systemAction: return .row(.systemActionsSystemActions, name)
-        case .command: return settingsOwner == nil ? .row(.commandsCommands, name) : nil
-        case .appleShortcut: return .row(.appleShortcutsShortcuts, name)
+        case .application: return .launcherItem(.applicationsApplications, name)
+        case .systemSettings: return .launcherItem(.systemSettingsSystemSettings, name)
+        case .systemAction: return .launcherItem(.systemActionsSystemActions, name)
+        case .command: return .launcherItem(.commandsCommands, name)
+        case .appleShortcut: return .launcherItem(.appleShortcutsShortcuts, name)
+        case .quicklink: return .launcherItem(.quicklinksQuicklinks, name)
         case .customCommand: return .section(.commandsCustomCommands)
         case .quickAction: return .section(.quickActionsActions)
         case .snippet: return .section(.snippetsLibrary)
@@ -120,7 +130,28 @@ extension AppEntry {
         case .windowCommand:
             return CustomWindowSize.id(fromEntryID: id) == nil
                 ? nil : .section(.windowManagementCustomSizes)
-        case .quicklink, .extensionCommand, .meeting: return nil
+        case .extensionCommand, .meeting: return nil
         }
+    }
+
+    /// Mirrors each pane's `FeatureCommandsSection` anchor; Search Menu Items sits apart.
+    private func ownedCommandSection(in owner: SettingsTab) -> SettingsTarget? {
+        let anchor: SettingsAnchor? =
+            switch owner {
+            case .commands: .commandsCustomCommands
+            case .quicklinks: .quicklinksCommands
+            case .ai: .aiCommands
+            case .fileSearch: .fileSearchCommands
+            case .notes: .notesCommands
+            case .snippets: .snippetsCommands
+            case .navigation:
+                id == CommandID.searchMenuItems.rawValue ? .navigationMenuSearch : .navigationCommands
+            case .windowManagement: .windowManagementLayoutCommands
+            case .clipboard: .clipboardCommands
+            case .emoji: .emojiCommands
+            case .calendar: .calendarCommands
+            default: nil
+            }
+        return anchor.map { .section($0) }
     }
 }

@@ -68,7 +68,7 @@ enum AppActionsMenu {
         if CommandConfigurationMenu.isConfigurable(app) {
             items.append(
                 PopoverMenuItem(
-                    title: String(localized: "Configure Command…"), systemImage: "gearshape",
+                    title: String(localized: "Configure Command…"), systemImage: "gearshape.2",
                     startsSection: true, shortcut: "⇧⌘,", action: onConfigure))
         }
         if running, app.kind == .application {

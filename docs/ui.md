@@ -784,13 +784,15 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   row's trailing edge. The half the compiler can't reach — a target nothing declares, which
   navigates and then sits there — is caught by `Scripts/check-settings-search.js`, run from
   `Scripts/lint.sh`. **Add the entry and its marker together, or lint will say so.**
-- **The reveal lives in two modifiers, never in a pane** (`SettingsScrollTarget.swift`).
+- **The reveal lives in modifiers, never in a pane** (`SettingsScrollTarget.swift`).
   `.settingsScrollTarget()` on a pane's `Form` holds the `ScrollViewReader` and one `.task(id:)` keyed
   on the request, so a second jump cancels the first mid-pulse and the pane releases the request when
   it settles; `.settingsAnchor(_:)` on a `Section` supplies the `.id` and paints the wash, reading
   which anchor is lit from `\.settingsFlash` rather than having it threaded down.
   `SettingsScrollRequest` carries a token because picking the same result twice has to scroll again
   rather than compare equal and do nothing.
+  A `.launcherItem` target has no row to scroll to: the pane lands on its section, and
+  `.revealsLauncherItem(in:query:)` on that section's filtered list narrows the filter to the name.
 - **The pulse is a pill on the name, and nothing around it is touched.** A grouped `Form` applies a
   `.background` to a row's whole *content* box, so lighting a section — or a row — paints ragged
   blocks at the width of every label, button and footer paragraph in it. (`.listRowBackground` is a

@@ -131,11 +131,19 @@ enum SettingsTarget: Hashable, Sendable {
     case section(SettingsAnchor)
     /// The row's visible title, which is also the catalog entry's — they are the same string.
     case row(SettingsAnchor, String)
+    /// A launcher entry by name, which the section's own filter field narrows its list to.
+    case launcherItem(SettingsAnchor, String)
 
     var anchor: SettingsAnchor {
         switch self {
-        case .section(let anchor), .row(let anchor, _): return anchor
+        case .section(let anchor), .row(let anchor, _), .launcherItem(let anchor, _): return anchor
         }
+    }
+
+    /// What the pane scrolls to and lights: a launcher entry's row has no id, so its section does.
+    var revealed: SettingsTarget {
+        if case .launcherItem(let anchor, _) = self { return .section(anchor) }
+        return self
     }
 
     var tab: SettingsTab { anchor.tab }

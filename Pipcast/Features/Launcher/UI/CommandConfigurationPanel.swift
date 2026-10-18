@@ -118,7 +118,7 @@ private struct CommandConfigurationSurface<Content: View>: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
             Spacer(minLength: metrics.spacing.sm)
-            footerButton(String(localized: "Close"), key: "esc", action: onClose)
+            footerButton(String(localized: "Close"), key: String(localized: "esc"), action: onClose)
             if let onSave {
                 footerButton(String(localized: "Save"), key: "↵", action: onSave)
             }

@@ -408,10 +408,14 @@ plus `.extensionCommand(entryID:)`), and **Open Command Settings** for both. Set
 menu with a field in the same corner: ↵ saves through `AliasStore`, a blank field removes the alias,
 and Esc or a click away discards it. Set Hotkey… starts `HotKeyManager`'s one capture session once
 the panel is key — its conflict handling, ⌫ removal and Esc are the Settings recorder's own — and
-the panel closes when the recording ends. Either confirms through the message pill. Open Command
-Settings opens `AppEntry.settingsTab`; a list with a filter field is narrowed to the row's name
-(`revealsLauncherItem`), other panes scroll to the section listing it, and an extension command
-reveals its extension's row.
+the panel closes when the recording ends. Either confirms through the message pill when something
+changed, and a modifier-only hotkey without Accessibility says so there instead. Open Command
+Settings opens the pane that lists the row. A list with a filter field — applications, System
+Settings panes, system actions, commands, Apple Shortcuts, quicklinks — gets a
+`SettingsTarget.launcherItem`, which scrolls to its section and narrows the filter to the row's name
+(`revealsLauncherItem`); custom commands, quick actions, snippets, layouts, rooms, custom sizes and a
+feature pane's own commands scroll to their section; an extension command reveals its extension's
+row; a built-in window command, whose section has no anchor, opens the pane at the top.
 
 Visibility is one-way from ⌘K: an unwanted result is noticed while searching, so ⌘K can hide a
 row, but putting it back is still the pane's checkbox. Every pane built

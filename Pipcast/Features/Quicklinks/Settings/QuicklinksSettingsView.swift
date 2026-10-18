@@ -77,6 +77,7 @@ struct QuicklinksSettingsView: View {
                 SettingsRowTitle(.quicklinksQuicklinks, "Add Quicklink")
             }
         }
+        .revealsLauncherItem(in: .quicklinksQuicklinks, query: $query)
     }
 
     private var behaviour: some View {

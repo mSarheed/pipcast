@@ -16,8 +16,8 @@ The command palette is a borderless floating `NSPanel` hosting SwiftUI; see
   no SwiftUI, no AppKit — so `palette-selection-test` compiles the shipped type rather than a copy.
   Section headers are not selectable and never consume an index.
 - **A menu owns native text input while it is open.** Its panel becomes key so the menu field gets an
-  AppKit field editor; the palette field stays mounted and inert beneath it. Return and keypad Enter
-  stay with that editor during marked-text composition, before a row can dismiss the menu.
+  AppKit field editor; the palette field stays mounted and inert beneath it. Return, keypad Enter and
+  Escape stay with that editor during marked-text composition, before a row can dismiss the menu.
 - **The search field is never mounted conditionally.** A screen that owns the keyboard itself hides it
   through `PaletteScreen.hidesSearchField` — opacity and hit testing, never an `if` — because
   flipping a branch around it tears its field editor down. The header is simply left empty.
