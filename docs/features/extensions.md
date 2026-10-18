@@ -365,6 +365,10 @@ screens hold (see [palette.md](palette.md)).
   Both spellings are answered before characters are considered at all, and the rules are pure so
   `ext-form-test` drives them.
 
+  `ExtensionTabKeys` dispatches explicit Tab actions in the extension's own window before palette
+  navigation. On Forms it normalizes native back-tab for field traversal and suppresses repeats.
+  The Actions panel uses the same input bridge; open control lists and marked text retain their keys.
+
   `ExtensionDateField` is the same shape over `ExtensionDateExpression`, which parses what Raycast's
   date field parses — "tomorrow at 10am", "in 3 days", "next friday", "25 dec" — and offers the same
   presets. It is pure and takes its clock and calendar as parameters, so `ext-form-test` drives it

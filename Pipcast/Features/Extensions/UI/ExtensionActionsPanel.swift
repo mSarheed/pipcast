@@ -80,6 +80,13 @@ struct ExtensionActionsPanel: View {
                 placeholder: String(localized: "Search for actions…"), height: panel.rowHeight,
                 verticalOffset: -metrics.spacing.xxs / 2)
         }
+        .background {
+            ExtensionTabKeys { modifiers in
+                guard let row = shortcutRow(.tab, modifiers) else { return false }
+                onActivate(row)
+                return true
+            }
+        }
         // The panel holds focus while open, so the screen's own shortcut keys never see these.
         .onKeyPress(phases: .down) { press in
             guard !press.modifiers.isEmpty,

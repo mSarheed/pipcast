@@ -180,6 +180,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `ext-test` | the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
 | `ext-sign-in-test` | `Extensions/Service/ExtensionSignInSession.swift` — cancellation without a browser callback, late callback isolation, retry, refused starts and pre-cancelled runs |
 | `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
+| `ext-tab-test` | `Extensions/UI/ExtensionTabKeys.swift` — native back-tab, Form-only normalization and repeat swallowing, modifiers, window ownership, IME and teardown |
 | `icon-cache-test` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
 | `entry-icon-test` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
 | `text-diff-test` | `QuickActions/Model/TextDiffEngine.swift` — exact chunks, coalescing, Unicode, ties, token-cap boundaries and fast paths |
@@ -897,6 +898,10 @@ Opt into installed English spelling service checks with
 
 ### Extensions
 
+- In ray.so's Create Image from Code, Tab and Shift-Tab walk fields in both directions; Return
+  inserts a Code newline, while ⌘↵ submits. The search bar stays hidden and the submit hint remains.
+  Check a non-first `autoFocus` field, explicit Tab/Shift-Tab actions with Actions closed and open,
+  and an open picker retaining its keys. Return to the launcher and check its usual Tab navigation.
 - Open `raycast://extensions/linear/linear?source=webstore` from a browser: Settings → Extensions
   offers the exact Store listing with Install (or Reinstall). Close it without installing, then open
   a different Store link and verify its listing replaces the first. Repeat with extensions disabled:

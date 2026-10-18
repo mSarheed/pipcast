@@ -237,6 +237,12 @@ struct ExtensionCommandScreen: PaletteScreen {
                     extensions.dispatch(handler: handler, arguments: [value])
                 }
             )
+            .background {
+                ExtensionTabKeys(isForm: isForm) { modifiers in
+                    guard !vm.menuOpen, !vm.isComposing, !vm.isControlListOpen else { return false }
+                    return dispatchShortcut(key: .tab, modifiers: modifiers, at: vm.selection)
+                }
+            }
             .onChange(of: vm.query) { _, query in extensions.searchQueryChanged(to: query) })
     }
 
