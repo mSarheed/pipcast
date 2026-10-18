@@ -55,7 +55,7 @@ system-wide chord, and HIToolbox's TIS APIs remain the public input-source mecha
 | add or restyle any view                                     | [ui.md](docs/ui.md)                                          |
 | touch one feature's internals                               | [features/](docs/features/) — each opens with its invariants |
 | package or ship a build                                     | [release.md](docs/release.md)                                |
-| open a pull request as an outside contributor               | [CONTRIBUTING.md](CONTRIBUTING.md)                           |
+| open a pull request                                         | [CONTRIBUTING.md](CONTRIBUTING.md)                           |
 
 ## Non-negotiables
 
@@ -162,3 +162,4 @@ Each item is explained in [testing.md](docs/testing.md#definition-of-done).
 - `./Scripts/lint.sh` is clean.
 - `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Pipcast/Features/*/Model/` returns nothing.
 - Any doc your change made wrong is fixed in the same commit.
+- Opening a PR: the title is a Conventional Commit (CI checks it), and CI reruns the checks above.

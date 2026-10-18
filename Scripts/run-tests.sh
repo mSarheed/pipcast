@@ -48,6 +48,22 @@ if [ "${1:-}" = "--exec" ]; then
     exit 0
 fi
 
+source Scripts/require-xcode.sh
+
+# Runs share $BIN and clear its failure markers, so a second run would turn the first one green.
+LOCK="$BIN/run.lock"
+if ! mkdir "$LOCK" 2>/dev/null; then
+    holder=$(cat "$LOCK/pid" 2>/dev/null)
+    if [ -n "$holder" ] && kill -0 "$holder" 2>/dev/null; then
+        echo "✗ Another run-tests.sh (pid $holder) is running. Wait for it to finish." >&2
+        exit 2
+    fi
+    rm -rf "$LOCK"
+    mkdir "$LOCK" || exit 2
+fi
+echo $$ > "$LOCK/pid"
+trap 'rm -rf "$LOCK"' EXIT
+
 QUEUE="$BIN/queue"
 : > "$QUEUE"
 rm -f "$BIN"/*.failed "$BIN"/*.running

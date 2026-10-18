@@ -26,6 +26,9 @@ of this file is the sixth, judged by what you touched.
 ./Scripts/run-tests.sh calc-test    # just one, while iterating
 ```
 
+One run at a time: runs share a scratch directory, so a second one refuses to start until the first
+finishes.
+
 `apple-intelligence-test` runs deterministic checks by default. Its real model generation is opt-in:
 
 ```sh

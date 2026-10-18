@@ -3,6 +3,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
+source Scripts/require-xcode.sh
 command -v swiftlint >/dev/null || {
     echo "✗ swiftlint not found. Install it with:  brew install swiftlint" >&2
     exit 2

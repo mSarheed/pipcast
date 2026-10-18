@@ -42,7 +42,8 @@ xcodebuild -project Pipcast.xcodeproj -scheme Pipcast -configuration Debug build
 
 `xcodebuild` uses whatever `xcode-select` points at; if that's the Command Line Tools rather than
 Xcode, prefix with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` (the SwiftUI
-`@State`/`@FocusState` macros need Xcode's macOS platform).
+`@State`/`@FocusState` macros need Xcode's macOS platform). `run-tests.sh` and `lint.sh` need it too,
+and refuse to start on the Command Line Tools rather than fail like broken code.
 
 `Pipcast.xcodeproj` is committed and generated from `project.yml` via XcodeGen — after changing
 project settings in `project.yml`, run `xcodegen generate` and commit the result. There is no
