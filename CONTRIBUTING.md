@@ -31,8 +31,8 @@ Check existing [issues](https://github.com/mSarheed/pipcast/issues) and
   `fix(launcher): keep the selection after a refresh`. PRs are squash-merged, so the title becomes
   the commit on `main` and the line in the changelog. A check fails until it matches.
 - The whole bar in [`docs/testing.md`](docs/testing.md#definition-of-done) passes — harnesses, lint,
-  purity, a clean build. Engine changes come with new cases. CI runs all four on every PR; run them
-  locally first so it stays green. CodeRabbit reviews the Swift diff on top of that.
+  purity, a clean build. Engine changes come with new cases. CI runs all four unless a PR only
+  touches docs; run them locally first so it stays green. CodeRabbit reviews the Swift diff on top.
 - Runtime changes are leak-tested and memory-measured. Numbers in the PR.
 - You actually used the app, on your path and the ones next to it.
 - Rebased on `main`.

@@ -195,7 +195,8 @@ Xcode's re-indent (⌃I), as it always has been. Two consequences worth knowing:
 - `force_try` is an error; `force_cast` only warns, because the AX and AppKit bridges have four
   legitimate ones.
 
-Errors block, warnings do not. CI runs this script on every PR; run it locally before you open one.
+Errors block, warnings do not. CI runs this script on every PR that touches code; run it locally
+before you open one.
 
 ## Brand assets
 

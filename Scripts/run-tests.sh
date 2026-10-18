@@ -50,19 +50,17 @@ fi
 
 source Scripts/require-xcode.sh
 
-# Runs share $BIN and clear its failure markers, so a second run would turn the first one green.
-LOCK="$BIN/run.lock"
-if ! mkdir "$LOCK" 2>/dev/null; then
-    holder=$(cat "$LOCK/pid" 2>/dev/null)
-    if [ -n "$holder" ] && kill -0 "$holder" 2>/dev/null; then
+# A second run would clear this one's failure markers; a pid symlink takes the lock atomically.
+LOCK="$BIN/run.pid"
+until ln -s "$$" "$LOCK" 2>/dev/null; do
+    holder=$(readlink "$LOCK")
+    if kill -0 "$holder" 2>/dev/null; then
         echo "✗ Another run-tests.sh (pid $holder) is running. Wait for it to finish." >&2
         exit 2
     fi
-    rm -rf "$LOCK"
-    mkdir "$LOCK" || exit 2
-fi
-echo $$ > "$LOCK/pid"
-trap 'rm -rf "$LOCK"' EXIT
+    rm -f "$LOCK"
+done
+trap 'rm -f "$LOCK"' EXIT
 
 QUEUE="$BIN/queue"
 : > "$QUEUE"

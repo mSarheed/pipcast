@@ -162,4 +162,5 @@ Each item is explained in [testing.md](docs/testing.md#definition-of-done).
 - `./Scripts/lint.sh` is clean.
 - `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Pipcast/Features/*/Model/` returns nothing.
 - Any doc your change made wrong is fixed in the same commit.
-- Opening a PR: the title is a Conventional Commit (CI checks it), and CI reruns the checks above.
+- Opening a PR: the title is a Conventional Commit (CI checks it), and CI reruns the checks above
+  unless the PR only touches docs.
