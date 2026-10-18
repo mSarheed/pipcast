@@ -121,7 +121,7 @@ extension AppEntry {
         case .systemAction: return .launcherItem(.systemActionsSystemActions, name)
         case .command: return .launcherItem(.commandsCommands, name)
         case .appleShortcut: return .launcherItem(.appleShortcutsShortcuts, name)
-        case .quicklink: return .launcherItem(.quicklinksQuicklinks, name)
+        case .quicklink: return .launcherItem(.quicklinksLibrary, name)
         case .customCommand: return .section(.commandsCustomCommands)
         case .quickAction: return .section(.quickActionsActions)
         case .snippet: return .section(.snippetsLibrary)

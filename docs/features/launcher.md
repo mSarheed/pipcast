@@ -411,7 +411,7 @@ the panel is key — its conflict handling, ⌫ removal and Esc are the Settings
 the panel closes when the recording ends. Either confirms through the message pill when something
 changed, and a modifier-only hotkey without Accessibility says so there instead. Open Command
 Settings opens the pane that lists the row. A list with a filter field — applications, System
-Settings panes, system actions, commands, Apple Shortcuts, quicklinks — gets a
+Settings panes, system actions, commands, Apple Shortcuts, the quicklink library — gets a
 `SettingsTarget.launcherItem`, which scrolls to its section and narrows the filter to the row's name
 (`revealsLauncherItem`); custom commands, quick actions, snippets, layouts, rooms, custom sizes and a
 feature pane's own commands scroll to their section; an extension command reveals its extension's
