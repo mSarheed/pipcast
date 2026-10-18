@@ -324,7 +324,8 @@ can't import its own duplicates. Skipped entries are counted and reported in the
 takes a fresh identity for every entry, so it can never collide with a shortcut an existing quicklink
 owns.
 
-Quicklinks and their bindings also ride in native settings backups, and the settings flags with them.
+Quicklinks and their bindings also ride in native settings backups, and the settings flags with them —
+except **Fetch website icons**, which a backup never carries, so restoring one can't turn it on.
 Unlike `snippetsEnabled`, `quicklinksEnabled` grants no permission class and enables no listening, so
 excluding it would be cargo-culting.
 

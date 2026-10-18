@@ -469,9 +469,20 @@ struct QuicklinkCoordinatorTests {
         let stored = (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? []
         expect(stored.count == 1, "off then on keeps only the second fetch's icon")
 
+        coordinator.addImportedQuicklinks([Quicklink(name: "Queued", link: "https://queued.example/")])
+        fixture.settings.quicklinkFetchesWebsiteIcons = false
+        coordinator.applyWebsiteIcons()
+        try await drain()
+        expect(
+            !google.requests.contains("queued.example"),
+            "a fetch queued just before turning it off never contacts Google")
+        fixture.settings.quicklinkFetchesWebsiteIcons = true
+        coordinator.applyWebsiteIcons()
+        try await settle { google.requests.count == 5 }
+
         google.holding = true
         coordinator.refreshWebsiteIcon(id: fixture.link.id)
-        try await settle { google.requests.count == 4 }
+        try await settle { google.requests.count == 6 }
         for quicklink in fixture.store.quicklinks {
             await coordinator.deleteQuicklink(id: quicklink.id)
         }

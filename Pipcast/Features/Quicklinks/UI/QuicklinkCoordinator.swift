@@ -131,7 +131,10 @@ final class QuicklinkCoordinator {
 
     @discardableResult
     private func fetchWebsiteIcon(host: String) async -> Bool {
-        guard await websiteIcons.fetch(host: host) else { return false }
+        // Rechecked as the task starts: one queued just before an opt-out must not contact Google.
+        guard settings.quicklinkFetchesWebsiteIcons, await websiteIcons.fetch(host: host) else {
+            return false
+        }
         // Also prunes it straight away if its last quicklink went while it was being fetched.
         applyQuicklinksPresence()
         return true
