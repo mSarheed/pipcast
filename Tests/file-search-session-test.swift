@@ -152,8 +152,6 @@ struct FileSearchSessionTests {
         session.search("annual")
         await waitUntil { session.state == .ready }
         let snapshot = await probe.snapshot()
-        expect(snapshot.calls == ["a", "annual"], "a burst starts promptly and coalesces subsequent queries")
-        expect(snapshot.cancelled == ["a"], "a new burst query cancels its leading search")
         expect(session.results.first?.name == "annual", "only the final burst query publishes")
         session.search("cancel before debounce")
         session.cancel()
@@ -193,6 +191,7 @@ struct FileSearchSessionTests {
 
         let snapshot = await probe.snapshot()
         expect(snapshot.calls == ["a", "annual"], "keystrokes queued behind a search collapse")
+        expect(snapshot.cancelled == ["a"], "a new query cancels the running search")
     }
 
     static func serializesRunningQueries() async {
