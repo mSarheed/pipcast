@@ -415,7 +415,7 @@ Settings panes, system actions, commands, Apple Shortcuts, the quicklink library
 `SettingsTarget.launcherItem`, which scrolls to its section and narrows the filter to the row's name
 (`revealsLauncherItem`); custom commands, quick actions, snippets, layouts, rooms, custom sizes and a
 feature pane's own commands scroll to their section; an extension command reveals its extension's
-row; a built-in window command, whose section has no anchor, opens the pane at the top.
+row; a built-in window command reveals its own row.
 
 Visibility is one-way from ⌘K: an unwanted result is noticed while searching, so ⌘K can hide a
 row, but putting it back is still the pane's checkbox. Every pane built

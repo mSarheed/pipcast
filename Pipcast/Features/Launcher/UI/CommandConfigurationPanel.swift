@@ -58,6 +58,7 @@ struct CommandHotkeyPanel: View {
     let onClose: () -> Void
 
     @Environment(\.metrics) private var metrics
+    @Environment(HotKeyManager.self) private var hotKeys
 
     var body: some View {
         CommandConfigurationSurface(
@@ -67,6 +68,12 @@ struct CommandHotkeyPanel: View {
             ShortcutCaptureReadout()
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, metrics.spacing.md)
+                // The capture ends on any click outside its recorder; the readout stands in for one.
+                .background {
+                    if hotKeys.recordingAction != nil {
+                        ShortcutRecorderHitRegion(capture: hotKeys.capture)
+                    }
+                }
         }
     }
 }

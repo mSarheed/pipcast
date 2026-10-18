@@ -91,6 +91,8 @@ extension SettingsAnchor {
     static let windowManagementLayoutCommands = Self(
         tab: .windowManagement, title: "Layout and Room Commands")
     static let windowManagementOptions = Self(tab: .windowManagement, title: "Options")
+    /// The catalog's commands, which span one section per group, so it names rows, never a header.
+    static let windowManagementCommands = Self(tab: .windowManagement, title: "Commands")
     static let windowManagementCustomSizes = Self(tab: .windowManagement, title: "Custom Sizes")
 
     static let clipboardClipboard = Self(tab: .clipboard, title: "Clipboard")

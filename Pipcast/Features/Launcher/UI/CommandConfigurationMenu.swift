@@ -129,7 +129,7 @@ extension AppEntry {
         case .windowRoom: return .section(.windowManagementRooms)
         case .windowCommand:
             return CustomWindowSize.id(fromEntryID: id) == nil
-                ? nil : .section(.windowManagementCustomSizes)
+                ? .row(.windowManagementCommands, name) : .section(.windowManagementCustomSizes)
         case .extensionCommand, .meeting: return nil
         }
     }
