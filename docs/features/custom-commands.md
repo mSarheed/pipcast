@@ -59,7 +59,9 @@ Its header collects the same positional arguments as root search; Return uses th
 and confirmation gates. Run and Edit share their action definitions with the launcher home.
 ⌘E edits, ⌘N creates, and the final destructive action deletes with ⌃X. An empty library or filter
 still offers Create. Escape returns to the previous search; editing returns to the browser's query
-and selection. Alias and hotkey assignment remain in Settings.
+and selection. This browser doesn't assign aliases or hotkeys. A command's row in root search does,
+through ⌘K › Configure Command… (⇧⌘,), and so does Settings; both write the same alias and hotkey
+stores. See [launcher.md](launcher.md#user-aliases).
 
 `showsInRootSearch == false` keeps a command out of that slice — and with it its alias — while its
 shortcut still runs it. The editor's **Show in root search** toggle writes it, and so does the

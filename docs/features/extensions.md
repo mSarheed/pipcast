@@ -594,7 +594,8 @@ along with the extension's stored preferences and its chosen icon.
 
 A user alias binds to a **command**, keyed by the launcher entry id
 (`extension:<extension>/<command>`) — the same key the shortcut, favorite and ranking stores use.
-Settings › Extensions › the command › Alias is the writer; `AppIndex` already ranks it as
+Settings › Extensions › the command › Alias writes it, and so does the command's ⌘K ›
+Configure Command… › Set Alias… in root search; both go through `AliasStore`. `AppIndex` ranks it as
 `.userAlias`. The field sits beside the shortcut recorder on the command's title row, the same
 pairing Settings ▸ Commands uses. It dims when the command is hidden from launcher search — the
 global Show in launcher switch, or this extension's — because the ranker never sees the entry then.
