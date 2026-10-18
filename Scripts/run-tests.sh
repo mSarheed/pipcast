@@ -118,6 +118,7 @@ run menu-search-test       $L/SearchRelevance.swift \
 run window-switch-test     $L/SearchRelevance.swift \
                            Pipcast/Features/WindowSwitcher/Model/*.swift
 run index file-search-performance $FS/Model/*.swift $FILE_INDEX
+run index file-search-session-performance $FS/Model/*.swift $FS/Service/FileSearchSession.swift $FILE_INDEX
 run ranking-test           $L/SearchRelevance.swift $L/ScriptRomanization.swift \
                            $L/LauncherMatch.swift $L/LauncherRankingStore.swift
 run scopes-test            $L/SearchScopes.swift

@@ -61,12 +61,26 @@ final class FileSearchCoordinator {
     /// Checks the switch before reading the session, so with it off the launcher observes nothing.
     func launcherFiles(for query: String) -> [FileSearchResult] {
         guard showsFilesInLauncher, FileSearchQuery.answersLauncher(query) else { return [] }
-        return Array(session.results.prefix(FileSearchQuery.launcherLimit))
+        return Array(session.results().prefix(FileSearchQuery.launcherLimit))
     }
 
     func applyLauncherFiles() {
         guard palette.mode == .launcher else { return }
         searchFromLauncher(palette.query)
+    }
+
+    func searchInFolder(_ result: FileSearchResult) {
+        guard palette.mode == .fileSearch, result.isDirectory else { return }
+        palette.fileSearchFolder = result.id
+        palette.rewriteQuery("")
+    }
+
+    @discardableResult
+    func leaveFolder() -> Bool {
+        guard palette.mode == .fileSearch, palette.fileSearchFolder != nil else { return false }
+        palette.fileSearchFolder = nil
+        palette.rewriteQuery("")
+        return true
     }
 
     func rebuildIndex() {

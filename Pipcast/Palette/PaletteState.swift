@@ -21,6 +21,7 @@ final class PaletteState {
     var isComposing = false
     var clipboardFilter: ClipboardFilter = .all { didSet { restoredSelection = nil } }
     var fileSearchFilter: FileSearchFilter = .all
+    var fileSearchFolder: String?
     var emojiCategoryFilter: EmojiCategoryFilter = .all
     /// Nil means the configured default; zoom only overrides it for this picker session.
     var emojiGridColumnsOverride: EmojiGridColumns?
@@ -147,6 +148,7 @@ final class PaletteState {
         argumentEntryID = nil
         clipboardFilter = .all
         fileSearchFilter = .all
+        fileSearchFolder = nil
         emojiCategoryFilter = .all
         emojiGridColumnsOverride = nil
         forceExpanded = false

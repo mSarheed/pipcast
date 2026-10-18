@@ -26,6 +26,15 @@ struct PaletteNavigationTests {
     }
 
     static func main() {
+        let scoped = PaletteState()
+        scoped.prepare(mode: .fileSearch)
+        scoped.fileSearchFolder = "/Users/test/Documents"
+        scoped.prepare(mode: .fileSearch)
+        expect(scoped.fileSearchFolder == nil, "opening a fresh File Search clears its folder")
+        scoped.fileSearchFolder = "/Users/test/Documents"
+        scoped.prepare(mode: .launcher)
+        expect(scoped.fileSearchFolder == nil, "returning to root clears the folder")
+
         openingDisarmed()
         deliberateMovementArms()
         scrollingDisarms()

@@ -8,10 +8,12 @@ struct FileSearchScreen: PaletteScreen {
 
     private var metrics: InterfaceMetrics { core.settings.interfaceSize.metrics }
 
-    var rows: [FileSearchResult] { session.results }
+    var rows: [FileSearchResult] {
+        session.results(filter: vm.fileSearchFilter, folder: vm.fileSearchFolder)
+    }
 
     private var isShowingRecents: Bool {
-        vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        vm.fileSearchFolder == nil && vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var indexer: FileIndexer { core.fileIndexer }
@@ -51,6 +53,36 @@ struct FileSearchScreen: PaletteScreen {
         guard let result = result(at: selection) else { return false }
         core.fileSearchCoordinator.showInFinder(result)
         return true
+    }
+
+    func tab(at selection: Int, backwards: Bool) -> Bool {
+        guard !backwards, let result = result(at: selection), result.isDirectory else {
+            return vm.fileSearchFolder != nil && !backwards
+        }
+        core.fileSearchCoordinator.searchInFolder(result)
+        return true
+    }
+
+    func headerAccessory(at selection: Int, focus: FocusState<String?>.Binding) -> PaletteHeaderAccessory? {
+        guard let folder = vm.fileSearchFolder else { return nil }
+        return PaletteHeaderAccessory(
+            width: metrics.size.clipboardListWidth, fieldNames: [], firstIncompleteField: nil,
+            placement: .besideSearchField,
+            view: AnyView(
+                BarButton(action: { core.fileSearchCoordinator.leaveFolder() }) {
+                    HStack(spacing: metrics.spacing.sm) {
+                        SymbolImage(name: "folder", size: metrics.size.menuIcon)
+                        Text(verbatim: FileSearchScope.abbreviate(
+                            folder, homeDirectory: FileManager.default.homeDirectoryForCurrentUser)
+                        ).lineLimit(1).truncationMode(.middle)
+                        SymbolImage(name: "xmark", size: metrics.size.menuIcon)
+                    }
+                    .font(metrics.typography.bar)
+                }
+                .frame(maxWidth: metrics.size.clipboardListWidth)
+                .accessibilityLabel(String(localized: "Leave Folder"))
+                .accessibilityValue(folder)
+                .tooltip(String(localized: "Leave Folder"), edge: .bottom)))
     }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
@@ -130,7 +162,7 @@ enum FileSearchActionsMenu {
         result: FileSearchResult, core: AppCore, target: PasteTarget?
     ) -> PopoverMenuContent {
         let coordinator = core.fileSearchCoordinator
-        let items = [
+        var items = [
             PopoverMenuItem(
                 title: result.isDirectory ? String(localized: "Open Folder") : String(localized: "Open File"),
                 systemImage: result.isDirectory ? "folder" : "doc", shortcut: "↵"
@@ -161,6 +193,12 @@ enum FileSearchActionsMenu {
                 shortcut: "⌃X", isDestructive: true
             ) { coordinator.trash(result) }
         ]
+        if core.palette.mode == .fileSearch, result.isDirectory {
+            items.insert(PopoverMenuItem(
+                title: String(localized: "Search in Folder"), systemImage: "folder.badge.magnifyingglass",
+                shortcut: "⇥"
+            ) { coordinator.searchInFolder(result) }, at: 1)
+        }
         return PopoverMenuContent(header: result.name, items: items)
     }
 

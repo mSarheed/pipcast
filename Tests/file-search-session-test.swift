@@ -1,9 +1,12 @@
 import Foundation
+import Observation
+import Synchronization
 
 actor FileSearchProbe {
     private var active = 0
     private var calls: [String] = []
     private var maximumActive = 0
+    private var cancelled: [String] = []
     private let pausedQuery: String?
     private var pauseEnabled: Bool
     private var pausedContinuation: CheckedContinuation<Void, Never>?
@@ -13,7 +16,7 @@ actor FileSearchProbe {
         pauseEnabled = query != nil
     }
 
-    func search(query: String, filter: FileSearchFilter) async -> [FileSearchResult] {
+    func search(query: String, filter: FileSearchFilter, folder: String?) async -> [FileSearchResult] {
         active += 1
         calls.append(filter == .all ? query : "\(query) [\(filter.title)]")
         maximumActive = max(maximumActive, active)
@@ -24,13 +27,14 @@ actor FileSearchProbe {
         } else {
             try? await Task.sleep(for: .milliseconds(80))
         }
+        if Task.isCancelled { cancelled.append(query) }
         active -= 1
-        let home = URL(fileURLWithPath: "/Users/test")
+        let home = URL(fileURLWithPath: folder ?? "/Users/test")
         return [FileSearchResult(url: home.appending(path: query), isDirectory: false, homeDirectory: home)]
     }
 
-    func snapshot() -> (calls: [String], maximumActive: Int) {
-        (calls, maximumActive)
+    func snapshot() -> (calls: [String], maximumActive: Int, cancelled: [String]) {
+        (calls, maximumActive, cancelled)
     }
 
     func waitUntilPaused() async -> Bool {
@@ -64,6 +68,11 @@ struct FileSearchSessionTests {
     }
 
     static func main() async {
+        await resultObservation()
+        await cancellationKeepsRecentRefresh()
+        await keepsRowsWhileSearching()
+        await debouncesTyping()
+        await folderChangeRejectsStaleResults()
         await coalescesQueuedQueries()
         await serializesRunningQueries()
         await cancellationPreventsPendingWork()
@@ -76,6 +85,100 @@ struct FileSearchSessionTests {
 
         print(failures == 0 ? "File search session tests passed" : "\(failures) tests failed")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    static func resultObservation() async {
+        let session = makeSession(probe: FileSearchProbe())
+        let changed = Mutex(false)
+        withObservationTracking {
+            _ = session.results()
+        } onChange: {
+            changed.withLock { $0 = true }
+        }
+        session.search("first")
+        await waitUntil { session.state == .ready }
+        expect(changed.withLock { $0 }, "an initially empty launcher observes arriving results")
+        changed.withLock { $0 = false }
+        withObservationTracking {
+            _ = session.results()
+        } onChange: {
+            changed.withLock { $0 = true }
+        }
+        session.search("second")
+        expect(!changed.withLock { $0 }, "query bookkeeping does not invalidate unchanged launcher rows")
+        await waitUntil { session.state == .ready }
+        expect(changed.withLock { $0 }, "replacement rows still invalidate the launcher")
+    }
+
+    static func cancellationKeepsRecentRefresh() async {
+        let probe = FileSearchProbe(pausing: "")
+        let session = makeSession(probe: probe)
+        session.refreshRecent()
+        guard await probe.waitUntilPaused() else { return expect(false, "recent refresh starts") }
+        session.cancel()
+        await probe.resumePausedSearch()
+        try? await Task.sleep(for: .milliseconds(20))
+        session.search("")
+        expect(!session.results.isEmpty, "launcher cancellation preserves an index-requested recent refresh")
+        let snapshot = await probe.snapshot()
+        expect(
+            snapshot.cancelled.isEmpty,
+            "query cancellation does not cancel the independent recent refresh")
+    }
+
+    static func keepsRowsWhileSearching() async {
+        let session = makeSession(probe: FileSearchProbe())
+        session.search("first")
+        await waitUntil { session.state == .ready }
+        session.search("second")
+        expect(session.results().first?.name == "first", "typing keeps the previous list while loading")
+        await waitUntil { session.state == .ready }
+        session.refresh()
+        expect(session.results().first?.name == "second", "refresh preserves rows and selection")
+        session.search("second", folder: "/new")
+        expect(session.results(folder: "/new").isEmpty, "changing destination clears the previous list")
+        await waitUntil { session.state == .ready }
+    }
+
+    static func debouncesTyping() async {
+        let probe = FileSearchProbe()
+        let session = makeSession(probe: probe)
+        session.search("a")
+        try? await Task.sleep(for: .milliseconds(20))
+        expect(session.results.isEmpty, "the leading burst query has not published")
+        session.search("an")
+        try? await Task.sleep(for: .milliseconds(20))
+        expect(session.results.isEmpty, "a cancelled leading query never publishes")
+        session.search("annual")
+        await waitUntil { session.state == .ready }
+        let snapshot = await probe.snapshot()
+        expect(snapshot.calls == ["a", "annual"], "a burst starts promptly and coalesces subsequent queries")
+        expect(snapshot.cancelled == ["a"], "a new burst query cancels its leading search")
+        expect(session.results.first?.name == "annual", "only the final burst query publishes")
+        session.search("cancel before debounce")
+        session.cancel()
+        try? await Task.sleep(for: .milliseconds(100))
+        let cancelled = await probe.snapshot()
+        expect(cancelled.calls == snapshot.calls, "cancellation prevents a debounced operation from starting")
+    }
+
+    static func folderChangeRejectsStaleResults() async {
+        let probe = FileSearchProbe(pausing: "report")
+        let session = makeSession(probe: probe)
+        session.search("report", folder: "/old")
+        guard await probe.waitUntilPaused() else { return expect(false, "scoped query starts") }
+        session.search("report", folder: "/new")
+        expect(session.results.isEmpty, "a new folder immediately clears the previous destination")
+        await probe.resumePausedSearch()
+        await waitUntil { session.state == .ready }
+        let snapshot = await probe.snapshot()
+        expect(snapshot.calls == ["report", "report"], "the same words rerun in a different folder")
+        expect(session.results.first?.id == "/new/report", "a late result from the old folder cannot publish")
+        expect(session.results().isEmpty, "scoped rows cannot leak to root search before its observer runs")
+        expect(!session.results(folder: "/new").isEmpty, "the current destination remains visible")
+        session.search("report")
+        await waitUntil { session.state == .ready }
+        expect(session.results.first?.id == "/Users/test/report", "leaving the folder searches globally")
     }
 
     static func coalescesQueuedQueries() async {
@@ -120,6 +223,7 @@ struct FileSearchSessionTests {
 
         let snapshot = await probe.snapshot()
         expect(snapshot.calls == ["running"], "cancelling drops the queued search")
+        expect(snapshot.cancelled == ["running"], "cancellation reaches the running search operation")
         expect(session.state == .idle && session.results.isEmpty, "cancellation clears the session")
     }
 
@@ -152,7 +256,7 @@ struct FileSearchSessionTests {
 
         let snapshot = await probe.snapshot()
         expect(
-            snapshot.calls == ["", "report", "report", ""],
+            snapshot.calls == ["", "report", "", "report"],
             "an idle session prepares recents, and an open one re-asks its query and refreshes them")
     }
 
@@ -219,8 +323,8 @@ struct FileSearchSessionTests {
     }
 
     static func makeSession(probe: FileSearchProbe) -> FileSearchSession {
-        FileSearchSession { query, filter in
-            await probe.search(query: query, filter: filter)
+        FileSearchSession { query, filter, folder in
+            await probe.search(query: query, filter: filter, folder: folder)
         }
     }
 

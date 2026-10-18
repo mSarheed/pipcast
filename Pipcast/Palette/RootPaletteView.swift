@@ -430,7 +430,9 @@ struct RootPaletteView: View {
             .onChange(of: vm.query) {
                 if vm.collapseQueryLineBreaks() { return }
                 land(restoringNavigation: true)
-                if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
+                if vm.mode == .fileSearch {
+                    fileSearch.search(vm.query, filter: vm.fileSearchFilter, folder: vm.fileSearchFolder)
+                }
                 if vm.mode == .launcher { core.fileSearchCoordinator.searchFromLauncher(vm.query) }
                 if vm.mode == .dictionary { dictionary.lookUp(vm.query) }
                 if vm.mode == .menuSearch { menuSearch.filter(vm.query) }
@@ -451,12 +453,19 @@ struct RootPaletteView: View {
             .onChange(of: vm.clipboardFilter) { land(restoringNavigation: true) }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
+                guard vm.mode == .fileSearch else { return }
                 land()
-                fileSearch.search(vm.query, filter: vm.fileSearchFilter)
+                fileSearch.search(vm.query, filter: vm.fileSearchFilter, folder: vm.fileSearchFolder)
+            }
+            .onChange(of: vm.fileSearchFolder) {
+                guard vm.mode == .fileSearch else { return }
+                land()
+                fileSearch.search(vm.query, filter: vm.fileSearchFilter, folder: vm.fileSearchFolder)
             }
             .onChange(of: vm.mode) {
                 if vm.restoredSelection == nil { vm.clipboardFilter = .all }
                 vm.fileSearchFilter = .all
+                if vm.mode != .fileSearch { vm.fileSearchFolder = nil }
                 vm.emojiCategoryFilter = .all
                 vm.emojiGridColumnsOverride = nil
                 if menuOpen { closeMenus() }
@@ -465,7 +474,7 @@ struct RootPaletteView: View {
                 if vm.mode != .uninstall { uninstall.cancel() }
                 // Entering with no query is the blank screen's own request for recents.
                 if vm.mode == .fileSearch {
-                    fileSearch.search(vm.query, filter: vm.fileSearchFilter)
+                    fileSearch.search(vm.query, filter: vm.fileSearchFilter, folder: vm.fileSearchFolder)
                 } else if vm.mode == .launcher {
                     core.fileSearchCoordinator.searchFromLauncher(vm.query)
                 } else {
@@ -599,7 +608,7 @@ struct RootPaletteView: View {
                 switch PaletteEscapeAction.resolve(
                     menuOpen: menuOpen, menuQuery: vm.menuQuery,
                     argumentFocused: argumentFocused != nil, query: vm.query, mode: vm.mode,
-                    canGoBack: vm.canGoBack,
+                    canGoBack: hasBackStep,
                     behavior: settings.escapeKeyBehavior)
                 {
                 case .clearMenuQuery, .closeMenu:
@@ -1514,7 +1523,8 @@ struct RootPaletteView: View {
 
     /// An extension keeps its own stack, so it can have a step back the palette cannot see.
     private var hasBackStep: Bool {
-        vm.canGoBack || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
+        vm.canGoBack || (vm.mode == .fileSearch && vm.fileSearchFolder != nil)
+            || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
     }
 
     /// Never promises a step the click does not take: a root screen closes rather than backs.
@@ -1525,6 +1535,7 @@ struct RootPaletteView: View {
     }
 
     private func goBack() {
+        if core.fileSearchCoordinator.leaveFolder() { return }
         if vm.mode == .customCommandEditor {
             core.customCommandCoordinator.cancelCustomCommandEditing()
             return

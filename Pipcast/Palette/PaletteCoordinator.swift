@@ -97,7 +97,10 @@ final class PaletteCoordinator {
         // Before the show: `targetApp` must still name the app in front, and no row may pop in.
         onScreenOpening?(palette.mode)
         windowController.show()
-        if palette.mode == .fileSearch { fileSearch.search(palette.query) }
+        if palette.mode == .fileSearch {
+            fileSearch.search(
+                palette.query, filter: palette.fileSearchFilter, folder: palette.fileSearchFolder)
+        }
         if palette.mode == .menuSearch { menuSearch.filter(palette.query) }
         if palette.mode == .switchWindows { windowSwitch.filter(palette.query) }
         // Re-scan on open so an app uninstalled since the last scan drops out of the launcher.

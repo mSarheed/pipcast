@@ -35,8 +35,9 @@ design follows [fsearch](https://github.com/noahdunnagan/fsearch).
   only seeds.
 - **The launcher's Files section is off by default, and off costs nothing.** With it off a keystroke never
   reaches the index, and `LauncherScreen` reads the switch before the session, so it observes nothing.
-- **A superseded query never publishes.** The session runs one search at a time, keeps only the newest
-  pending request, and checks its revision before publishing.
+- **A superseded query never publishes.** The first query after a pause starts immediately; rapid follow-ups
+  coalesce over 40 ms. The session runs one search at a time, cancels superseded work, and checks its revision
+  and destination before publishing.
 - **Share is the one system popover, and the palette stays up under it.** `AGENTS.md` keeps Pipcast's
   own dialogs because a question or a report is Pipcast's to word. A share sheet is neither: it is
   AirDrop, Mail and Messages, and re-drawing it would mean re-implementing the transports and losing
@@ -132,6 +133,30 @@ The diff reads a copy of the state that is released before its result is written
 copies the overlay: holding that copy across the write cost 1.7 ms per change at 30,000 overlay entries.
 `MustScanSubDirs` rescans a folder recursively. History loss at or above a root, a moved root or more
 than 100,000 changes since the snapshot trigger a background rebuild.
+
+## Searching inside a folder
+
+In Search Files, **Tab** on a folder clears the query and scopes the existing index search to that
+folder's descendants. The header shows its path with a **Leave Folder** button. Backspace on an empty
+query, the header's back button, or Escape after clearing the query leaves the scope. Escape still
+honors the user's Close and Pop to Root behavior. Enter keeps opening the selected item normally.
+The Actions menu also offers **Search in Folder** with its Tab shortcut.
+
+The scope is transient palette state, reset on a fresh screen and kept when Pop to Root Search keeps
+the screen. It never narrows root search or changes the configured crawl roots. An empty scoped query
+lists up to 200 descendants, including folders, ordered by visibility priority then modification date.
+A typed query keeps the usual filename ranking and type filter. Snapshot searches scan the folder's
+contiguous subtree range before selecting the best hits; live additions use the same path boundary.
+
+In both root search and Search Files, the first query after a 40 ms pause starts immediately. A follow-up
+within that window waits for 40 ms of quiet, coalescing rapid bursts. Searching runs off the main actor,
+and cancellation reaches the parallel index scan. Changing filter or folder clears the prior rows;
+typing and index refreshes keep the list visible until replacement results arrive. Late results cannot
+publish or answer another destination's query. Recent files remain cached so opening the unscoped blank
+screen still shows them immediately.
+
+Typed paths (`~/`, absolute paths and partial paths) are not interpreted as folder navigation.
+This implements the Tab-to-scope portion of tinycast #1125, not its broader path-input request.
 
 ## Type filter
 

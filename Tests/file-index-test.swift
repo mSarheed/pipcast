@@ -34,6 +34,7 @@ struct FileIndexTests {
 
         layout(snapshot, root: root.path)
         search(index, root: root.path)
+        scopedSearch(index, root: root.path)
         try live(index, root: root, policy: policy)
 
         print(failures == 0 ? "File index tests passed" : "\(failures) file index tests failed")
@@ -89,6 +90,27 @@ struct FileIndexTests {
         expect(index.itemCount == 15, "the count matches the snapshot")
     }
 
+    static func scopedSearch(_ index: FileIndex, root: String) {
+        let query = FileSearchQuery.prepare("todo")!
+        let documents = root + "/Documents"
+        let found = index.search(query, filter: .all, folder: documents)
+        expect(found.map(\.id) == [documents + "/Archive/todo.md"], "a scope includes descendants only")
+        expect(index.search(query, filter: .images, folder: documents).isEmpty, "scope keeps the type filter")
+        expect(
+            index.search(query, filter: .all, folder: documents + "Missing").isEmpty,
+            "missing scope finds nothing")
+        let blank = index.recent(filter: .all, folder: documents).map(\.id)
+        expect(blank.contains(documents + "/Archive"), "an empty scope includes folders for another Tab")
+        expect(!blank.contains(documents), "the scoped folder never lists itself")
+        expect(blank.allSatisfy { $0.hasPrefix(documents + "/") }, "an empty scope never leaks siblings")
+        let project = index.recent(filter: .all, folder: root + "/Developer/app").map(\.name)
+        expect(project.firstIndex(of: "main.swift")! < project.firstIndex(of: "config")!,
+               "ordinary descendants rank above hidden descendants in an empty scope")
+        expect(
+            index.search(query, filter: .all, isCancelled: { true }).isEmpty,
+            "a cancelled scan yields no results")
+    }
+
     static func live(_ index: FileIndex, root: URL, policy: FileSearchPolicy) throws {
         let documents = root.appending(path: "Documents")
         let revision = index.recentRevision
@@ -136,9 +158,21 @@ struct FileIndexTests {
             index.itemCount == churn + 1 && index.recentRevision == dated,
             "a hidden file counts but leaves Recent alone")
 
+        let project = index.recent(filter: .all, folder: developer.appending(path: "application").path)
+            .map(\.name)
+        expect(project.firstIndex(of: "main.swift")! < project.firstIndex(of: "HEAD")!,
+               "overlay hidden descendants rank below ordinary descendants")
+
         try write(documents.appending(path: "Trip/Photos/sunset.jpg"))
         index.apply(folder: documents.path)
         expect(names(index, "sunset") == ["sunset.jpg"], "a new folder is crawled whole")
+        let scoped = index.search(
+            FileSearchQuery.prepare("sunset")!, filter: .all, folder: documents.appending(path: "Trip").path)
+        expect(scoped.map(\.name) == ["sunset.jpg"], "new overlay folders can be scoped before a rebuild")
+        expect(index.search(
+            FileSearchQuery.prepare("sunset")!, filter: .all,
+            folder: root.appending(path: "Pictures").path).isEmpty,
+            "overlay results respect the scope")
         try FileManager.default.removeItem(at: documents.appending(path: "Trip"))
         index.apply(folder: documents.path)
         expect(names(index, "sunset").isEmpty && names(index, "trip").isEmpty, "and removed whole")

@@ -322,6 +322,23 @@ swiftc -O -wmo -swift-version 6 Pipcast/Features/FileSearch/Model/*.swift \
 
 It prints the crawl and write times, the index size, and first and median latency per query.
 
+`Tests/file-search-session-performance.swift` measures the shipped session's synchronous query cost,
+completion latency (including debounce), and process RSS with file queries on and off. Create the
+snapshot once and reuse that exact file for both revisions; run measurements after builds and tests
+finish. This isolates the search service and does not measure SwiftUI rendering or whole-app RSS.
+
+```sh
+swiftc -Onone -swift-version 6 Pipcast/Features/FileSearch/Model/*.swift \
+    Pipcast/Features/FileSearch/Service/FileIndex.swift \
+    Pipcast/Features/FileSearch/Service/FileIndexSnapshot.swift \
+    Pipcast/Features/FileSearch/Service/FileIndexCrawler.swift \
+    Pipcast/Features/FileSearch/Service/FileSearchSession.swift \
+    Tests/file-search-session-performance.swift -o /tmp/file-search-session-performance
+/tmp/file-search-session-performance --index /tmp/file-session-benchmark.bin
+/tmp/file-search-session-performance --on /tmp/file-session-benchmark.bin
+/tmp/file-search-session-performance --off /tmp/file-session-benchmark.bin
+```
+
 The calculator benchmark is deterministic — an injected clock, calendar and rate table — so it is a
 timing harness rather than an assertion one, and stays out of `run-tests.sh` for that reason:
 
@@ -913,6 +930,23 @@ Opt into installed English spelling service checks with
 - Every command under Settings ▸ Extensions has Add Alias, and Record Hotkey when the mode is
   supported; an alias set there finds the command from its start and shows the chip
 - Hiding the extension from the launcher, or turning off Show in launcher, dims its alias fields
+
+### File Search folder navigation
+
+- With File Search and Show in launcher enabled, root results keep applications and commands before
+  Files. Turn Show in launcher off and check that typing no longer starts file searches.
+- In Search Files, select a folder and press Tab: its path appears in the header, the query clears,
+  and typing finds only descendants. Repeat inside a nested folder; apply a type filter too.
+- Backspace with an empty query and the scope's Leave Folder button both restore the unscoped search.
+  The header back button does the same. Escape clears text first and follows the configured behavior.
+- Return still opens a folder; Shift-Tab retains palette navigation. Tab on a file stays in a folder
+  scope; unscoped, it returns to root search. Space stays text input. IME composition and an open menu keep
+  their existing key ownership.
+- Type rapidly, change folders or filters during a query, then return to root search or close the
+  palette: a result from the old query or folder never appears in the new destination.
+- With delayed Pop to Root Search, closing and reopening preserves the scope. A fresh screen or an
+  expired reset clears it. Without Full Disk Access, the existing access message and Privacy action
+  remain visible instead of an unexplained empty list.
 
 ### Settings and backup
 
