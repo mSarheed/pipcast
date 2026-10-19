@@ -56,6 +56,7 @@ struct DoubleTapDetectorTests {
     static func main() {
         modifierGlyphs()
         commandActions()
+        commandDeepLinks()
         layoutCharacters()
         hyperChord()
         hyperRetargeting()
@@ -377,6 +378,56 @@ struct DoubleTapDetectorTests {
             Set(HotKeyAction.builtInActions.map(\.defaultsKey)).count
                 == HotKeyAction.builtInActions.count,
             "no two built-in actions share a defaults key, which would bind them together")
+    }
+
+    // MARK: - Deeplinks
+
+    static func commandDeepLinks() {
+        let entryIDs =
+            CommandID.allCases.map(\.rawValue) + WindowCommandCatalog.all.map(\.entryID)
+            + SystemActionCatalog.all.map(\.entryID)
+        for entryID in entryIDs {
+            let action = CommandDeepLink.action(entryID: entryID)
+            let url = CommandDeepLink.url(entryID: entryID, scheme: "pipcast")
+            expect(
+                (url == nil) == (action == nil),
+                "\(entryID) has a link exactly when a shortcut can bind it")
+            guard let url else { continue }
+            expect(
+                CommandDeepLink.action(for: url) == action,
+                "\(url) runs the action \(entryID)'s shortcut runs")
+        }
+        expect(
+            CommandDeepLink.url(entryID: CommandID.clipboardHistory.rawValue, scheme: "pipcast")?
+                .absoluteString == "pipcast://command/clipboard-history",
+            "a command's link is its entry id with the colon read as a slash")
+        expect(
+            CommandDeepLink.url(entryID: "window-command:left-half", scheme: "pipcast-dev")?
+                .absoluteString == "pipcast-dev://window-command/left-half",
+            "a Debug build hands out links in its own scheme")
+        expect(
+            CommandDeepLink.action(for: URL(string: "pipcast://system-action/lock-screen")!)
+                == .systemAction(id: .lockScreen),
+            "a system action's link resolves to its shortcut action")
+        for unrunnable in [CommandID.quit, .openInBrowser, .runShellCommand] {
+            expect(
+                CommandDeepLink.url(entryID: unrunnable.rawValue, scheme: "pipcast") == nil
+                    && CommandDeepLink.action(for: catalogURL(unrunnable)) == nil,
+                "\(unrunnable.name) has no link, as it has no shortcut")
+        }
+        for malformed in [
+            "pipcast://", "pipcast://command", "pipcast://command/", "pipcast://command/nope",
+            "pipcast://command/clipboard-history/extra", "pipcast://extensions/demo/search",
+            "pipcast:command/clipboard-history", "pipcast://window-size/left-half"
+        ] {
+            expect(
+                CommandDeepLink.action(for: URL(string: malformed)!) == nil,
+                "\(malformed) names no command")
+        }
+    }
+
+    private static func catalogURL(_ id: CommandID) -> URL {
+        URL(string: "pipcast://" + id.rawValue.replacingOccurrences(of: ":", with: "/"))!
     }
 
     // MARK: - The Hyper chord

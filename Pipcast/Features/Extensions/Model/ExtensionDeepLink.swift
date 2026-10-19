@@ -19,6 +19,7 @@ struct ExtensionDeepLink: Sendable, Equatable {
     let arguments: [String: String]
     let fallbackText: String?
     let launchType: ExtensionLaunchType
+    var context: [String: RenderValue] = [:]
 
     /// `owner/ext` first so a scoped manifest wins over a bare slug collision.
     var extensionCandidates: [String] {
@@ -34,7 +35,20 @@ struct ExtensionDeepLink: Sendable, Equatable {
 
     static func claims(_ url: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased() else { return false }
-        return ["raycast", "pipcast", "com.raycast", "raycastinternal"].contains(scheme)
+        return ["raycast", "pipcast", "pipcast-dev", "com.raycast", "raycastinternal"]
+            .contains(scheme)
+    }
+
+    /// What Copy Deeplink hands out; a scoped manifest name already carries its owner.
+    static func url(
+        scheme: String, owner: String, extensionName: String, commandName: String
+    ) -> URL? {
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = "extensions"
+        let owned = extensionName.contains("/") ? extensionName : owner + "/" + extensionName
+        components.path = "/" + owned + "/" + commandName
+        return components.url
     }
 
     static func parse(url: URL) -> ExtensionDeepLink? {
@@ -79,12 +93,15 @@ struct ExtensionDeepLink: Sendable, Equatable {
         var arguments: [String: String] = [:]
         var fallbackText: String?
         var launchType = ExtensionLaunchType.userInitiated
+        var context: [String: RenderValue] = [:]
         for item in items {
             switch item.name.lowercased() {
             case "arguments":
                 if let raw = item.value { arguments = parseArguments(raw) }
             case "fallbacktext":
                 fallbackText = item.value
+            case "context":
+                if let raw = item.value { context = parseContext(raw) }
             case "launchtype", "launch_type":
                 launchType = item.value?.lowercased() == "background" ? .background : .userInitiated
             default:
@@ -94,7 +111,25 @@ struct ExtensionDeepLink: Sendable, Equatable {
         return .command(
             ExtensionDeepLink(
                 ownerOrAuthor: ownerOrAuthor, extensionName: extensionName, commandName: commandName,
-                arguments: arguments, fallbackText: fallbackText, launchType: launchType))
+                arguments: arguments, fallbackText: fallbackText, launchType: launchType,
+                context: context))
+    }
+
+    /// Raycast's `launchContext`: one URL-encoded JSON object, passed through as plain data.
+    static func parseContext(_ raw: String) -> [String: RenderValue] {
+        guard let data = raw.data(using: .utf8),
+            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return [:] }
+        return object.mapValues(contextValue)
+    }
+
+    /// Recursing itself, so an object shaped like `{type, id}` is never hoisted into a view node.
+    private static func contextValue(_ json: Any) -> RenderValue {
+        switch json {
+        case let object as [String: Any]: .object(object.mapValues(contextValue))
+        case let array as [Any]: .array(array.map(contextValue))
+        default: RenderValue(json: json)
+        }
     }
 
     /// Raycast sends one URL-encoded JSON object; anything else means no arguments, not a failure.

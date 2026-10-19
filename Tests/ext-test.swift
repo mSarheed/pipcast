@@ -986,6 +986,47 @@ struct ExtensionTests {
             "deeplink rejects other schemes",
             ExtensionDeepLink.parse(url: URL(string: "https://example.com/x")!) == nil)
 
+        let context = ExtensionDeepLink.parse(
+            url: URL(
+                string:
+                    "pipcast://extensions/demo/demo/define?context=%7B%22input%22%3A%20%22looked%20up%22%7D"
+            )!)
+        check(
+            "deeplink passes context through as the launch context",
+            context?.context == ["input": .string("looked up")], String(describing: context?.context))
+        let shaped = ExtensionDeepLink.parseContext(
+            #"{"issue":{"type":"bug","id":3},"tags":[{"type":"a","id":1}],"n":2,"ok":true}"#)
+        check(
+            "deeplink context stays plain data, never a hoisted view node",
+            shaped == [
+                "issue": .object(["type": .string("bug"), "id": .number(3)]),
+                "tags": .array([.object(["type": .string("a"), "id": .number(1)])]),
+                "n": .number(2), "ok": .bool(true),
+            ], String(describing: shaped))
+        check(
+            "deeplink treats a non-object or malformed context as none",
+            ExtensionDeepLink.parseContext("[1]") == [:]
+                && ExtensionDeepLink.parseContext("not-json") == [:]
+                && full?.context == [:])
+        check(
+            "a Debug build's own scheme is claimed",
+            ExtensionDeepLink.parse(url: URL(string: "pipcast-dev://extensions/linear/linear/create-issue")!)
+                == canonical)
+
+        let copied = ExtensionDeepLink.url(
+            scheme: "pipcast", owner: "linear", extensionName: "linear", commandName: "create-issue")
+        check(
+            "Copy Deeplink hands out the owner, extension and command",
+            copied?.absoluteString == "pipcast://extensions/linear/linear/create-issue",
+            String(describing: copied))
+        let scoped = ExtensionDeepLink.url(
+            scheme: "pipcast", owner: "author", extensionName: "acme/demo", commandName: "search")
+        check(
+            "Copy Deeplink keeps a scoped manifest's own owner",
+            scoped?.absoluteString == "pipcast://extensions/acme/demo/search"
+                && scoped.flatMap(ExtensionDeepLink.parse)?.matches(manifestName: "acme/demo") == true,
+            String(describing: scoped))
+
         check(
             "deeplink matches a scoped install by slug",
             bare?.matches(manifestName: "owner/demo") == true)

@@ -87,6 +87,10 @@ final class AppCore {
     /// Set when a layout editor should open with Settings; the pane consumes it.
     var pendingWindowLayoutEdit: WindowLayoutEditRequest?
     var pendingExtensionStoreInstall: ExtensionDeepLink.StoreInstall?
+    @ObservationIgnored private var linkFocusTask: Task<Void, Never>?
+    /// The last other app in front: where a link hands focus back once it has activated Pipcast.
+    @ObservationIgnored private var lastOtherApp = NSWorkspace.shared.frontmostApplication
+    @ObservationIgnored private var appActivationToken: NotificationCenter.ObservationToken?
 
     @ObservationIgnored private(set) lazy var snippetCoordinator = SnippetCoordinator(
         store: snippetsStore, listener: snippetListener, injector: textInjector,
@@ -464,6 +468,7 @@ final class AppCore {
             snippetCoordinator.applySnippetsLauncherPresence()
 
             observeFeatureSwitches()
+            observeAppActivation()
 
             // First launch binds no hotkey, so guide once; the marker is written at show-time.
             if !OnboardingState.hasOnboarded {
@@ -485,15 +490,60 @@ final class AppCore {
 
     func handleOpenURL(_ url: URL) {
         guard ExtensionDeepLink.claims(url) else { return }
-        guard let route = ExtensionDeepLink.route(url: url) else {
-            paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
+        if let action = CommandDeepLink.action(for: url) {
+            afterReturningFocus { [weak self] in
+                guard let self, !hotKeys.perform(action) else { return }
+                showMessage(String(localized: "This command is turned off"), tone: .danger)
+            }
             return
         }
-        switch route {
+        switch ExtensionDeepLink.route(url: url) {
         case .command(let link):
-            extensionCoordinator.runDeepLink(link)
+            afterReturningFocus { [weak self] in self?.extensionCoordinator.runDeepLink(link) }
         case .storeInstall(let install):
+            linkFocusTask?.cancel()
             extensionCoordinator.showStoreInstall(install)
+        case nil where (url.host() ?? "").isEmpty && url.path().isEmpty:
+            afterReturningFocus { [weak self] in
+                self?.paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
+            }
+        case nil:
+            let message = String(localized: "Pipcast doesn’t recognize this link")
+            afterReturningFocus { [weak self] in self?.showMessage(message, tone: .danger) }
+        }
+    }
+
+    private func observeAppActivation() {
+        let workspace = NSWorkspace.shared
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        appActivationToken = workspace.notificationCenter.addObserver(
+            of: workspace, for: .didActivateApplication
+        ) { [weak self] message in
+            guard message.application.processIdentifier != ownPID else { return }
+            self?.lastOtherApp = message.application
+        }
+    }
+
+    /// Opening a link activates Pipcast, so what it runs must first hand the app in front back.
+    private func afterReturningFocus(_ run: @escaping @MainActor () -> Void) {
+        linkFocusTask?.cancel()
+        let workspace = NSWorkspace.shared
+        guard NSApp.isActive, !paletteCoordinator.isVisible, let previous = lastOtherApp,
+            previous.processIdentifier != ProcessInfo.processInfo.processIdentifier,
+            !previous.isTerminated
+        else { return run() }
+        previous.activate()
+        linkFocusTask = Task {
+            let deadline = ContinuousClock.now + .milliseconds(500)
+            // Until our own resign lands too: arriving late, it would hide a palette just shown.
+            while NSApp.isActive
+                || workspace.frontmostApplication?.processIdentifier != previous.processIdentifier,
+                ContinuousClock.now < deadline
+            {
+                do { try await Task.sleep(for: .milliseconds(10)) } catch { return }
+            }
+            guard !Task.isCancelled else { return }
+            run()
         }
     }
 

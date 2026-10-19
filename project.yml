@@ -18,9 +18,11 @@ settings:
     CODE_SIGN_IDENTITY: "Pipcast Self-Signed"
     SWIFT_STRICT_CONCURRENCY: complete
     PIPCAST_BUNDLE_IDENTIFIER: io.github.msarheed.pipcast.app
+    PIPCAST_URL_SCHEME: pipcast
   configs:
     Debug:
       PIPCAST_BUNDLE_IDENTIFIER: io.github.msarheed.pipcast.app.dev
+      PIPCAST_URL_SCHEME: pipcast-dev
       DICTATION_EXECUTABLE_NAME: Pipcast Dev Dictation
     Release:
       CODE_SIGN_IDENTITY: "Developer ID Application"

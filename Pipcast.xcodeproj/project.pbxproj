@@ -702,6 +702,7 @@
 		CCDD23DA9677FE2C38E4938D /* QuicklinkLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CDFCCC7FCAAD81FEE03908 /* QuicklinkLauncher.swift */; };
 		CD3B996BA0C8849F0EE4AECB /* QuicklinkEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C150AA7C125B68624C207E1E /* QuicklinkEditorView.swift */; };
 		CD3E60BE27D9742C2F5F982E /* UnitCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7459DADAC7F43A793E68B47D /* UnitCategory.swift */; };
+		CD61C05844166246D0CBFD06 /* CommandDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51BF4507BB608CB06C5BC8F4 /* CommandDeepLink.swift */; };
 		CD78A6372E19BCFA35375845 /* AIChatSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB55F0A905F5F4A05B54BBDA /* AIChatSidebarView.swift */; };
 		CDC1CFB3DAD993F0FBE283E3 /* AppSettingsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1276A5D83A39296ED97E56D /* AppSettingsKey.swift */; };
 		CDE84A178E17F22E981BA490 /* WindowActionMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B41E8656B057FEAF6909298 /* WindowActionMemory.swift */; };
@@ -1190,6 +1191,7 @@
 		5087BA008C079722E9C581AE /* EmojiData.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiData.generated.swift; sourceTree = "<group>"; };
 		5104FA8FA8F4266F87B894E6 /* SpaceSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceSwitcher.swift; sourceTree = "<group>"; };
 		510A747959F6830FFDE7AC32 /* WindowChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowChrome.swift; sourceTree = "<group>"; };
+		51BF4507BB608CB06C5BC8F4 /* CommandDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandDeepLink.swift; sourceTree = "<group>"; };
 		52BF4280C7DEF289F9E47BD3 /* SnippetsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetsSettingsView.swift; sourceTree = "<group>"; };
 		5335F92258B57796A07B0226 /* PaletteWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteWindowController.swift; sourceTree = "<group>"; };
 		538CC7EB7BF664D31AC153DD /* FileIndexHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = FileIndexHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -2150,6 +2152,7 @@
 			isa = PBXGroup;
 			children = (
 				BAABC04752164A05145DA0EE /* CommandCatalog.swift */,
+				51BF4507BB608CB06C5BC8F4 /* CommandDeepLink.swift */,
 				2C94EDEA0403E6E127D9B3A3 /* CommandID.swift */,
 				726AAFE7A3941A0924F5BBF7 /* EntryNaming.swift */,
 				4020E86A3A94D1890488650E /* Fallback.swift */,
@@ -4202,6 +4205,7 @@
 				F8A051A69B8DA7A7CC499E31 /* CommandCatalog.swift in Sources */,
 				E6409465F8EDD5A2092C1E94 /* CommandConfigurationMenu.swift in Sources */,
 				F3222B8016F31587CC9B20C5 /* CommandConfigurationPanel.swift in Sources */,
+				CD61C05844166246D0CBFD06 /* CommandDeepLink.swift in Sources */,
 				04EAF707716472AE85AD6CB4 /* CommandEscapeTap.swift in Sources */,
 				6119BD3BF67021C83D23FA12 /* CommandID.swift in Sources */,
 				C472823988CD389D8B11B86A /* CommandOutputPresenter.swift in Sources */,
@@ -5021,6 +5025,7 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PIPCAST_BUNDLE_IDENTIFIER = io.github.msarheed.pipcast.app;
+				PIPCAST_URL_SCHEME = pipcast;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = YES;
@@ -5117,6 +5122,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PIPCAST_BUNDLE_IDENTIFIER = io.github.msarheed.pipcast.app.dev;
+				PIPCAST_URL_SCHEME = "pipcast-dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;

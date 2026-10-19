@@ -71,6 +71,12 @@ enum AppActionsMenu {
                     title: String(localized: "Configure Command…"), systemImage: "gearshape.2",
                     startsSection: true, shortcut: "⇧⌘,", action: onConfigure))
         }
+        if let deeplink = core.launcherCoordinator.deeplink(for: app) {
+            items.append(
+                PopoverMenuItem(title: String(localized: "Copy Deeplink"), systemImage: "link") {
+                    core.launcherCoordinator.copyDeeplink(deeplink)
+                })
+        }
         if running, app.kind == .application {
             items.append(
                 PopoverMenuItem(

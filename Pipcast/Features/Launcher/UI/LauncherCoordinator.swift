@@ -284,6 +284,25 @@ final class LauncherCoordinator {
 
     // MARK: - Row actions
 
+    /// What Copy Deeplink copies; nil for an entry no link can run.
+    func deeplink(for app: AppEntry) -> URL? {
+        guard let scheme = Bundle.main.object(forInfoDictionaryKey: "PipcastURLScheme") as? String
+        else { return nil }
+        guard app.kind == .extensionCommand else {
+            return CommandDeepLink.url(entryID: app.id, scheme: scheme)
+        }
+        return core.extensions.deeplink(for: app, scheme: scheme)
+    }
+
+    func copyDeeplink(_ url: URL) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        guard Paster.copyPlainText(url.absoluteString) else {
+            core.showMessage(String(localized: "Couldn’t copy link"))
+            return
+        }
+        core.showMessage(String(localized: "Link copied"))
+    }
+
     func resetRanking(for app: AppEntry) {
         ranking.reset(itemKey: app.preferenceKey)
     }

@@ -22,6 +22,9 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- What Copy Deeplink hands out: the build's own registered scheme, `pipcast-dev` in Debug. -->
+	<key>PipcastURLScheme</key>
+	<string>$(PIPCAST_URL_SCHEME)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -30,7 +33,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>raycast</string>
-				<string>pipcast</string>
+				<string>$(PIPCAST_URL_SCHEME)</string>
 				<string>com.raycast</string>
 			</array>
 		</dict>

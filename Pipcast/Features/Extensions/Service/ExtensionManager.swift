@@ -364,6 +364,13 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         return (owner, command)
     }
 
+    func deeplink(for entry: AppEntry, scheme: String) -> URL? {
+        guard let (owner, command) = resolve(entry) else { return nil }
+        return ExtensionDeepLink.url(
+            scheme: scheme, owner: owner.manifest.storeHandle, extensionName: owner.manifest.name,
+            commandName: command.name)
+    }
+
     /// A deep link names owner/extension/command; the owner is a hint, the slug decides.
     func resolve(_ link: ExtensionDeepLink) -> (InstalledExtension, ExtensionCommand)? {
         let candidates = installed.filter { link.matches(manifestName: $0.manifest.name) }
@@ -1007,6 +1014,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         }
         coordinator?.runExtensionCommand(
             entry(for: command, in: owner), arguments: link.arguments,
-            fallbackText: link.fallbackText, launchType: link.launchType)
+            fallbackText: link.fallbackText, launchType: link.launchType,
+            launchContext: link.context)
     }
 }

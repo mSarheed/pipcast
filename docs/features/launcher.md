@@ -844,6 +844,46 @@ Settings or About window) yet inactive, which the non-activating palette makes c
 state does the reveal also open the viewer named by the global `NSFileViewer` default, Finder when it
 is unset, so every other reveal is exactly the one system call.
 
+## Deeplinks
+
+A built-in command's link is its `AppEntry.id` with the `:` read as `/`, in the channel's scheme —
+the placeholder URL the catalog already built, made real:
+
+| Command                | Link                                  |
+| ---------------------- | ------------------------------------- |
+| Clipboard History      | `pipcast://command/clipboard-history` |
+| Search Emoji & Symbols | `pipcast://command/search-emoji`      |
+| Open Camera            | `pipcast://command/open-camera`       |
+| Left Half              | `pipcast://window-command/left-half`  |
+| Lock Screen            | `pipcast://system-action/lock-screen` |
+
+Those ids already key shortcuts, aliases, favorites and ranking, so a link is as stable as a binding.
+`Model/CommandDeepLink.swift` reads both directions off `CommandID`, `WindowCommandCatalog` and
+`SystemActionCatalog`; there is no list of linkable commands to keep. A command has a link exactly
+when a global shortcut can bind it, so Quit and the query-driven Open in Browser and Run Shell Command
+have none, and neither does anything the user made. `hotkey-test` round-trips every catalog entry.
+
+Opening a link runs the command's `HotKeyAction` through `HotKeyManager.perform`: the same funnel,
+switches and toggling as its shortcut, which is what a tool like Leader Key stands in for. A switch that
+refuses it says so in the HUD; a link naming no command says Pipcast doesn't recognize it; a bare
+`pipcast://` opens the palette. None of them is an alert.
+
+Opening a URL activates Pipcast, which would leave a window command nothing to place and the palette
+no paste target. So `AppCore.handleOpenURL` first activates the last other app to come forward, which
+`AppCore` follows through `NSWorkspace`'s `.didActivateApplication` — `menuBarOwningApplication` would
+not do, since an open Settings window makes Pipcast `.regular` and the menu bar its own. It waits up to
+500 ms for that app to come forward and for Pipcast's own resign to land, which arriving late would hide
+a palette just shown. A newer link cancels the wait. A link opened without activation (`open -g`) runs
+at once.
+
+Debug registers `pipcast-dev` in place of `pipcast` (`PIPCAST_URL_SCHEME` in `project.yml`), so a link
+copied from a local build never opens the installed app. Copy Deeplink reads the scheme back from the
+same setting, through Info.plist's `PipcastURLScheme`. Stable and beta both answer `pipcast://`.
+
+**Copy Deeplink** in a row's ⌘K Actions menu copies its link: a built-in command's, or an extension
+command's `pipcast://extensions/…` link from [extensions.md](extensions.md#deeplinks). A row with no
+link doesn't offer it.
+
 ## Dragging an application out
 
 An application row drags its bundle onto the Dock, into a System Settings privacy list, or anywhere

@@ -602,8 +602,9 @@ global Show in launcher switch, or this extension's — because the ranker never
 
 ## Deeplinks
 
-Pipcast registers `raycast`, `com.raycast` and `pipcast` to receive extension links. An installed
-Raycast competes for its schemes, and macOS chooses which app receives a link.
+Pipcast registers `raycast`, `com.raycast` and `pipcast` (`pipcast-dev` in Debug) to receive
+extension links. An installed Raycast competes for its schemes, and macOS chooses which app receives
+a link.
 
 `raycast://extensions/<owner>/<extension>?source=webstore`, used by the Store website's Install
 buttons, opens Settings → Extensions and looks up that exact listing to offer the existing Install
@@ -613,15 +614,22 @@ opens their Settings pane so they can be enabled through the usual consent flow.
 `raycast://extensions/<owner>/<extension>/<command>` runs an installed command from outside the app —
 a browser link, another app, a Shortcut — and `pipcast://` mirrors it so our own links never depend
 on Raycast winning the scheme. Both accept Raycast's query parameters: `arguments` as URL-encoded
-JSON, `fallbackText`, and `launchType=background`, which only a no-view command receives — a view
-command always takes over the palette, so it launches as `userInitiated`. The owner is a hint: a
+JSON, `context` as a URL-encoded JSON object that reaches the command as `props.launchContext`,
+`fallbackText`, and `launchType=background`, which only a no-view command receives — a view
+command always takes over the palette, so it launches as `userInitiated`. `context` stays plain
+data: an object shaped like `{type, id}` is never read as a view node. The owner is a hint: a
 scoped install matches by `owner/extension` first and falls back to the bare slug, so short links
-keep working. Anything else on a claimed scheme just reopens the palette, and an unknown command says
-so rather than failing silently. `ExtensionDeepLink` owns the claimed schemes and the parsing,
+keep working. A bare scheme reopens the palette; any other link Pipcast can't route, and an unknown
+command, says so in the HUD rather than failing silently. A command link hands focus back to the app
+the user was in before it runs, as [launcher.md](launcher.md#deeplinks) describes. Copy Deeplink
+hands out `pipcast://extensions/<owner>/<extension>/<command>`, the owner being the manifest's
+`owner` or else its `author`. `ExtensionDeepLink` owns the claimed schemes and the parsing,
 covered by `Tests/ext-test.swift`. Two-segment links without `source=webstore` keep running commands
 as `<extension>/<command>`; three-segment command links keep running even with that parameter.
 An extension's own `open("raycast://…")` resolves through the same
-`ExtensionManager.resolve(_:)` instead of launching Raycast.
+`ExtensionManager.resolve(_:)` instead of launching Raycast. It runs extension command links only:
+Pipcast's built-in command links ([launcher.md](launcher.md#deeplinks)) are for the outside, and an
+extension written for Raycast never names one.
 
 For view commands, nonempty `fallbackText` also prefills the search field: lists and grids filter
 locally or receive it through `onSearchTextChange` when their handler mounts. It remains available

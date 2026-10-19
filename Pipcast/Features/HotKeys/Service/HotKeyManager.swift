@@ -421,9 +421,11 @@ final class HotKeyManager {
             holdKey: dictationBinding.flatMap { modifierTaps[$0] == .dictation ? holdKey : nil })
     }
 
-    private func perform(_ action: HotKeyAction) {
+    /// A deeplink runs here too, so a link is gated by the same switches as its chord.
+    @discardableResult
+    func perform(_ action: HotKeyAction) -> Bool {
         // The category switch, the way each feature switch already guards its own funnel.
-        guard allowsAction?(action) ?? true else { return }
+        guard allowsAction?(action) ?? true else { return false }
         switch action {
         case .togglePalette: onTogglePalette?()
         case .dictation: onDictationPressed?()
@@ -442,6 +444,7 @@ final class HotKeyManager {
         case .snippet(let id): onExpandSnippet?(id)
         case .extensionCommand(let entryID): onRunExtensionCommand?(entryID)
         }
+        return true
     }
 
     // MARK: - UUID-keyed indexes
