@@ -41767,54 +41767,54 @@
         }
       }
     },
-    "Couldn’t switch back to %@" : {
+    "Couldn’t switch back to the app you were in" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Konnte nicht zu %@ zurückwechseln"
+            "value" : "Konnte nicht zur vorherigen App zurückwechseln"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo volver a %@"
+            "value" : "No se pudo volver a la app en la que estabas"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de revenir à %@"
+            "value" : "Impossible de revenir à l’app précédente"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ に戻れませんでした"
+            "value" : "直前のアプリに戻れませんでした"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@(으)로 돌아갈 수 없습니다"
+            "value" : "이전 앱으로 돌아갈 수 없습니다"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível voltar para %@"
+            "value" : "Não foi possível voltar para o app em que você estava"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось вернуться в «%@»"
+            "value" : "Не удалось вернуться в предыдущее приложение"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法切换回 %@"
+            "value" : "无法切换回之前的 App"
           }
         }
       }

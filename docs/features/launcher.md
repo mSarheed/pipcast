@@ -873,9 +873,9 @@ no paste target. So `AppCore.handleOpenURL` first activates the last other app t
 `AppCore` follows through `NSWorkspace`'s `.didActivateApplication` — `menuBarOwningApplication` would
 not do, since an open Settings window makes Pipcast `.regular` and the menu bar its own. It waits up to
 500 ms for that app to come forward and for Pipcast's own resign to land, which arriving late would hide
-a palette just shown. If the hand-back doesn't land, the link runs nothing and says so in the HUD: with
-Pipcast still in front, a window command would place Pipcast's own window. A newer link cancels the
-wait. A link opened without activation (`open -g`) runs at once.
+a palette just shown. If the hand-back doesn't land, or there is no app to hand back to, the link runs
+nothing and says so in the HUD: with Pipcast still in front, a window command would place Pipcast's own
+window. A newer link cancels the wait. A link opened without activation (`open -g`) runs at once.
 
 Debug registers `pipcast-dev` in place of `pipcast` (`PIPCAST_URL_SCHEME` in `project.yml`), so a link
 copied from a local build never opens the installed app. Copy Deeplink reads the scheme back from the

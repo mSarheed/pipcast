@@ -527,30 +527,30 @@ final class AppCore {
     /// Opening a link activates Pipcast, so what it runs must first hand the app in front back.
     private func afterReturningFocus(_ run: @escaping @MainActor () -> Void) {
         linkFocusTask?.cancel()
-        let workspace = NSWorkspace.shared
-        guard NSApp.isActive, let previous = lastOtherApp,
+        guard NSApp.isActive else { return run() }
+        // Still in front, a window command would place Pipcast's own window instead.
+        let refuse = { [weak self] in
+            let message = String(localized: "Couldn’t switch back to the app you were in")
+            self?.showMessage(message, tone: .danger)
+        }
+        guard let previous = lastOtherApp,
             previous.processIdentifier != ProcessInfo.processInfo.processIdentifier,
             !previous.isTerminated
-        else { return run() }
+        else { return refuse() }
         previous.activate()
+        let workspace = NSWorkspace.shared
         // Our own resign too: arriving late, it would hide a palette just shown.
         let handedBack = {
             !NSApp.isActive
                 && workspace.frontmostApplication?.processIdentifier == previous.processIdentifier
         }
-        linkFocusTask = Task { [weak self] in
+        linkFocusTask = Task {
             let deadline = ContinuousClock.now + .milliseconds(500)
             while !handedBack(), ContinuousClock.now < deadline {
                 do { try await Task.sleep(for: .milliseconds(10)) } catch { return }
             }
             guard !Task.isCancelled else { return }
-            // Still in front, a window command would place Pipcast's own window instead.
-            guard handedBack() else {
-                let name = previous.localizedName ?? ""
-                let message = String(localized: "Couldn’t switch back to \(name)")
-                self?.showMessage(message, tone: .danger)
-                return
-            }
+            guard handedBack() else { return refuse() }
             run()
         }
     }
