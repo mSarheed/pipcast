@@ -528,7 +528,7 @@ final class AppCore {
     private func afterReturningFocus(_ run: @escaping @MainActor () -> Void) {
         linkFocusTask?.cancel()
         let workspace = NSWorkspace.shared
-        guard NSApp.isActive, !paletteCoordinator.isVisible, let previous = lastOtherApp,
+        guard NSApp.isActive, let previous = lastOtherApp,
             previous.processIdentifier != ProcessInfo.processInfo.processIdentifier,
             !previous.isTerminated
         else { return run() }
