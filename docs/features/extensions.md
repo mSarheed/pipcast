@@ -711,7 +711,7 @@ the descriptor calls `tar` unpacks through), `os`,
 each async form reporting the child's real `pid` for `process.kill` — Timers pauses that way),
 `crypto` (hashes, HMAC, PBKDF2, AES-CBC/ECB, random, UUID), `zlib` (gzip/zlib/raw deflate, both
 directions, plus `create*` streams that buffer until `end`), `http`/`https` (`request`, `get` and `Agent`, buffered over the same URLSession bridge
-as `fetch`, with `socketPath` for Unix-socket HTTP), `stream` (`Readable`, `Writable`, `Duplex`, `Transform`, `PassThrough`, `pipeline`,
+as `fetch`, with `socketPath` for Unix-socket HTTP, plus Node's `STATUS_CODES` and `METHODS` tables), `stream` (`Readable`, `Writable`, `Duplex`, `Transform`, `PassThrough`, `pipeline`,
 `finished`, plus `stream/promises` and `stream/web`), `util`, `events`, `buffer`, `url`, `querystring`, `punycode`, `assert`,
 `string_decoder`, `timers`. Every other built-in resolves to a stub that throws only when used, so a
 bundle that merely references `http2` or `domain` still loads. Those stubs are manufactured lazily,
