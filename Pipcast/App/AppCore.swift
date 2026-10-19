@@ -533,16 +533,24 @@ final class AppCore {
             !previous.isTerminated
         else { return run() }
         previous.activate()
-        linkFocusTask = Task {
+        // Our own resign too: arriving late, it would hide a palette just shown.
+        let handedBack = {
+            !NSApp.isActive
+                && workspace.frontmostApplication?.processIdentifier == previous.processIdentifier
+        }
+        linkFocusTask = Task { [weak self] in
             let deadline = ContinuousClock.now + .milliseconds(500)
-            // Until our own resign lands too: arriving late, it would hide a palette just shown.
-            while NSApp.isActive
-                || workspace.frontmostApplication?.processIdentifier != previous.processIdentifier,
-                ContinuousClock.now < deadline
-            {
+            while !handedBack(), ContinuousClock.now < deadline {
                 do { try await Task.sleep(for: .milliseconds(10)) } catch { return }
             }
             guard !Task.isCancelled else { return }
+            // Still in front, a window command would place Pipcast's own window instead.
+            guard handedBack() else {
+                let name = previous.localizedName ?? ""
+                let message = String(localized: "Couldn’t switch back to \(name)")
+                self?.showMessage(message, tone: .danger)
+                return
+            }
             run()
         }
     }

@@ -687,7 +687,7 @@ Opt into installed English spelling service checks with
   Left Half: TextEdit's window moves. With Notes off, `pipcast-dev://command/show-notes` says the
   command is off; `pipcast-dev://command/nope` says it isn't recognized; neither raises an alert.
   Run this on a build macOS has already granted: an ungranted build's first-launch permission prompt
-  takes the front, which closes a palette a link just opened as it would one a shortcut opened
+  holds the front, so the link can't hand focus back and says it couldn't switch back instead
 
 ### Hotkeys
 
