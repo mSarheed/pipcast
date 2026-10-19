@@ -622,8 +622,9 @@ scoped install matches by `owner/extension` first and falls back to the bare slu
 keep working. A bare scheme reopens the palette; any other link Pipcast can't route, and an unknown
 command, says so in the HUD rather than failing silently. A command link hands focus back to the app
 the user was in before it runs, as [launcher.md](launcher.md#deeplinks) describes. Copy Deeplink
-hands out `pipcast://extensions/<owner>/<extension>/<command>`, the owner being the manifest's
-`owner` or else its `author`. `ExtensionDeepLink` owns the claimed schemes and the parsing,
+hands out `<scheme>://extensions/<owner>/<extension>/<command>` in the build's own scheme — `pipcast`
+on stable and beta, `pipcast-dev` in Debug — the owner being the manifest's `owner` or else its
+`author`. `ExtensionDeepLink` owns the claimed schemes and the parsing,
 covered by `Tests/ext-test.swift`. Two-segment links without `source=webstore` keep running commands
 as `<extension>/<command>`; three-segment command links keep running even with that parameter.
 An extension's own `open("raycast://…")` resolves through the same

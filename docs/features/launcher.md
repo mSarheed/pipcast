@@ -881,9 +881,9 @@ Debug registers `pipcast-dev` in place of `pipcast` (`PIPCAST_URL_SCHEME` in `pr
 copied from a local build never opens the installed app. Copy Deeplink reads the scheme back from the
 same setting, through Info.plist's `PipcastURLScheme`. Stable and beta both answer `pipcast://`.
 
-**Copy Deeplink** in a row's ⌘K Actions menu copies its link: a built-in command's, or an extension
-command's `pipcast://extensions/…` link from [extensions.md](extensions.md#deeplinks). A row with no
-link doesn't offer it.
+**Copy Deeplink** in a row's ⌘K Actions menu copies its link, in the build's own scheme (so
+`pipcast-dev://command/…` from a Debug build): a built-in command's, or an extension command's
+`extensions/…` link from [extensions.md](extensions.md#deeplinks). A row with no link doesn't offer it.
 
 ## Dragging an application out
 
