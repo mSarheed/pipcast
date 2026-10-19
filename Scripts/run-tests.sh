@@ -719,6 +719,7 @@ run updates-test           Pipcast/Features/Updates/Model/*.swift \
                            Pipcast/Features/Updates/Service/BundleSignature.swift
 run update-check-test      Pipcast/Features/Updates/Model/*.swift \
                            Pipcast/Features/Updates/Service/UpdateCheckStore.swift \
+                           Pipcast/Features/Updates/Service/UpdateFailure.swift \
                            Pipcast/Platform/AppPaths.swift
 run support-test           Pipcast/Features/Support/Model/*.swift
 run changelog-test         Pipcast/Features/Updates/Model/*.swift \

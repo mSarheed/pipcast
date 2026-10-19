@@ -27,6 +27,7 @@ final class UpdateCoordinator {
         title: String(localized: "Software Update"), contentSize: UpdateWindowView.initialSize,
         activation: core.activationPolicy)
     @ObservationIgnored private var installTask: Task<Void, Never>?
+    @ObservationIgnored private var checkTask: Task<Void, Never>?
 
     init(store: UpdateCheckStore, core: AppCore) {
         self.store = store
@@ -73,16 +74,27 @@ final class UpdateCoordinator {
         }
         stage = .checking
         present()
-        Task { [weak self] in
+        // Only the newest click may report, so an earlier failure cannot mask a later answer.
+        checkTask?.cancel()
+        checkTask = Task { [weak self] in
             guard let self else { return }
-            let answered = await store.check()
+            var failure: UpdateFailure?
+            do {
+                try await store.check()
+            } catch is CancellationError {
+                return
+            } catch {
+                failure = error as? UpdateFailure ?? .checkFailed(error.localizedDescription)
+            }
+            guard !Task.isCancelled else { return }
+            checkTask = nil
             guard case .checking = stage else { return }
             if let release = store.update {
                 stage = .available(release)
-            } else if answered {
-                stage = .upToDate
+            } else if let failure {
+                stage = .failed(failure)
             } else {
-                stage = .failed(.downloadFailed(String(localized: "Pipcast could not reach GitHub.")))
+                stage = .upToDate
             }
         }
     }
@@ -94,6 +106,9 @@ final class UpdateCoordinator {
         // Already in hand: re-offering would throw away a download or the relaunch it earned.
         case .installing, .readyToRelaunch:
             return true
+        // A manual check in flight reports its own, possibly newer, answer.
+        case .checking where checkTask != nil:
+            return false
         case .checking, .upToDate, .localBuild, .available, .blocked, .failed:
             guard UpdateReadiness.evaluate(core.currentActivity) == nil else { return false }
             stage = .available(release)
