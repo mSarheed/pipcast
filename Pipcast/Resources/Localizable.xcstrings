@@ -89096,6 +89096,58 @@
         }
       }
     },
+    "Paste the next Clipboard History entry into %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den nächsten Eintrag aus dem Zwischenablageverlauf in %@ einfügen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Pegar la siguiente entrada del historial del portapapeles en %@?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller la prochaine entrée de l’historique du presse-papiers dans %@ ?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリップボード履歴の次の項目を%@に貼り付けますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클립보드 기록의 다음 항목을 %@에 붙여넣을까요?"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar a próxima entrada do histórico da área de transferência em %@?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вставить следующую запись из истории буфера обмена в %@?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将剪贴板历史中的下一项粘贴到 %@？"
+          }
+        }
+      }
+    },
     "Paste to %@" : {
       "localizations" : {
         "de" : {

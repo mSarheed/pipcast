@@ -1039,6 +1039,9 @@ Opt into installed English spelling service checks with
   recorded target, and a genuinely focused Pipcast panel remains a valid target.
 - A bare channel URL opens the launcher; unknown commands and malformed links show a HUD. Quit asks
   through Pipcast's dialog, and cancelling it leaves Pipcast running.
+- With only test entries in an isolated channel, open a Paste Sequentially link over a text editor.
+  Confirm pastes one entry into the named app; Cancel or switching apps during the dialog pastes nothing.
+  Repeated links cannot stack dialogs, and ordinary shortcuts and launcher rows retain their behavior.
 - An extension link's URL-encoded JSON `context` reaches `launchContext`, including nested values and
   an explicit empty object. Malformed or duplicate context rejects the link without running a command.
 

@@ -81,7 +81,9 @@ disabled categories and features retain their existing gates, permissions and co
 Unknown commands, malformed links and disabled built-in commands report through Pipcast's HUD.
 Built-in routes accept exactly one path component, with no query, fragment, credentials or port.
 A bare channel URL or `pipcast://` opens the launcher. Quit asks for confirmation through Pipcast's
-own dialog. Other commands keep their existing permission and confirmation paths. Repeated links open the
+own dialog. Paste Sequentially also confirms each deeplink invocation, naming the receiving app before
+releasing a Clipboard History entry. Cancel, a terminated target, or a changed target prevents the paste.
+Other commands keep their existing permission and confirmation paths. Repeated links open the
 screen again; they do not toggle it closed.
 When opening a link brings Pipcast forward, macOS can restore its last key window before delivery.
 If that leaves a movable Pipcast window with focus, commands use it as their window/paste target;

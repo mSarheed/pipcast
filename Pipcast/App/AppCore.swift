@@ -559,6 +559,25 @@ final class AppCore {
                     else { return }
                     launcherCoordinator.runCommand(.quit)
                 }
+            case .command(.pasteSequentially):
+                guard let target = paletteCoordinator.targetApp, !target.isTerminated else { return }
+                let name = target.localizedName ?? target.bundleIdentifier ?? String(target.processIdentifier)
+                Task { [weak self] in
+                    guard let self,
+                        await confirm(
+                            title: CommandID.pasteSequentially.name,
+                            message: String(
+                                localized: "Paste the next Clipboard History entry into \(name)?"),
+                            symbol: CommandID.pasteSequentially.sfSymbol,
+                            confirmTitle: String(localized: "Paste"),
+                            tone: .neutral, confirmRole: .standard),
+                        allowsAction(.command(.pasteSequentially)), !target.isTerminated,
+                        NSWorkspace.shared.frontmostApplication?.processIdentifier
+                            == target.processIdentifier,
+                        paletteCoordinator.targetApp?.processIdentifier == target.processIdentifier
+                    else { return }
+                    launcherCoordinator.runCommand(.pasteSequentially)
+                }
             case .command(let command):
                 if paletteCoordinator.isVisible {
                     paletteCoordinator.hidePalette(
