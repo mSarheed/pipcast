@@ -84,6 +84,7 @@ final class ConfettiPanel: NSPanel {
     override func close() {
         for fall in falls.values { fall.cancel() }
         falls.removeAll()
+        host.layer?.sublayers = nil
         super.close()
     }
 
