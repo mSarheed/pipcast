@@ -5,14 +5,14 @@ import AppKit
 final class ConfettiCoordinator {
     /// The pill, so it stays owned by `AppCore`.
     private unowned let core: AppCore
-    private var panel: ConfettiPanel?
-    private var show: Task<Void, Never>?
+    /// One sheet per display with confetti still in the air, keyed by its frame.
+    private var panels: [CGRect: ConfettiPanel] = [:]
 
     init(core: AppCore) {
         self.core = core
     }
 
-    /// A second burst replaces the first rather than stacking sheets.
+    /// A second burst joins the first on its display rather than cutting it short.
     func fire() {
         guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
             clear()
@@ -20,22 +20,25 @@ final class ConfettiCoordinator {
             return
         }
         guard let screen = NSScreen.underCursor else { return }
-        clear()
+        panel(for: screen).fire()
+    }
+
+    private func panel(for screen: NSScreen) -> ConfettiPanel {
+        let frame = screen.frame
+        if let panel = panels[frame] { return panel }
         let panel = ConfettiPanel(screen: screen)
-        self.panel = panel
-        panel.orderFrontRegardless()
-        show = Task { [weak self] in
-            try? await Task.sleep(for: ConfettiPanel.burst)
-            panel.ceaseFire()
-            try? await Task.sleep(for: ConfettiPanel.lifetime)
-            guard !Task.isCancelled else { return }
-            self?.clear()
+        panel.onEmpty = { [weak self, weak panel] in
+            guard let self, let panel, panels[frame] === panel else { return }
+            panels[frame] = nil
+            panel.close()
         }
+        panels[frame] = panel
+        panel.orderFrontRegardless()
+        return panel
     }
 
     private func clear() {
-        show?.cancel()
-        panel?.close()
-        panel = nil
+        for panel in panels.values { panel.close() }
+        panels.removeAll()
     }
 }

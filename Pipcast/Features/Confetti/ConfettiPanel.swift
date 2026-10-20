@@ -1,27 +1,47 @@
 import AppKit
 
-/// A click-through sheet over one display, with a confetti cannon in each bottom corner.
+/// A click-through sheet over one display; every burst adds a cannon to each bottom corner.
 final class ConfettiPanel: NSPanel {
-    private static let colors: [NSColor] = [
-        .systemRed, .systemOrange, .systemYellow, .systemGreen, .systemTeal, .systemBlue,
-        .systemPurple, .systemPink
-    ]
-    /// How long the cannons fire; everything after is the fall.
-    static let burst: Duration = .milliseconds(180)
-    static let lifetime: Duration = .seconds(6)
+    private enum Shape: CaseIterable {
+        case strip, triangle, circle
 
-    private let emitters: [CAEmitterLayer]
+        /// Mostly strips, as Raycast's is: the triangles and dots only salt it.
+        var birthRate: Float {
+            switch self {
+            case .strip: 130
+            case .triangle: 45
+            case .circle: 35
+            }
+        }
+    }
+
+    private static let colors: [NSColor] = [
+        .systemRed, .systemOrange, .systemYellow, .systemGreen, .systemBlue, .systemPurple,
+        .systemPink
+    ]
+    /// How long the cannons fire; everything after is the flutter and the fall.
+    private static let firing: CFTimeInterval = 0.25
+    /// From a burst's first piece to its last one leaving the display.
+    static let lifetime: Duration = .seconds(3)
+
+    /// Runs once the last burst in the air has fallen, so the owner can close the sheet.
+    var onEmpty: (() -> Void)?
+
+    private let host: NSView
+    private let pixelScale: CGFloat
+    /// Drawn once per sheet, since every burst and colour shares them.
+    private let images: [Shape: CGImage]
+    private var falls: [Int: Task<Void, Never>] = [:]
+    private var nextFall = 0
 
     init(screen: NSScreen) {
         let frame = screen.frame
-        let gravity = frame.height * 0.9
-        // Enough speed to reach most of the way up the display before gravity turns it.
-        let speed = (2 * gravity * frame.height * 0.85).squareRoot()
-        emitters = [
-            Self.cannon(at: CGPoint(x: 0, y: 0), aim: .pi / 2 - 0.42, speed: speed, gravity: gravity),
-            Self.cannon(
-                at: CGPoint(x: frame.width, y: 0), aim: .pi / 2 + 0.42, speed: speed, gravity: gravity)
-        ]
+        host = NSView(frame: NSRect(origin: .zero, size: frame.size))
+        host.wantsLayer = true
+        pixelScale = screen.backingScaleFactor
+        images = Shape.allCases.reduce(into: [:]) { images, shape in
+            images[shape] = Self.image(of: shape, scale: screen.backingScaleFactor)
+        }
         super.init(
             contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered,
             defer: false)
@@ -35,66 +55,143 @@ final class ConfettiPanel: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         isReleasedWhenClosed = false
         setFrame(frame, display: false)
-
-        let host = NSView(frame: NSRect(origin: .zero, size: frame.size))
-        host.wantsLayer = true
-        for emitter in emitters {
-            emitter.frame = host.bounds
-            emitter.contentsScale = screen.backingScaleFactor
-            host.layer?.addSublayer(emitter)
-        }
         contentView = host
     }
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    /// Shuts the cannons; what is in the air keeps falling.
-    func ceaseFire() {
-        for emitter in emitters { emitter.birthRate = 0 }
+    /// Adds to whatever is still in the air rather than replacing it, as Raycast's does.
+    func fire() {
+        guard let root = host.layer else { return }
+        let bounds = host.bounds
+        let cannons = [
+            cannon(at: CGPoint(x: 0, y: 0), aim: .pi / 2 - 0.5, in: bounds),
+            cannon(at: CGPoint(x: bounds.width, y: 0), aim: .pi / 2 + 0.5, in: bounds)
+        ]
+        for cannon in cannons { root.addSublayer(cannon) }
+        let fall = nextFall
+        nextFall += 1
+        falls[fall] = Task { [weak self] in
+            try? await Task.sleep(for: Self.lifetime)
+            guard !Task.isCancelled, let self else { return }
+            for cannon in cannons { cannon.removeFromSuperlayer() }
+            falls[fall] = nil
+            if falls.isEmpty { onEmpty?() }
+        }
     }
 
-    private static func cannon(
-        at point: CGPoint, aim: CGFloat, speed: CGFloat, gravity: CGFloat
-    ) -> CAEmitterLayer {
+    override func close() {
+        for fall in falls.values { fall.cancel() }
+        falls.removeAll()
+        super.close()
+    }
+
+    private func cannon(at point: CGPoint, aim: CGFloat, in bounds: CGRect) -> CAEmitterLayer {
         let emitter = CAEmitterLayer()
+        emitter.frame = bounds
         emitter.emitterPosition = point
         emitter.emitterShape = .point
+        emitter.renderMode = .unordered
         emitter.beginTime = CACurrentMediaTime()
-        emitter.emitterCells = colors.flatMap { color in
-            [Self.strip, Self.dot].compactMap { image in
-                image.map { piece(image: $0, color: color, aim: aim, speed: speed, gravity: gravity) }
+        emitter.birthRate = 0
+        // Speed and gravity scale with the display, so the burst reaches the top on any screen.
+        let height = bounds.height
+        var cells: [CAEmitterCell] = []
+        for shape in Shape.allCases {
+            guard let image = images[shape] else { continue }
+            for color in Self.colors {
+                let cell = Self.piece(
+                    shape, image: image, scale: pixelScale, color: color, aim: aim, height: height)
+                cell.name = "confetti-\(cells.count)"
+                cells.append(cell)
             }
+        }
+        emitter.emitterCells = cells
+        Self.addAir(to: emitter)
+
+        let firing = CABasicAnimation(keyPath: "birthRate")
+        firing.fromValue = 1
+        firing.toValue = 0
+        firing.duration = Self.firing
+        emitter.add(firing, forKey: "firing")
+
+        let gravity = CAKeyframeAnimation()
+        gravity.duration = CFTimeInterval(Self.lifetime.components.seconds)
+        gravity.keyTimes = [0, 0.15, 0.5, 1]
+        gravity.values = [0, -0.2 * height, -1.2 * height, -2.4 * height].map { $0 as NSNumber }
+        gravity.fillMode = .forwards
+        gravity.isRemovedOnCompletion = false
+        for cell in cells {
+            guard let name = cell.name else { continue }
+            emitter.add(gravity, forKey: "emitterCells.\(name).yAcceleration")
         }
         return emitter
     }
 
     private static func piece(
-        image: CGImage, color: NSColor, aim: CGFloat, speed: CGFloat, gravity: CGFloat
+        _ shape: Shape, image: CGImage, scale: CGFloat, color: NSColor, aim: CGFloat,
+        height: CGFloat
     ) -> CAEmitterCell {
         let cell = CAEmitterCell()
         cell.contents = image
+        cell.contentsScale = scale
         cell.color = color.cgColor
-        cell.birthRate = 60
-        cell.lifetime = 6
-        cell.velocity = speed
-        cell.velocityRange = speed * 0.3
+        cell.birthRate = shape.birthRate
+        cell.lifetime = 2.1
+        cell.lifetimeRange = 0.7
+        cell.velocity = height * 3.4
+        cell.velocityRange = height * 1.6
         cell.emissionLongitude = aim
-        cell.emissionRange = 0.4
-        cell.yAcceleration = -gravity
+        cell.emissionRange = 0.6
         cell.spin = 4
-        cell.spinRange = 10
-        cell.scale = 1
-        cell.scaleRange = 0.4
-        cell.alphaSpeed = -0.12
+        cell.spinRange = 8
+        cell.scaleRange = 0.25
+        // Undocumented: a plane tumbles through three axes like paper; missing, it spins flat.
+        cell.setValue("plane", forKey: "particleType")
+        cell.setValue(Double.pi, forKey: "orientationRange")
+        cell.setValue(Double.pi / 2, forKey: "orientationLongitude")
+        cell.setValue(Double.pi / 2, forKey: "orientationLatitude")
         return cell
     }
 
-    private static let strip = pieceImage(width: 12, height: 6, round: false)
-    private static let dot = pieceImage(width: 7, height: 7, round: true)
+    /// The launch is tuned for this drag to brake it short of the top; without it, it overshoots.
+    private static func addAir(to emitter: CAEmitterLayer) {
+        let drag = behavior("drag")
+        drag?.setValue("drag", forKey: "name")
+        drag?.setValue(2.6, forKey: "drag")
+        let sway = behavior("wave")
+        sway?.setValue([90, 0, 0], forKey: "force")
+        sway?.setValue(0.5, forKey: "frequency")
+        let flutter = behavior("wave")
+        flutter?.setValue([0, 400, 0], forKey: "force")
+        flutter?.setValue(3, forKey: "frequency")
+        let behaviors = [drag, sway, flutter].compactMap { $0 }
+        guard !behaviors.isEmpty else { return }
+        emitter.setValue(behaviors, forKey: "emitterBehaviors")
+    }
+
+    /// `CAEmitterBehavior` is private, so it is looked up at run time and may be absent.
+    private static func behavior(_ type: String) -> NSObject? {
+        let selector = NSSelectorFromString("behaviorWithType:")
+        guard let behaviorClass = NSClassFromString("CAEmitterBehavior") as? NSObject.Type,
+            class_getClassMethod(behaviorClass, selector) != nil
+        else { return nil }
+        typealias Make = @convention(c) (AnyObject, Selector, NSString) -> NSObject?
+        let make = unsafeBitCast(behaviorClass.method(for: selector), to: Make.self)
+        return make(behaviorClass, selector, type as NSString)
+    }
 
     /// White, so each cell's colour tints it.
-    private static func pieceImage(width: Int, height: Int, round: Bool) -> CGImage? {
+    private static func image(of shape: Shape, scale: CGFloat) -> CGImage? {
+        let size: CGSize =
+            switch shape {
+            case .strip: CGSize(width: 16, height: 5)
+            case .triangle: CGSize(width: 9, height: 8)
+            case .circle: CGSize(width: 6, height: 6)
+            }
+        let width = Int(size.width * scale)
+        let height = Int(size.height * scale)
         guard
             let context = CGContext(
                 data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
@@ -103,7 +200,15 @@ final class ConfettiPanel: NSPanel {
         else { return nil }
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
-        if round { context.fillEllipse(in: rect) } else { context.fill(rect) }
+        switch shape {
+        case .strip: context.fill(rect)
+        case .circle: context.fillEllipse(in: rect)
+        case .triangle:
+            context.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            context.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            context.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+            context.fillPath()
+        }
         return context.makeImage()
     }
 }
