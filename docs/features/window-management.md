@@ -229,6 +229,12 @@ ever setting `.fullScreenPrimary` on it, so testing that flag would make Fullscr
 Settings. The Notes panel is `.fullScreenAuxiliary` and stays a no-op, as an unwilling external
 window already is.
 
+An external command deeplink passes its resolved `targetApp` explicitly to the coordinator. That app
+wins over the current key window and the palette's retained target; dismissing the palette in this path
+never restores its old focus. A terminated explicit target is refused rather than replaced. Ordinary
+palette commands and shortcuts still use `handOffTarget()` above. `window-deeplink-test` compiles the
+shipped coordinator and target resolver against recorded mover/palette effects to guard both paths.
+
 This mirrors `InjectionTarget` in [Text injection](text-injection.md), which solved the same problem
 for keystrokes: same shape, same `Service/` position, one idea applied twice.
 

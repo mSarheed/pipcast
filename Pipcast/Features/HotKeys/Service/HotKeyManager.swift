@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// Owns every binding: persistence, registration with both engines, conflicts and dispatch.
 @MainActor
@@ -26,7 +26,7 @@ final class HotKeyManager {
     var onRunCommand: ((CommandID) -> Void)?
     var onRunCustomCommand: ((UUID) -> Void)?
     var onRunSystemAction: ((SystemAction.ID) -> Void)?
-    var onRunWindowCommand: ((WindowCommand.ID) -> Void)?
+    var onRunWindowCommand: ((WindowCommand.ID, NSRunningApplication?) -> Void)?
     var onRunWindowLayout: ((UUID) -> Void)?
     var onEnterRoom: ((UUID) -> Void)?
     var onRunCustomWindowSize: ((UUID) -> Void)?
@@ -423,7 +423,7 @@ final class HotKeyManager {
 
     /// A deeplink runs here too, so a link is gated by the same switches as its chord.
     @discardableResult
-    func perform(_ action: HotKeyAction) -> Bool {
+    func perform(_ action: HotKeyAction, targetApp: NSRunningApplication? = nil) -> Bool {
         // The category switch, the way each feature switch already guards its own funnel.
         guard allowsAction?(action) ?? true else { return false }
         switch action {
@@ -434,7 +434,7 @@ final class HotKeyManager {
         case .settingsPane(let bundleID): AppLauncher.openSettingsPane(bundleID: bundleID)
         case .customCommand(let id): onRunCustomCommand?(id)
         case .systemAction(let id): onRunSystemAction?(id)
-        case .windowCommand(let id): onRunWindowCommand?(id)
+        case .windowCommand(let id): onRunWindowCommand?(id, targetApp)
         case .windowLayout(let id): onRunWindowLayout?(id)
         case .windowRoom(let id): onEnterRoom?(id)
         case .customWindowSize(let id): onRunCustomWindowSize?(id)

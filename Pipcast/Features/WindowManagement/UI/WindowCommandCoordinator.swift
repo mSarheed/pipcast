@@ -20,7 +20,7 @@ final class WindowCommandCoordinator {
         self.customSizes = customSizes
     }
 
-    func runWindowCommand(id: WindowCommand.ID) {
+    func runWindowCommand(id: WindowCommand.ID, targetApp: NSRunningApplication? = nil) {
         guard settings.windowManagementEnabled else { return }
         if let direction = SpaceDirection(id) {
             // Restoring focus reactivates an app elsewhere, pulling its Space forward.
@@ -28,8 +28,16 @@ final class WindowCommandCoordinator {
             spaceSwitcher.perform(direction)
             return
         }
+        let target: WindowTarget?
+        if let targetApp {
+            guard !targetApp.isTerminated else { return }
+            if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
+            target = .external(targetApp)
+        } else {
+            target = handOffTarget()
+        }
         windowMover.perform(
-            id, target: handOffTarget(), gap: CGFloat(settings.windowGap),
+            id, target: target, gap: CGFloat(settings.windowGap),
             cycle: settings.windowCycle)
     }
 

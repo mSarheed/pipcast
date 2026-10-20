@@ -163,6 +163,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
 | `microphone-mute-test` | Native input mute, delayed confirmation, device switches and failures; injected CoreAudio calls only |
 | `volume-test` | `SystemActions/Model/VolumeLevel.swift` |
+| `window-deeplink-test` | Explicit external window targets with a retained own window, visible/hidden palette, ordinary shortcut targeting, disabled feature and Space dispatch; shipped coordinator and target resolver with recorded effects |
 | `window-command-test` | `WindowManagement/WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` |
 | `window-layout-test` | `WindowManagement/Model/WindowLayout*.swift` and `CustomWindowSize*.swift` — the layout record, its geometry and its inverse, the plan and the store; custom sizes' units, frames and store |
 | `window-room-test` | `WindowManagement/Model/Room*.swift` — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
@@ -1007,6 +1008,9 @@ Opt into installed English spelling service checks with
   externally controlled mute reports failure. Rapid repeats while a change is pending are ignored
 - Holding a bound hotkey does **not** stack dialogs
 - Lock Screen locks from a global hotkey with the palette closed, including a Hyper-key binding
+- Open a window-command deeplink with Settings/Notes behind the palette and its ⌘K menu open:
+  the external app receives the placement, Pipcast's window stays unchanged, and Actions closes.
+  Repeat with the palette hidden and with `open -g`; then check ordinary shortcuts still place Notes.
 - Window commands move the window you were last in; cycle-on-repeat steps ½ → ⅓ → ⅔
 - "Top Half" lands flush with the top of the visible frame, on a secondary display too
 - A command with the Notes window focused places Notes, not the app behind it

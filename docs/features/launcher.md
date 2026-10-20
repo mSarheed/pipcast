@@ -866,7 +866,7 @@ when a global shortcut can bind it, so Quit and the query-driven Open in Browser
 have none, and neither does anything the user made. `hotkey-test` round-trips every catalog entry.
 
 Opening a link runs the command's `HotKeyAction` through `HotKeyManager.perform`: the same funnel,
-switches and toggling as its shortcut, which is what a tool like Leader Key stands in for. A switch that
+switches as its shortcut, which is what a tool like Leader Key stands in for. A switch that
 refuses it says so in the HUD; a link naming no command says Pipcast doesn't recognize it; a bare
 `pipcast://` opens the palette. None of them is an alert.
 
@@ -877,7 +877,17 @@ not do, since an open Settings window makes Pipcast `.regular` and the menu bar 
 500 ms for that app to come forward and for Pipcast's own resign to land, which arriving late would hide
 a palette just shown. If the hand-back doesn't land, or there is no app to hand back to, the link runs
 nothing and says so in the HUD: with Pipcast still in front, a window command would place Pipcast's own
-window. A newer link cancels the wait. A link opened without activation (`open -g`) runs at once.
+window. A newer link cancels the wait. A link opened without activation (`open -g`) captures the
+frontmost external app and runs at once. Both paths dismiss an existing palette without restoring its
+old focus before dispatch, so a link opens its requested screen even when that screen was already open.
+Window commands carry the captured app through `HotKeyManager.perform(targetApp:)` into
+`WindowCommandCoordinator`; neither a retained Notes/Settings key window nor an open Actions menu
+can replace it. Ordinary shortcuts continue to use their own-window and palette targeting rules.
+
+System-action links retain the existing action-specific confirmations and feature gates. In particular,
+Empty Trash follows Finder's warning preference, including running without a dialog when it is off.
+This is deliberate automation parity: Raycast also offers Copy Deeplink for Empty Trash. A copied URL
+is an invocation, not an authorization token; receiving one does not enable a disabled feature.
 
 Debug registers `pipcast-dev` in place of `pipcast` (`PIPCAST_URL_SCHEME` in `project.yml`), so a link
 copied from a local build never opens the installed app. Copy Deeplink reads the scheme back from the

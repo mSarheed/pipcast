@@ -13,9 +13,31 @@ struct HotKeyDispatchTest {
     }
 
     static func main() {
+        explicitWindowTarget()
         for includesShift in [false, true] { dispatch(includesShift: includesShift) }
         print("\(checks) dispatch checks; \(failures) failures")
         if failures > 0 { exit(1) }
+    }
+
+    static func explicitWindowTarget() {
+        let domain = "pipcast.hotkey-target-test.\(UUID())"
+        let defaults = UserDefaults(suiteName: domain)!
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let manager = HotKeyManager(defaults: defaults)
+        let app = NSRunningApplication.current
+        var received: NSRunningApplication?
+        var calls = 0
+        manager.onRunWindowCommand = { _, target in
+            received = target
+            calls += 1
+        }
+        check("deeplink dispatch succeeds", manager.perform(.windowCommand(id: .sample), targetApp: app))
+        check("deeplink carries its exact target", received === app && calls == 1)
+        manager.perform(.windowCommand(id: .sample))
+        check("ordinary shortcuts request the usual target", received == nil && calls == 2)
+        manager.allowsAction = { _ in false }
+        check("disabled category refuses deeplink", !manager.perform(.windowCommand(id: .sample), targetApp: app))
+        check("disabled category never reaches coordinator", calls == 2)
     }
 
     static func dispatch(includesShift: Bool) {

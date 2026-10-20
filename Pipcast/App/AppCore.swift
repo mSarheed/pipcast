@@ -385,8 +385,8 @@ final class AppCore {
             hotKeys.onRunSystemAction = { [weak self] id in
                 self?.systemActionCoordinator.runSystemAction(id: id)
             }
-            hotKeys.onRunWindowCommand = { [weak self] id in
-                self?.windowCommandCoordinator.runWindowCommand(id: id)
+            hotKeys.onRunWindowCommand = { [weak self] id, targetApp in
+                self?.windowCommandCoordinator.runWindowCommand(id: id, targetApp: targetApp)
             }
             hotKeys.onRunWindowLayout = { [weak self] id in
                 self?.windowLayoutCoordinator.runWindowLayout(id: id)
@@ -491,25 +491,25 @@ final class AppCore {
     func handleOpenURL(_ url: URL) {
         guard ExtensionDeepLink.claims(url) else { return }
         if let action = CommandDeepLink.action(for: url) {
-            afterReturningFocus { [weak self] in
-                guard let self, !hotKeys.perform(action) else { return }
+            afterReturningFocus { [weak self] targetApp in
+                guard let self, !hotKeys.perform(action, targetApp: targetApp) else { return }
                 showMessage(String(localized: "This command is turned off"), tone: .danger)
             }
             return
         }
         switch ExtensionDeepLink.route(url: url) {
         case .command(let link):
-            afterReturningFocus { [weak self] in self?.extensionCoordinator.runDeepLink(link) }
+            afterReturningFocus { [weak self] _ in self?.extensionCoordinator.runDeepLink(link) }
         case .storeInstall(let install):
             linkFocusTask?.cancel()
             extensionCoordinator.showStoreInstall(install)
         case nil where (url.host() ?? "").isEmpty && url.path().isEmpty:
-            afterReturningFocus { [weak self] in
+            afterReturningFocus { [weak self] _ in
                 self?.paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
             }
         case nil:
             let message = String(localized: "Pipcast doesn’t recognize this link")
-            afterReturningFocus { [weak self] in self?.showMessage(message, tone: .danger) }
+            afterReturningFocus { [weak self] _ in self?.showMessage(message, tone: .danger) }
         }
     }
 
@@ -525,25 +525,27 @@ final class AppCore {
     }
 
     /// Opening a link activates Pipcast, so what it runs must first hand the app in front back.
-    private func afterReturningFocus(_ run: @escaping @MainActor () -> Void) {
+    private func afterReturningFocus(_ run: @escaping @MainActor (NSRunningApplication) -> Void) {
         linkFocusTask?.cancel()
-        guard NSApp.isActive else { return run() }
+        let workspace = NSWorkspace.shared
+        let targetApp = NSApp.isActive ? lastOtherApp : workspace.frontmostApplication
         // Still in front, a window command would place Pipcast's own window instead.
         let refuse = { [weak self] in
             let message = String(localized: "Couldn’t switch back to the app you were in")
             self?.showMessage(message, tone: .danger)
         }
-        guard let previous = lastOtherApp,
+        guard let previous = targetApp,
             previous.processIdentifier != ProcessInfo.processInfo.processIdentifier,
             !previous.isTerminated
         else { return refuse() }
-        previous.activate()
-        let workspace = NSWorkspace.shared
+        if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
         // Our own resign too: arriving late, it would hide a palette just shown.
         let handedBack = {
             !NSApp.isActive
                 && workspace.frontmostApplication?.processIdentifier == previous.processIdentifier
         }
+        if handedBack() { return run(previous) }
+        previous.activate()
         linkFocusTask = Task {
             let deadline = ContinuousClock.now + .milliseconds(500)
             while !handedBack(), ContinuousClock.now < deadline {
@@ -551,7 +553,7 @@ final class AppCore {
             }
             guard !Task.isCancelled else { return }
             guard handedBack() else { return refuse() }
-            run()
+            run(previous)
         }
     }
 
@@ -635,6 +637,7 @@ final class AppCore {
     }
 
     func prepareForTermination() {
+        linkFocusTask?.cancel()
         if settings.dictationEnabled { dictationCoordinator.prepareForTermination() }
         settingsFile?.flush()
         clipboardTextIndexer?.stop()
