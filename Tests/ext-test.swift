@@ -186,12 +186,15 @@ struct ExtensionTests {
         renderNodeChecks()
         screenChecks()
         navigationSearchChecks()
+        controlledSearchTextChecks()
+        searchRoundTripChecks()
         actionIconChecks()
         deepLinkChecks()
         nodeShimChecks()
         await runtimeChecks()
         await bundledModuleChecks()
         await navigationSearchRuntimeChecks()
+        await controlledSearchTextRuntimeChecks()
         await searchAccessoryRuntimeChecks()
         await nodeContractChecks()
         await bufferEventChecks()
@@ -1144,6 +1147,377 @@ struct ExtensionTests {
             recorder.failures.joined(separator: "\n"))
         check("navigation needs no external calls", host.calls.isEmpty)
         await runtime.stop(session: "navigation")
+    }
+
+    /// A List's `searchText` is the search bar's controlled value, as in Raycast.
+    static func controlledSearchTextChecks() {
+        var search = ExtensionSearchState()
+        check(
+            "an uncontrolled screen leaves the field alone",
+            search.searchTextRendered(nil, hasSearchHandler: true, query: "typed") == nil)
+
+        // dict-cc's "Translate from Clipboard": empty on mount, then the clipboard text.
+        check(
+            "an empty mount leaves an empty field",
+            search.searchTextRendered("", hasSearchHandler: true, query: "") == nil)
+        check(
+            "a prefilled searchText reaches the field",
+            search.searchTextRendered("Runde", hasSearchHandler: true, query: "") == "Runde")
+        search.queryChanged(to: "Runde")
+        check(
+            "a re-render with the same searchText changes nothing",
+            search.searchTextRendered("Runde", hasSearchHandler: true, query: "Runde") == nil)
+
+        search = ExtensionSearchState()
+        check(
+            "a first empty render keeps text typed while the command launched",
+            search.searchTextRendered("", hasSearchHandler: true, query: "fallback") == nil)
+        search = ExtensionSearchState()
+        check(
+            "an initial searchText reaches the field",
+            search.searchTextRendered("seed", hasSearchHandler: true, query: "") == "seed")
+
+        // The controlled pattern, `searchText={text} onSearchTextChange={setText}`.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        for typed in ["a", "ab", "abc"] { search.queryChanged(to: typed) }
+        check(
+            "a late echo never swallows newer keystrokes",
+            search.searchTextRendered("a", hasSearchHandler: true, query: "abc") == nil)
+        check(
+            "each later echo is absorbed too",
+            search.searchTextRendered("ab", hasSearchHandler: true, query: "abc") == nil
+                && search.searchTextRendered("abc", hasSearchHandler: true, query: "abc") == nil)
+        check(
+            "an action setting searchText still reaches the field",
+            search.searchTextRendered("Leffe Blonde", hasSearchHandler: true, query: "abc")
+                == "Leffe Blonde")
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        for typed in ["h", "he", "hel"] { search.queryChanged(to: typed) }
+        check(
+            "a throttled echo absorbs the keystrokes it skipped",
+            search.searchTextRendered("hel", hasSearchHandler: true, query: "hel") == nil)
+        check(
+            "a skipped keystroke set later by the command is not an echo",
+            search.searchTextRendered("he", hasSearchHandler: true, query: "hel") == "he")
+
+        // An effect's value lands while a keystroke's echo is still on its way.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "h")
+        check(
+            "a value set mid-typing reaches the field",
+            search.searchTextRendered("Runde", hasSearchHandler: true, query: "h") == "Runde")
+        search.queryChanged(to: "Runde")
+        check("the command is not told the value it set", !search.forwardsSearchText("Runde"))
+        check("nor told it twice, by the handler's mount", !search.forwardsSearchText("Runde"))
+        check(
+            "a keystroke the command took after its own value is what the field settles on",
+            search.searchTextRendered("h", hasSearchHandler: true, query: "Runde") == "h")
+        search.queryChanged(to: "h")
+        search.queryChanged(to: "hi")
+        check("the next keystroke is told again", search.forwardsSearchText("hi"))
+        search.queryChanged(to: "Runde")
+        check(
+            "retyping the value the command once set is told too",
+            search.forwardsSearchText("Runde"))
+
+        // A "Clear" action and a preset action, each used more than once.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("abc", hasSearchHandler: true, query: "abc")
+        for preset in ["", "foo", ""] {
+            let shown = search.searchTextRendered(preset, hasSearchHandler: true, query: "x")
+            check("a value set again after another reaches the field: \(preset)", shown == preset)
+            search.queryChanged(to: preset)
+        }
+
+        // Typing on after a value lands, while both older replies are still on their way.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "h")
+        _ = search.searchTextRendered("Runde", hasSearchHandler: true, query: "h")
+        search.queryChanged(to: "Runde")
+        search.queryChanged(to: "Runde2")
+        check(
+            "a stale echo after typing on is dropped",
+            search.searchTextRendered("h", hasSearchHandler: true, query: "Runde2") == nil)
+        check(
+            "the last keystroke's reply settles it",
+            search.searchTextRendered("Runde2", hasSearchHandler: true, query: "Runde2") == nil)
+
+        // `useState<string>()`: the prop is undefined until the first keystroke's reply.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered(nil, hasSearchHandler: true, query: "")
+        search.queryChanged(to: "a")
+        search.queryChanged(to: "ab")
+        check(
+            "an undefined searchText's first reply is still an echo",
+            search.searchTextRendered("a", hasSearchHandler: true, query: "ab") == nil
+                && search.searchTextRendered("ab", hasSearchHandler: true, query: "ab") == nil)
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("fixed", hasSearchHandler: true, query: "fixed")
+        for count in 1...40 { search.queryChanged(to: String(repeating: "k", count: count)) }
+        check(
+            "a screen that never echoes forgets its oldest keystrokes",
+            search.searchTextRendered("k", hasSearchHandler: true, query: "kkkk") == "k")
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered(nil, hasSearchHandler: true, query: "fal")
+        search.queryChanged(to: "fall")
+        check(
+            "a launch-typed echo before searchText is defined keeps a later keystroke",
+            search.searchTextRendered("fal", hasSearchHandler: true, query: "fall") == nil)
+
+        // A pushed screen whose own searchText starts empty, then a preset, then a Clear.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered(nil, hasSearchHandler: true, query: "x")
+        _ = search.navigate(to: 2, current: .init(query: "x", selection: 0))
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "")
+        _ = search.searchTextRendered("foo", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "foo")
+        check(
+            "a Clear on a pushed screen reaches the field",
+            search.searchTextRendered("", hasSearchHandler: true, query: "foo") == "")
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "fal")
+        search.queryChanged(to: "fall")
+        check(
+            "a launch-typed echo does not drop a later keystroke",
+            search.searchTextRendered("fal", hasSearchHandler: true, query: "fall") == nil
+                && search.searchTextRendered("fall", hasSearchHandler: true, query: "fall") == nil)
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "kept")
+        _ = search.searchTextRendered("kept", hasSearchHandler: true, query: "kept")
+        _ = search.navigate(to: 2, current: .init(query: "kept", selection: 0))
+        _ = search.navigate(to: 1, current: .init(query: "child", selection: 0))
+        search.queryChanged(to: "kept")
+        _ = search.searchTextRendered("kept", hasSearchHandler: true, query: "kept")
+        _ = search.searchTextRendered("other", hasSearchHandler: true, query: "kept")
+        search.queryChanged(to: "other")
+        check(
+            "the restored query set again after another reaches the field",
+            search.searchTextRendered("kept", hasSearchHandler: true, query: "other") == "kept")
+
+        // dict-cc re-reads the clipboard whenever its searchText differs from it.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        check(
+            "a clipboard's line breaks fold as the field folds them",
+            search.searchTextRendered("Runde\n", hasSearchHandler: true, query: "") == "Runde")
+        search.queryChanged(to: "Runde")
+        check("the folded text is not sent back", !search.forwardsSearchText("Runde"))
+        check(
+            "the same multi-line value again changes nothing",
+            search.searchTextRendered("Runde\n", hasSearchHandler: true, query: "Runde") == nil)
+
+        // dict-cc refills its clipboard text whenever the field is emptied.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        _ = search.searchTextRendered("Runde", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "Runde")
+        search.queryChanged(to: "")
+        check("clearing the command's value is told", search.forwardsSearchText(""))
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        check(
+            "a value the command restores after a clear does not refill the field",
+            search.searchTextRendered("Runde\n", hasSearchHandler: true, query: "") == nil)
+        search.queryChanged(to: "W")
+        _ = search.searchTextRendered("W", hasSearchHandler: true, query: "W")
+        check(
+            "once the user types again, the command's value lands as before",
+            search.searchTextRendered("Runde", hasSearchHandler: true, query: "W") == "Runde")
+
+        // "Use recent: foo", Escape, then the same action again.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        _ = search.searchTextRendered("foo", hasSearchHandler: true, query: "")
+        search.queryChanged(to: "foo")
+        search.queryChanged(to: "")
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        search.actionDispatched()
+        check(
+            "an action asking for the cleared value again lands",
+            search.searchTextRendered("foo", hasSearchHandler: true, query: "") == "foo")
+        search.queryChanged(to: "foo")
+        search.extensionClearsSearchBar()
+        search.queryChanged(to: "")
+        check(
+            "after the command's own clearSearchBar its value lands again",
+            search.searchTextRendered("", hasSearchHandler: true, query: "") == nil
+                && search.searchTextRendered("foo", hasSearchHandler: true, query: "") == "foo")
+
+        // A throttled burst repeating its last text, then a value set before the timer fires.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        for typed in ["hou", "hous", "hou", "hous"] { search.queryChanged(to: typed) }
+        _ = search.searchTextRendered("X", hasSearchHandler: true, query: "hous")
+        search.queryChanged(to: "X")
+        check(
+            "the burst's one reply is what the field settles on",
+            search.searchTextRendered("hous", hasSearchHandler: true, query: "X") == "hous")
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("seed", hasSearchHandler: true, query: "seed")
+        search.queryChanged(to: "seedling")
+        check(
+            "an unchanged searchText never reverts typing",
+            search.searchTextRendered("seed", hasSearchHandler: true, query: "seedling") == nil)
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("seed", hasSearchHandler: false, query: "seed")
+        search.queryChanged(to: "typed")
+        check(
+            "without a handler a changed searchText always applies",
+            search.searchTextRendered("typed", hasSearchHandler: false, query: "other") == "typed")
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("parent", hasSearchHandler: true, query: "parent")
+        _ = search.navigate(to: 2, current: .init(query: "parent", selection: 0))
+        check(
+            "a pushed screen's searchText reaches its fresh field",
+            search.searchTextRendered("parent", hasSearchHandler: true, query: "") == "parent")
+        _ = search.navigate(to: 1, current: .init(query: "parent", selection: 0))
+        check(
+            "popping back to a matching parent changes nothing",
+            search.searchTextRendered("parent", hasSearchHandler: true, query: "parent") == nil)
+
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("x", hasSearchHandler: false, query: "x")
+        search.queryChanged(to: "xyz")
+        let typed = ExtensionSearchState.Screen(query: "xyz", selection: 2)
+        _ = search.navigate(to: 2, current: typed)
+        _ = search.searchTextRendered(nil, hasSearchHandler: false, query: "")
+        check("popping back restores the typed query", search.navigate(to: 1, current: .init()) == typed)
+        check(
+            "the parent's unchanged searchText does not revert it",
+            search.searchTextRendered("x", hasSearchHandler: false, query: "xyz") == nil)
+        search.queryChanged(to: "xyz")
+        check(
+            "nor does it lose the restored row",
+            search.landingSelection(for: "xyz", rowCount: 4) == 2)
+        _ = search.navigate(to: 2, current: typed)
+        _ = search.navigate(to: 1, current: .init())
+        check(
+            "a searchText changed while covered applies on return",
+            search.searchTextRendered("new", hasSearchHandler: false, query: "xyz") == "new")
+    }
+
+    /// The field and a command trading texts in order, as the runtime's serial queue delivers them.
+    struct SearchRoundTrip {
+        enum Step {
+            case type(String)
+            case set(String)
+            case deliver
+        }
+
+        var search = ExtensionSearchState()
+        var field = ""
+        var command = ""
+        var inFlight: [String] = []
+        let reply: (String) -> String
+
+        init(reply: @escaping (String) -> String = { $0 }) {
+            self.reply = reply
+            _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        }
+
+        mutating func edit(_ text: String) {
+            field = text
+            search.queryChanged(to: text)
+            if search.forwardsSearchText(text) { inFlight.append(text) }
+        }
+
+        mutating func render(_ text: String) {
+            command = text
+            if let shown = search.searchTextRendered(text, hasSearchHandler: true, query: field) {
+                edit(shown)
+            }
+        }
+
+        /// False when sends keep coming back long after the input stopped.
+        mutating func settles(_ steps: [Step]) -> Bool {
+            for step in steps {
+                switch step {
+                case .type(let text): edit(text)
+                case .set(let text): render(text)
+                case .deliver where !inFlight.isEmpty: render(reply(inFlight.removeFirst()))
+                case .deliver: break
+                }
+            }
+            for _ in 0..<40 where !inFlight.isEmpty { render(reply(inFlight.removeFirst())) }
+            return inFlight.isEmpty && field == command
+        }
+    }
+
+    static func searchRoundTripChecks() {
+        var upper = SearchRoundTrip { $0.uppercased() }
+        check(
+            "a normalising handler settles on its own value",
+            upper.settles([.type("a"), .type("ab")]) && upper.field == "AB")
+        var twice = SearchRoundTrip()
+        check(
+            "two values set across an await settle on the second",
+            twice.settles([.type("abc"), .deliver, .set(""), .set("saved")])
+                && twice.field == "saved")
+        var mid = SearchRoundTrip()
+        check(
+            "a value set mid-typing settles with the command",
+            mid.settles([.type("h"), .set("Runde"), .type("Runde2"), .deliver]))
+        var presets = SearchRoundTrip()
+        check(
+            "Clear, a preset and Clear again each land",
+            presets.settles([.type("a"), .deliver, .set(""), .set("foo"), .set("")])
+                && presets.field == "")
+        var repeated = SearchRoundTrip()
+        check(
+            "a text sent twice around a value the command set settles",
+            repeated.settles([.type("x"), .set("y"), .type("x"), .deliver, .deliver])
+                && repeated.field == "x")
+        var racing = SearchRoundTrip()
+        check(
+            "a Clear racing a backspace settles",
+            racing.settles([.type("a"), .type(""), .set(""), .deliver, .deliver]))
+    }
+
+    /// The prop reaches Swift, including one set from an effect after mount.
+    @MainActor
+    static func controlledSearchTextRuntimeChecks() async {
+        let (runtime, _, recorder) = makeRuntime()
+        defer { runtime.shutdown() }
+        do {
+            try await runtime.boot(config: .current(supportDirectory: URL(fileURLWithPath: "/tmp")))
+        } catch {
+            check("searchText runtime boots", false, "\(error)")
+            return
+        }
+        let command = """
+            const { createElement: h, useEffect, useState } = require("react");
+            const { List } = require("@raycast/api");
+            exports.default = function Command() {
+              const [searchText, setSearchText] = useState("");
+              useEffect(() => { setTimeout(() => setSearchText("Runde"), 10); }, []);
+              return h(List, { searchText, onSearchTextChange: setSearchText, throttle: true },
+                h(List.Item, { title: searchText || "empty" }));
+            };
+            """
+        await runtime.start(
+            session: "search-text", code: command, file: URL(fileURLWithPath: "/tmp/search-text.js"),
+            mode: .view, context: launchContext())
+        await settle { recorder.trees.last?.activeRoot?.string("searchText") == "Runde" }
+        let texts = recorder.trees.compactMap { $0.activeRoot?.string("searchText") }
+        check("the mount renders an empty searchText", texts.first == "", "\(texts)")
+        check("a searchText set after mount is rendered", texts.last == "Runde", "\(texts)")
+        check(
+            "a throttled List still exposes its search handler",
+            recorder.trees.last?.activeRoot?.handler("onSearchTextChange") != nil)
+        await runtime.stop(session: "search-text")
     }
 
     // MARK: - End-to-end through JavaScriptCore

@@ -851,6 +851,15 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
 
     func dispatch(handler: String, arguments: [Any] = []) {
         guard let sessionID else { return }
+        let root: RenderNode? = if case .rendered(let tree) = state { tree.activeRoot } else { nil }
+        if handler == root?.handler("onSearchTextChange") {
+            // Echoing a value the command set itself back to it would let two values chase forever.
+            if let text = arguments.first as? String, !searchState.forwardsSearchText(text) {
+                return
+            }
+        } else if handler != root?.handler("onSelectionChange") {
+            searchState.actionDispatched()
+        }
         let payload = ExtensionRuntime.jsonString(from: arguments)
         Task { await runtime.dispatch(session: sessionID, handler: handler, payload: payload) }
     }
@@ -918,6 +927,14 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         {
             coordinator?.showExtensionSearch(search, tree: tree)
         }
+        if let query = coordinator?.extensionSearch?.query,
+            let text = searchState.searchTextRendered(
+                tree.activeRoot?.string("searchText"),
+                hasSearchHandler: tree.activeRoot?.handler("onSearchTextChange") != nil,
+                query: query)
+        {
+            coordinator?.showExtensionSearchText(text)
+        }
         state = .rendered(tree)
         navigationDepth = tree.depth
         seedSearchBarAccessory(in: tree)
@@ -981,6 +998,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     }
 
     func clearSearchBar() {
+        searchState.extensionClearsSearchBar()
         coordinator?.clearSearchBar()
     }
 

@@ -285,6 +285,11 @@ final class ExtensionCoordinator {
         palette.query = ""
     }
 
+    /// A List or Grid's `searchText` is the controlled value of the search bar.
+    func showExtensionSearchText(_ text: String) {
+        palette.rewriteQuery(text)
+    }
+
     var extensionSearch: ExtensionSearchState.Screen? {
         guard palette.mode == .extensionCommand else { return nil }
         return ExtensionSearchState.Screen(query: palette.query, selection: palette.selection)
