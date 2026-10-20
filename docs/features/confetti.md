@@ -15,10 +15,12 @@ corners that reaches the top, then flutters down and is gone in under three seco
 fallen; their speed and gravity scale with the display's height so the burst reaches the top on any
 screen. Strips, triangles and dots match Raycast's mix. The paper look relies on undocumented Core
 Animation, as Raycast's own does: a `plane` particle type that tumbles each piece through three axes,
-and `CAEmitterBehavior` drag and wave, looked up at run time. Where macOS drops them, the confetti
-spins flat, or without drag shoots past the top in a quick streak, rather than failing: the launch
-speed is tuned for drag to brake it. `ConfettiCoordinator` keeps one panel per
-display and closes it when the panel reports its last burst done.
+set by key, and `CAEmitterBehavior` drag and wave, looked up at run time. Core Animation objects store
+any key they don't know rather than throwing, so a macOS that drops the particle keys leaves the
+pieces spinning flat; one without `CAEmitterBehavior` gets no drag, and since the launch speed is
+tuned for drag to brake it, the burst shoots past the top in a quick streak. Neither fails.
+`ConfettiCoordinator` keeps one panel per display and closes it when the panel reports its last burst
+done.
 
 Besides its own `pipcast://command/confetti`, Raycast's `raycast://confetti` and
 `raycast://extensions/raycast/raycast/confetti` fire it, from a script or from an extension's
