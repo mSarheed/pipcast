@@ -142,11 +142,18 @@ struct AppleShortcutIconTest {
 
     @MainActor static func promptDiesWithEmptyLibrary() async {
         let fake = FakeIcons()
+        fake.holdFetch = true
         let store = make(fake)
+        // Only a read already running could carry the prompt over to the next one.
+        store.read(library, .init(sweep: true))
+        await waitForHold(fake)
         store.read([], .init(sweep: true, prompting: true))
         store.read(library, .init())
+        fake.release()
         await settle(store)
-        check("a prompt asked over an empty library never prompts a later read", fake.accessAsks == [false])
+        check(
+            "a prompt asked over an empty library never prompts a later read",
+            !fake.accessAsks.contains(true))
     }
 
     @MainActor static func failedIconsWaitForSweep() async {

@@ -63,7 +63,7 @@ final class AppleShortcutCoordinator {
         refresh()
     }
 
-    /// Re-read on every launcher open; the tool answers in milliseconds, so overlaps just drop.
+    /// Re-read on every launcher open; an overlapping call joins the read in flight.
     func refresh(promptingForIcons prompting: Bool = false) {
         guard settings.appleShortcutsEnabled else { return }
         if prompting { promptsForIcons = true }
