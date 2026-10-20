@@ -15,6 +15,7 @@ final class ConfettiCoordinator {
     /// A second burst replaces the first rather than stacking sheets.
     func fire() {
         guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            clear()
             core.showMessage("🎉")
             return
         }
