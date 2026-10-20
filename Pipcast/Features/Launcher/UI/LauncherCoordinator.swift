@@ -317,12 +317,6 @@ final class LauncherCoordinator {
         core.palette.queryHistory.clear()
     }
 
-    /// Switching recall off forgets what it kept, whether the pane or settings.json switched it.
-    func applySearchHistory() {
-        guard !core.settings.launcherRemembersSearches else { return }
-        clearSearchHistory()
-    }
-
     // MARK: - Row actions
 
     /// What Copy Deeplink copies; nil for an entry no link can run.

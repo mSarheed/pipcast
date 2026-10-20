@@ -529,10 +529,11 @@ the field is empty again. ↓ keeps moving the selection, and Escape clears the 
 - **What is kept** is the trimmed query: the newest 50, an exact repeat moved to the front rather
   than stored twice. A calculator query is kept as its expression, so its answer is worked out again
   on recall with today's rates; the answers themselves are Calculator History's.
-- **What is skipped**: anything over 200 characters or holding a line break, which is pasted
-  content, and an unbroken run of 32 or more characters that is either hex with letters and digits
-  or mixes upper and lower case with digits — the shapes of an API key, token or hash. A `://`
-  address and a path starting `/` or `~` are kept whatever their shape.
+- **What is skipped**: anything over 200 characters, which is pasted content, and an unbroken run
+  of 32 or more characters that is either hex with letters and digits or mixes upper and lower case
+  with digits — the shapes of an API key, token or hash. A `://` address and a path starting `/` or
+  `~` are kept whatever their shape. The field joins a paste's lines before anything is recorded, so
+  a short multi-line paste is kept as one line; the model's own refusal of a line break is a backstop.
 - **Where ↑ recalls**: in root search with no menu open, no IME composition, no argument field
   focused and no modifier held, on the compact bar or with the top row selected. The query must be
   empty or still exactly the entry ↑ last put there. Anywhere else ↑ does what it always did.
@@ -543,8 +544,9 @@ the field is empty again. ↓ keeps moving the selection, and Escape clears the 
 The history lives on `PaletteState` for the app's lifetime and is never persisted, so quitting
 Pipcast forgets it. Settings › General › Search › **Recall recent searches**
 (`launcherRemembersSearches`, on by default) is the switch; turning it off clears the history, from
-the pane or from settings.json, through an `AppCore` `track` sink. **Recent searches › Clear
-History** empties it while leaving recall on. A backup and settings.json
+the pane or from settings.json, through an `AppCore` `track` sink. The sink clears on every change
+of the switch, so turning it off and on again before the sink runs still forgets. **Recent searches
+› Clear History** empties it while leaving recall on. A backup and settings.json
 (`search.remembersRecentSearches`) carry the switch, as they carry Clipboard History's, and never a
 search.
 

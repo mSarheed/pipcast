@@ -715,9 +715,10 @@ final class AppCore {
         track(
             { _ = $0.automaticallyCheckForUpdates },
             reproject: { $0.updateCoordinator.applyAutomaticChecking() })
+        // Any flip forgets: off then on again before this runs must still clear what off meant to.
         track(
             { _ = $0.launcherRemembersSearches },
-            reproject: { $0.launcherCoordinator.applySearchHistory() })
+            reproject: { $0.launcherCoordinator.clearSearchHistory() })
         track(
             {
                 _ = $0.windowManagementEnabled
