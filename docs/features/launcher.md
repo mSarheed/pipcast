@@ -522,8 +522,8 @@ the field is empty again. ↓ keeps moving the selection, and Escape clears the 
 - **Recorded when a row runs**, never while typing. `LauncherScreen` hands the query to
   `LauncherCoordinator.rememberSearch` from ↵, a click, a ⌘-digit, ⌘↵ and ⇧⌘↵, before the action can
   rewrite or clear the field. An error card runs nothing and records nothing; ⌘K rows and chords
-  aimed at a row are not runs. Neither is a field a shortcut seeded with its row's name to ask
-  for arguments (`argumentEntryID`): nobody typed it.
+  aimed at a row are not runs. Neither is the name a shortcut seeded to ask for arguments, while
+  it still lists that row alone (`argumentEntryID`): nobody typed it. Edited, it is a search.
 - **Only root search.** A screen with its own field — an extension, the clipboard, snippets,
   Calculator History, settings search after `?` — never records, and ↑ there is untouched.
 - **What is kept** is the trimmed query: the newest 50, an exact repeat moved to the front rather

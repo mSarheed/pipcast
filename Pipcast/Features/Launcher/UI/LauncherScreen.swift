@@ -38,6 +38,8 @@ struct LauncherScreen: PaletteScreen {
     private let fallbacks: [(fallback: Fallback, entry: AppEntry)]
     /// Resolved in `init`: the palette indexes this several times per event, so it can't recompute.
     let rows: [Row]
+    /// A shortcut seeded the field with this row's name to ask for arguments; nobody typed it.
+    private let listsArgumentRowAlone: Bool
 
     var numberSlots: NumberSlots {
         if case .meeting = rows.first { return NumberSlots(hasMeetingCard: true) }
@@ -106,6 +108,7 @@ struct LauncherScreen: PaletteScreen {
         self.meetingCount = pinsFavorites ? ordered.meetingCount : 0
         self.suggestionCount = pinsFavorites ? ordered.suggestionCount : 0
         self.matchCount = matchCount
+        self.listsArgumentRowAlone = pinned != nil
         if let calc {
             self.rows = [.calc(calc)] + entries
         } else if let color {
@@ -291,7 +294,7 @@ struct LauncherScreen: PaletteScreen {
 
     func activate(at selection: Int) {
         if hasPrimaryAction(at: selection), row(at: selection) != nil {
-            core.launcherCoordinator.rememberSearch(vm.query)
+            rememberSearch(vm.query)
         }
         switch row(at: selection) {
         // Error cards no-op — copyCalculatorResult only acts on value payloads.
@@ -308,6 +311,11 @@ struct LauncherScreen: PaletteScreen {
             core.fallbackCoordinator.run(fallback, query: vm.query)
         case nil: break
         }
+    }
+
+    private func rememberSearch(_ query: String) {
+        guard !listsArgumentRowAlone else { return }
+        core.launcherCoordinator.rememberSearch(query)
     }
 
     /// The card's meeting or a meeting row's; both answer the meeting menu's chords.
@@ -328,16 +336,16 @@ struct LauncherScreen: PaletteScreen {
         if case .calc(let result) = row(at: selection) {
             let query = vm.query
             guard core.calculatorCoordinator.putAnswerInSearchBar(result) else { return false }
-            core.launcherCoordinator.rememberSearch(query)
+            rememberSearch(query)
             return true
         }
         if let file = file(at: selection) {
-            core.launcherCoordinator.rememberSearch(vm.query)
+            rememberSearch(vm.query)
             core.fileSearchCoordinator.showInFinder(file)
             return true
         }
         guard let app = entry(at: selection), app.canRevealInFinder else { return false }
-        core.launcherCoordinator.rememberSearch(vm.query)
+        rememberSearch(vm.query)
         core.launcherCoordinator.showInFinder(app)
         return true
     }
@@ -391,7 +399,7 @@ struct LauncherScreen: PaletteScreen {
 
     private func copyCalculation(at selection: Int) -> Bool {
         guard case .calc(let result) = row(at: selection), result.isActionable else { return false }
-        core.launcherCoordinator.rememberSearch(vm.query)
+        rememberSearch(vm.query)
         core.calculatorCoordinator.copyCalculationWithExpression(result)
         return true
     }
@@ -557,7 +565,7 @@ struct LauncherScreen: PaletteScreen {
                 openActions()
             },
             onActivate: {
-                core.launcherCoordinator.rememberSearch(vm.query)
+                rememberSearch(vm.query)
                 core.launcherCoordinator.launch(
                     $0, searchQuery: vm.query, arguments: argumentValues(for: $0))
             },

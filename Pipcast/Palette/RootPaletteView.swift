@@ -589,6 +589,7 @@ struct RootPaletteView: View {
                 return moveVertically(1)
             }
             .onKeyPress(keys: [.upArrow], phases: [.down, .repeat]) { press in
+                if press.phase == .down { upHoldRecalls = false }
                 if let reorder = movePinnedOrFavorite(-1, modifiers: press.modifiers) { return reorder }
                 if vm.isControlListOpen { return .ignored }
                 upHoldRecalls = (press.phase == .down || upHoldRecalls) && recallOlderSearch(press)

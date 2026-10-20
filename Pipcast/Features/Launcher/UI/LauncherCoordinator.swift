@@ -289,10 +289,7 @@ final class LauncherCoordinator {
 
     /// Called as root search runs a row, while the field still holds what was typed.
     func rememberSearch(_ query: String) {
-        // A shortcut that asks for arguments seeds the field with the row's name; nobody typed it.
-        guard core.settings.launcherRemembersSearches, core.palette.argumentEntryID == nil else {
-            return
-        }
+        guard core.settings.launcherRemembersSearches else { return }
         core.palette.queryHistory.record(query)
     }
 
