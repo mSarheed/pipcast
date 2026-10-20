@@ -423,7 +423,8 @@ struct DoubleTapDetectorTests {
         }
         for notConfetti in [
             "raycast://confetti/extra", "raycast://extensions/raycast/confetti",
-            "raycast://extensions/someone/raycast/confetti"
+            "raycast://extensions/someone/raycast/confetti", "pipcast://confetti",
+            "pipcast-dev://extensions/raycast/raycast/confetti", "https://example.com/confetti"
         ] {
             expect(
                 !CommandDeepLink.isRaycastConfetti(URL(string: notConfetti)!),

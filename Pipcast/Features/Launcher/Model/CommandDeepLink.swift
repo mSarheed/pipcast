@@ -23,6 +23,9 @@ enum CommandDeepLink {
 
     /// Raycast's own confetti links, which scripts and extensions fire to celebrate.
     static func isRaycastConfetti(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(),
+            ["raycast", "com.raycast", "raycastinternal"].contains(scheme)
+        else { return false }
         let path = ([url.host() ?? ""] + url.pathComponents)
             .filter { !$0.isEmpty && $0 != "/" }
             .map { $0.lowercased() }
