@@ -44,8 +44,9 @@ or a binding follows the shortcut rather than its old title. The entry id is
 Shortcuts app itself.
 
 The list is re-read whenever the launcher opens, the Settings pane appears, or the switch turns on.
-The tool answers in ~10 ms, so an overlapping request is simply dropped rather than queued. An
-unchanged list publishes nothing.
+The tool answers in ~10 ms, so an overlapping request joins the read in flight rather than queuing
+another; a prompt the pane asked for rides along (see [Icons](#icons)). An unchanged list publishes
+nothing.
 
 ## Sweeping deleted shortcuts
 
