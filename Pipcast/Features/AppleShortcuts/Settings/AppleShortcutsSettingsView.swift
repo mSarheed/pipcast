@@ -34,8 +34,10 @@ struct AppleShortcutsSettingsView: View {
         .formStyle(.grouped)
         .settingsScrollTarget(.appleShortcuts)
         .releasesFocusOnOutsideClick()
-        // Shortcuts can change while Settings sits closed, so the pane reads them fresh.
-        .task(id: settings.appleShortcutsEnabled) { core.appleShortcutCoordinator.refresh() }
+        // Fresh on every visit, and the one place the icons may raise the Automation prompt.
+        .task(id: settings.appleShortcutsEnabled) {
+            core.appleShortcutCoordinator.refresh(promptingForIcons: true)
+        }
     }
 
     private var library: some View {

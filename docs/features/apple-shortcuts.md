@@ -13,6 +13,9 @@ registered, so re-enabling restores every global shortcut.
 
 - **Shortcuts owns the library.** Nothing about a shortcut is stored except what every launcher entry
   already keys by `preferenceKey` — alias, visibility, favorite, ranking — and its hotkey binding.
+  Its icon is a cache Shortcuts can always answer again, never preferences or a backup.
+- **Only the Settings pane may raise the Automation prompt.** The launcher reads icons unprompted, so
+  a system dialog never lands on top of the palette.
 - **`run(id:)` is the single funnel** for a launcher row and a global shortcut alike, so the switch
   can't be bypassed.
 - **A failed read keeps the last good library.** Emptying the launcher because one spawn failed would
@@ -62,11 +65,42 @@ a shortcut usually acts on the app the user was in. There is **no timeout** — 
 dialog of its own for as long as it likes. Success is silent; a non-zero exit shows the tool's last
 lines in Pipcast's own dialog.
 
+## Icons
+
+Each row draws the shortcut's own icon, its glyph on its colour, as Shortcuts renders it. No public API
+lists shortcut icons, and the Shortcuts database under `~/Library/Shortcuts` needs Full Disk Access, so
+`AppleShortcutIconProvider` asks **Shortcuts Events** through its public scripting dictionary: the
+`icon` property of `shortcut id "<UUID>"`, a 256-pixel TIFF of the finished tile. The identifier must
+be the uppercase spelling; Shortcuts answers a lowercase one with nothing. It is a raw `getd` Apple
+event rather than AppleScript, so every send can carry `kAEDoNotPromptForUserConsent`.
+
+Sending needs **Automation permission for Shortcuts Events**, granted in Privacy & Security ›
+Automation. `canRead(prompting:)` launches the helper hidden, since permission can only be determined
+against a running target, then asks `AEDeterminePermissionToAutomateTarget`. The Settings pane's read
+passes `prompting: true`, so opening the pane or turning the switch on raises the system prompt once.
+Every launcher read passes `false`: a refusal, or a prompt never answered, stops the launcher trying
+until the pane asks again. Running and listing shortcuts need no permission either way.
+
+`AppleShortcutIconCache` keeps one 128-pixel PNG per shortcut in Caches, named
+`<uuid>-<digest>.png` from a hash of the TIFF, so a changed icon is a new path and `IconCache` never
+serves the old bitmap. Rows draw it as `.artwork` at `IconCache.appIconExtent`, the size of an app icon.
+Icons are read one shortcut at a time, so a large library never holds more than one full-size TIFF.
+
+- **The first read after launch, and every read the pane makes, sweeps**: every icon is fetched again,
+  since a new glyph or colour keeps the shortcut's identifier. Unchanged icons write nothing.
+- **Any other read fetches only shortcuts with no icon yet**, so an ordinary launcher open sends no
+  Apple event at all. An icon edited while Pipcast runs updates on the next pane visit or launch.
+- **The folder is scanned once per launch**, deleting files for shortcuts no longer listed. A replaced
+  icon's file is deleted only after rows point at its successor. An empty or failed read scans nothing.
+
+Without permission, or for a shortcut Shortcuts can't answer, the row keeps the Shortcuts app's icon.
+Turning the feature off cancels a read in flight; the files stay for the next time it turns on.
+
 ## Launcher and Settings
 
 `AppEntry.Kind.appleShortcut` is its own section, published right after Quicklinks. It is file-backed
-rather than a symbol tile: every row's `url` is Shortcuts.app, so each draws that app's icon from one
-cached bitmap. Reveal in Finder is refused, because the file is the app, not the shortcut.
+rather than a symbol tile: every row's `url` is Shortcuts.app, whose icon a row draws until its own
+is cached. Reveal in Finder is refused, because the file is the app, not the shortcut.
 
 The pane lists rows through `LauncherItemsList`, the same table the launcher-category panes use: icon,
 name, alias, shortcut recorder and the checkbox that hides one row from launcher search while its

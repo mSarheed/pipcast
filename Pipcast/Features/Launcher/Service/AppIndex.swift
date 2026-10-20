@@ -75,7 +75,7 @@ struct AppEntry: Identifiable, Hashable, Sendable {
                     openVerb: "Open Quicklink", canHideFromSearch: false,
                     canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 2)
             case .appleShortcut:
-                // File-backed so every row draws the Shortcuts app's own icon.
+                // File-backed so a row whose own icon is unread draws the Shortcuts app's.
                 return KindDescriptor(
                     label: "Apple Shortcut", sectionTitle: "Apple Shortcuts",
                     openVerb: "Run Shortcut", canHideFromSearch: true,
@@ -303,10 +303,11 @@ extension AppEntry {
     }
 
     /// No bundle id: that would key every shortcut's alias and ranking to the Shortcuts app.
-    init(_ shortcut: AppleShortcut, applicationURL: URL) {
+    init(_ shortcut: AppleShortcut, applicationURL: URL, icon: URL?) {
         self.init(
             id: shortcut.entryID, name: shortcut.name, url: applicationURL, bundleID: nil,
-            kind: .appleShortcut)
+            kind: .appleShortcut,
+            iconOverride: icon.map { .artwork(path: $0.path, extent: IconCache.appIconExtent) })
     }
 }
 

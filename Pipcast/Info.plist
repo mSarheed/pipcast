@@ -68,7 +68,7 @@
 	<key>NSAutoFillRequiresTextContentTypeForOneTimeCodeOnMac</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Pipcast uses automation to perform system actions you explicitly run.</string>
+	<string>Pipcast uses automation to perform system actions you explicitly run and to show your shortcuts’ icons.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Pipcast shows a camera preview so you can check yourself, and take a photo to the clipboard.</string>
 	<key>NSMicrophoneUsageDescription</key>

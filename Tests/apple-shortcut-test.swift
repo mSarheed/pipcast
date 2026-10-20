@@ -71,6 +71,54 @@ struct AppleShortcutTest {
         check("another kind's id is refused", AppleShortcut.id(fromEntryID: "quicklink:\(recipes)") == nil)
         check("a malformed id is refused", AppleShortcut.id(fromEntryID: "apple-shortcut:nope") == nil)
 
+        // Icon files: named by shortcut and pixels, so a changed icon is a new path.
+        let icon = AppleShortcutIconFile(id: volume, digest: "0123456789abcdef")
+        check(
+            "an icon file is named by its lowercase id and digest",
+            icon.fileName == "97a1ddfa-76f3-4872-a672-25d5f35b7882-0123456789abcdef.png")
+        check("an icon file name round-trips", AppleShortcutIconFile(fileName: icon.fileName) == icon)
+        let foreign = [
+            "97a1ddfa-76f3-4872-a672-25d5f35b7882-0123456789abcdef.tiff",
+            "97a1ddfa-76f3-4872-a672-25d5f35b7882-0123456789ABCDEF.png",
+            "97a1ddfa-76f3-4872-a672-25d5f35b7882-0123.png",
+            "97a1ddfa-76f3-4872-a672-25d5f35b7882-0123456789abcdeg.png",
+            "not-a-uuid-0123456789abcdef.png", ".DS_Store", "0123456789abcdef.png"
+        ]
+        check(
+            "a foreign or malformed file name is refused",
+            foreign.allSatisfy { AppleShortcutIconFile(fileName: $0) == nil })
+
+        let newer = AppleShortcutIconFile(id: volume, digest: "fedcba9876543210")
+        let orphan = AppleShortcutIconFile(id: gone, digest: "0123456789abcdef")
+        let pdfIcon = AppleShortcutIconFile(id: pdf, digest: "aaaaaaaaaaaaaaaa")
+        let scanned = AppleShortcutIconFile.resolve(
+            fileNames: [newer.fileName, orphan.fileName, ".DS_Store", icon.fileName, pdfIcon.fileName],
+            live: listed)
+        check(
+            "a scan keeps one icon per live shortcut",
+            scanned.kept == [volume: icon, pdf: pdfIcon])
+        check(
+            "a scan frees a deleted shortcut's icon, a duplicate and anything foreign",
+            Set(scanned.stale) == [newer.fileName, orphan.fileName, ".DS_Store"])
+        check(
+            "a scan of an empty folder keeps nothing",
+            AppleShortcutIconFile.resolve(fileNames: [], live: listed) == ([:], []))
+
+        let cachedIcons = [volume: icon]
+        check(
+            "only a shortcut without an icon is read outside a sweep",
+            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, sweep: false)
+                == [recipes, pdf])
+        check(
+            "a sweep re-reads every icon, since a new glyph keeps the identifier",
+            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, sweep: true)
+                == [recipes, volume, pdf])
+        check(
+            "nothing is read once every icon is cached",
+            AppleShortcutIconFile.pending(
+                live: listed, cached: [volume: icon, pdf: pdfIcon, recipes: icon], sweep: false
+            ).isEmpty)
+
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) failed")
         if failures > 0 { exit(1) }
     }

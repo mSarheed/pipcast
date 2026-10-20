@@ -178,7 +178,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `uninstall-coordinator-test` | Confirmation and the post-confirmation quit gate; recorded quit and Trash effects only |
 | `quicklink-test` | all of `Quicklinks/Model/`, plus editor drafts and placeholder selection |
 | `quicklink-coordinator-test` | Opening and requested arguments, launcher editing, current enabled-state preservation, deletion during editing and feature gates, and website icons — when each is fetched, refresh, pruning, turning off, and fetches still in flight — through a fake download; no platform effects or on-screen focus checks |
-| `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
+| `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser, entry ids, and icon file names, folder scans and which icons a read fetches |
 | `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus clipboard draft/save lifecycle through the coordinator, Actions Return composition through `Palette/MenuPanel.swift`, editor drafts, placeholder selection and `Platform/HealthTicker.swift` |
 | `notes-test` | all of `Notes/Model/` and `Notes/Service/`, including the Markdown parser, edit plans and reveal policy, plus the real fuzzy matcher and signposts |
 | `notes-editor-test` | the Notes editor, rendered and literal, with real TextKit 2 and AppKit editing objects: styling, reveal, layout fragments, keys, chords, checkboxes and links |
@@ -763,7 +763,11 @@ Opt into installed English spelling service checks with
 ### Apple Shortcuts
 
 - Off out of the box: the pane lists nothing and no shortcut reaches the launcher
-- Switching on lists every shortcut with the Shortcuts app's icon; ↵ on a row runs it
+- Switching on lists every shortcut; ↵ on a row runs it
+- The pane raises the Automation prompt for Shortcuts Events once; allowed, every row in the pane
+  and the launcher shows that shortcut's own icon, in Light and Dark; denied, the Shortcuts app's
+- Opening the launcher never raises the prompt, even before the pane has asked
+- A shortcut's icon changed in Shortcuts updates on the next visit to the pane
 - A shortcut added in Shortcuts appears on the next launcher open
 - A row's hotkey runs it with the palette closed; switching the feature off silences it
 - Unchecking a row hides it from search, and its hotkey still fires

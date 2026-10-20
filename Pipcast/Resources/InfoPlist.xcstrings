@@ -7,55 +7,55 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast verwendet Automation nur für Systemaktionen, die du ausdrücklich ausführst."
+            "value" : "Pipcast verwendet Automation für Systemaktionen, die du ausdrücklich ausführst, und um die Symbole deiner Kurzbefehle anzuzeigen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast uses automation to perform system actions you explicitly run."
+            "value" : "Pipcast uses automation to perform system actions you explicitly run and to show your shortcuts’ icons."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast usa la automatización para realizar las acciones del sistema que ejecutas expresamente."
+            "value" : "Pipcast usa la automatización para realizar las acciones del sistema que ejecutas expresamente y para mostrar los iconos de tus atajos."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast utilise l’automatisation pour exécuter des actions dans d’autres apps."
+            "value" : "Pipcast utilise l’automatisation pour exécuter les actions système que vous lancez explicitement et pour afficher les icônes de vos raccourcis."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcastは、あなたが明示的に実行するシステムアクションにオートメーションを使用します。"
+            "value" : "Pipcastは、あなたが明示的に実行するシステムアクションと、ショートカットのアイコンの表示にオートメーションを使用します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast는 사용자가 직접 실행하는 시스템 동작을 수행할 때 자동화를 사용합니다."
+            "value" : "Pipcast는 사용자가 직접 실행하는 시스템 동작을 수행하고 단축어 아이콘을 표시할 때 자동화를 사용합니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Pipcast usa automação para realizar as ações do sistema que você executa explicitamente."
+            "value" : "O Pipcast usa automação para realizar as ações do sistema que você executa explicitamente e para mostrar os ícones dos seus atalhos."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast использует автоматизацию для выполнения системных действий, которые вы запускаете явно."
+            "value" : "Pipcast использует автоматизацию для выполнения системных действий, которые вы запускаете явно, и для показа значков ваших быстрых команд."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pipcast 使用自动化来执行你主动运行的系统操作。"
+            "value" : "Pipcast 使用自动化来执行你主动运行的系统操作，并显示你的快捷指令图标。"
           }
         }
       }
