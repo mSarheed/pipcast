@@ -33,6 +33,34 @@ struct ExtensionIconTests {
             "artwork draws below an app icon's \(IconCache.appIconExtent): \(full)")
     }
 
+    /// Fitting fills a square: drawn straight in, Weather's 27×17 eye rounded into a circle.
+    static func nonSquareArtworkKeepsItsShape() {
+        let svg = { (width: String, height: String) in
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\(width)\" height=\"\(height)\">"
+                + "<rect width=\"\(width)\" height=\"\(height)\" fill=\"#000\"/></svg>"
+        }
+        let fixtures: [(URL?, CGFloat)] = [
+            (writeFile("eye.svg", Data(svg("27.0508", "16.748").utf8)), 27.0508 / 16.748),
+            (writeFile("mappin.svg", Data(svg("7.69531", "21.4551").utf8)), 7.69531 / 21.4551),
+            (writePNG("wide", inset: 0, height: 256), 2)
+        ]
+        defer {
+            for (url, _) in fixtures {
+                url.map { try? FileManager.default.removeItem(at: $0.deletingLastPathComponent()) }
+            }
+        }
+        for (url, aspect) in fixtures {
+            guard let url, let ink = inkBounds(ExtensionIconCache.icon(atPath: url.path)) else {
+                expect(false, "\(url?.lastPathComponent ?? "a fixture") rasterizes")
+                continue
+            }
+            let drawn = ink.width / ink.height
+            expect(
+                abs(drawn - aspect) / aspect < 0.08,
+                "\(url.lastPathComponent) keeps its \(aspect) aspect ratio: drew \(drawn)")
+        }
+    }
+
     /// A missing file still answers, so a row never renders an empty slot.
     static func missingFileFallsBack() {
         let icon = ExtensionIconCache.icon(atPath: "/nonexistent/\(UUID().uuidString).png")
@@ -147,33 +175,44 @@ struct ExtensionIconTests {
         expect(rejected == nil, "a broken payload is nil")
     }
 
-    /// A red square on a transparent canvas, `inset` pixels in from each edge.
-    static func writePNG(_ name: String, inset: Int) -> URL? {
+    /// A red fill on a transparent canvas, `inset` pixels in from each edge.
+    static func writePNG(_ name: String, inset: Int, height: Int = 512) -> URL? {
         let side = 512
         guard
             let rep = NSBitmapImageRep(
-                bitmapDataPlanes: nil, pixelsWide: side, pixelsHigh: side, bitsPerSample: 8,
+                bitmapDataPlanes: nil, pixelsWide: side, pixelsHigh: height, bitsPerSample: 8,
                 samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
                 bytesPerRow: 0, bitsPerPixel: 0), let ctx = NSGraphicsContext(bitmapImageRep: rep)
         else { return nil }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = ctx
         NSColor.red.setFill()
-        NSRect(x: inset, y: inset, width: side - inset * 2, height: side - inset * 2).fill()
+        NSRect(x: inset, y: inset, width: side - inset * 2, height: height - inset * 2).fill()
         NSGraphicsContext.restoreGraphicsState()
 
+        return rep.representation(using: .png, properties: [:]).flatMap {
+            writeFile("\(name).png", $0)
+        }
+    }
+
+    static func writeFile(_ name: String, _ data: Data) -> URL? {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("ext-icon-test-\(UUID().uuidString)")
-        guard let data = rep.representation(using: .png, properties: [:]),
+        guard
             (try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true))
                 != nil
         else { return nil }
-        let url = dir.appendingPathComponent("\(name).png")
+        let url = dir.appendingPathComponent(name)
         return (try? data.write(to: url)) != nil ? url : nil
     }
 
     /// The larger side of the alpha bounding box, as a share of the canvas.
     static func inkExtent(_ image: NSImage) -> CGFloat? {
+        inkBounds(image).map { max($0.width, $0.height) / 96 }
+    }
+
+    /// The alpha bounding box, in pixels of the 96pt canvas.
+    static func inkBounds(_ image: NSImage) -> CGSize? {
         rasterize(image).flatMap { rep in
             var minX = 96, maxX = -1, minY = 96, maxY = -1
             for y in 0..<96 {
@@ -185,7 +224,7 @@ struct ExtensionIconTests {
                 }
             }
             guard maxX >= 0 else { return nil }
-            return CGFloat(max(maxX - minX + 1, maxY - minY + 1)) / 96
+            return CGSize(width: maxX - minX + 1, height: maxY - minY + 1)
         }
     }
 
@@ -225,6 +264,7 @@ struct ExtensionIconTests {
 
     static func main() async {
         artworkIsNormalized()
+        nonSquareArtworkKeepsItsShape()
         missingFileFallsBack()
         await inlineDataURLsDecode()
         await paletteColorsInSVGResolve()

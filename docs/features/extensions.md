@@ -958,11 +958,11 @@ the same tile `IconCache` draws for the built-in commands, so the row reads as p
 
 An extension's own artwork has its own cache — `Service/ExtensionIconCache.swift` — rather than
 living in `IconCache`. That split is the point: `IconCache` stays the app-and-symbol layer and knows
-nothing about extensions. It lends out only the pixel work (`displayPixel`, `artworkExtent`,
-`paintedExtent`, `rasterized`), so there is one definition of how an icon is measured and drawn.
+nothing about extensions. It lends out only the pixel work (`IconCache.fitted`, which measures and
+rasterizes), so there is one definition of how an icon is measured and drawn.
 
 `ExtensionIconCache.extent` fits that artwork to **0.76** of the canvas, where an app icon and a
-symbol tile both sit at `IconCache.artworkExtent` **0.83**. The gap is deliberate and optical, not a
+symbol tile both sit at `IconCache.appIconExtent` **0.83**. The gap is deliberate and optical, not a
 size correction — measured, all three paths already produce an identical 40pt box.
 
 Every macOS 26 app icon is a squircle with a glyph inside it, and the ground disappears into the
@@ -973,9 +973,14 @@ change size depending on where it came from. An inline `data:` image is the one 
 fitted: the extension that drew it has already sized it, and rasterizing would cost the vector.
 
 Change the number only against a rendered strip of real icons; it means nothing on its own.
-`ext-icon-test` guards the invariant: padding in the source cannot change the drawn size, and a
-`data:` payload decodes in either encoding — and one naming a `raycast-*` colour draws ink, in the
-stroke that appearance calls for.
+`ext-icon-test` guards the invariant: padding in the source cannot change the drawn size, a
+non-square image keeps its aspect ratio, and a `data:` payload decodes in either encoding — and one
+naming a `raycast-*` colour draws ink, in the stroke that appearance calls for.
+
+Fitting fills a square, so `ExtensionIconCache` first centres anything wider or taller on a square
+canvas of its longer side. Drawn straight in, every non-square image stretches, a PNG as much as an
+SVG, with or without a `viewBox`: Weather's 27×17 SF Symbol eye rounded into a circle and its
+8×21 pin spread into a T. `NSImage` already reads an SVG's intrinsic size from `width`/`height`.
 
 - `ExtensionAppearance` (symbol + `ExtensionTint`) is stored per extension by manifest name in
   `ExtensionAppearanceStore`, and applies to **every command** of that extension — the same inheritance

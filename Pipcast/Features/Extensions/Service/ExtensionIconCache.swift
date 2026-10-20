@@ -15,6 +15,13 @@ enum ExtensionIconCache {
         return cache
     }()
 
+    /// Apart from `cache`, so one large Detail image cannot evict every row's icon.
+    private static let iconCache: Cache = {
+        let cache = Cache()
+        cache.totalCostLimit = 8 * 1024 * 1024
+        return cache
+    }()
+
     /// A freshly-decoded, thereafter-immutable `NSImage` is safe to move across the actor boundary.
     private struct Decoded: @unchecked Sendable {
         let image: NSImage?
@@ -24,22 +31,42 @@ enum ExtensionIconCache {
 
     /// Cache-only, so a warm row paints on the same frame.
     static func cached(atPath path: String) -> NSImage? {
-        IconCache.cachedArtwork(atPath: path, extent: extent)
+        iconCache.object(forKey: artworkKey(path))
     }
 
     /// Read from the file: `NSWorkspace` would answer a PNG with the generic document icon.
     static func icon(atPath path: String) -> NSImage {
+        if let cached = cached(atPath: path) { return cached }
         guard FileManager.default.fileExists(atPath: path) else {
             return IconCache.symbolIcon(named: "puzzlepiece.extension")
         }
-        return IconCache.artwork(atPath: path, extent: extent)
+        guard let source = NSImage(contentsOfFile: path) else {
+            return IconCache.symbolIcon(named: "questionmark.square.dashed")
+        }
+        let (icon, cost) = IconCache.fitted(squared(source), to: extent)
+        iconCache.setObject(icon, forKey: artworkKey(path), cost: cost)
+        return icon
     }
 
     static func loadAsync(atPath path: String) async -> NSImage? {
-        guard FileManager.default.fileExists(atPath: path) else {
-            return IconCache.symbolIcon(named: "puzzlepiece.extension")
+        if let cached = cached(atPath: path) { return cached }
+        return await Task.detached(priority: .userInitiated) {
+            Decoded(image: icon(atPath: path))
+        }.value.image
+    }
+
+    /// `fitted` fills a square, so anything wider or taller is centred on one or it stretches.
+    private static func squared(_ source: NSImage) -> NSImage {
+        let size = source.size
+        guard size.width > 0, size.height > 0, size.width != size.height else { return source }
+        let side = max(size.width, size.height)
+        return NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
+            source.draw(
+                in: NSRect(
+                    x: (side - size.width) / 2, y: (side - size.height) / 2,
+                    width: size.width, height: size.height))
+            return true
         }
-        return await IconCache.loadArtworkAsync(atPath: path, extent: extent)
     }
 
     /// Never rasterized: fitting flattens a GIF to its first frame.
@@ -116,7 +143,7 @@ enum ExtensionIconCache {
     /// A failure caches nothing, so a transient error retries; `asIcon` is off for markdown images.
     static func loadRemoteAsync(_ url: URL, asIcon: Bool = true) async -> NSImage? {
         let key = remoteKey(url, asIcon: asIcon)
-        if let cached = cache.object(forKey: key) { return cached }
+        if let cached = (asIcon ? iconCache : cache).object(forKey: key) { return cached }
         guard let (data, _) = try? await session.data(from: url) else { return nil }
         let decoded = await Task.detached(priority: .userInitiated) {
             Decoded(image: NSImage(data: data))
@@ -126,8 +153,8 @@ enum ExtensionIconCache {
             cache.setObject(source, forKey: key, cost: Int(source.size.width * source.size.height * 4))
             return source
         }
-        let (icon, cost) = IconCache.fitted(source, to: extent)
-        cache.setObject(icon, forKey: key, cost: cost)
+        let (icon, cost) = IconCache.fitted(squared(source), to: extent)
+        iconCache.setObject(icon, forKey: key, cost: cost)
         return icon
     }
 
@@ -138,6 +165,7 @@ enum ExtensionIconCache {
         return URLSession(configuration: config)
     }()
 
+    private static func artworkKey(_ path: String) -> NSString { ("artwork:" + path) as NSString }
     private static func originalKey(_ path: String) -> NSString { ("raw:" + path) as NSString }
     private static func remoteKey(_ url: URL, asIcon: Bool) -> NSString {
         ((asIcon ? "remote:" : "full:") + url.absoluteString) as NSString
