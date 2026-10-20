@@ -5,6 +5,12 @@ import UniformTypeIdentifiers
 
 /// Shortcut icons as small PNGs in Caches. docs/features/apple-shortcuts.md#icons
 struct AppleShortcutIconCache: Sendable {
+    struct Fetch: Equatable, Sendable {
+        /// Only icons that changed; one already cached under the same digest is left out.
+        var files: [UUID: AppleShortcutIconFile] = [:]
+        var failed: Set<UUID> = []
+    }
+
     private static let pixelSize = 128
 
     let folder: URL
@@ -30,18 +36,24 @@ struct AppleShortcutIconCache: Sendable {
     }
 
     /// Reads one at a time, so a large library never holds more than one full-size TIFF.
-    @concurrent func fetch(
-        _ ids: [UUID], cached: [UUID: AppleShortcutIconFile]
-    ) async -> [UUID: AppleShortcutIconFile] {
-        var fetched: [UUID: AppleShortcutIconFile] = [:]
-        for id in ids {
+    @concurrent func fetch(_ ids: [UUID], cached: [UUID: AppleShortcutIconFile]) async -> Fetch {
+        var fetch = Fetch()
+        for (index, id) in ids.enumerated() {
             guard !Task.isCancelled else { break }
-            guard let tiff = await AppleShortcutIconProvider.icon(of: id) else { continue }
-            let file = AppleShortcutIconFile(id: id, digest: Self.digest(of: tiff))
-            guard file != cached[id] else { continue }
-            if write(tiff, to: url(of: file)) { fetched[id] = file }
+            switch await AppleShortcutIconProvider.icon(of: id) {
+            case .icon(let tiff):
+                let file = AppleShortcutIconFile(id: id, digest: Self.digest(of: tiff))
+                guard file != cached[id] else { continue }
+                if write(tiff, to: url(of: file)) { fetch.files[id] = file } else { fetch.failed.insert(id) }
+            case .missing:
+                fetch.failed.insert(id)
+            case .unreachable:
+                // One timeout per read, not one per shortcut left.
+                fetch.failed.formUnion(ids[index...])
+                return fetch
+            }
         }
-        return fetched
+        return fetch
     }
 
     /// Only once rows point elsewhere: a row decoding a deleted path draws a placeholder.

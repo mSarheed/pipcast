@@ -107,17 +107,21 @@ struct AppleShortcutTest {
         let cachedIcons = [volume: icon]
         check(
             "only a shortcut without an icon is read outside a sweep",
-            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, sweep: false)
+            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, failed: [], sweep: false)
                 == [recipes, pdf])
         check(
-            "a sweep re-reads every icon, since a new glyph keeps the identifier",
-            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, sweep: true)
+            "a sweep re-reads every icon, a failed one too",
+            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, failed: [pdf], sweep: true)
                 == [recipes, volume, pdf])
         check(
             "nothing is read once every icon is cached",
             AppleShortcutIconFile.pending(
-                live: listed, cached: [volume: icon, pdf: pdfIcon, recipes: icon], sweep: false
+                live: listed, cached: [volume: icon, pdf: pdfIcon, recipes: icon], failed: [], sweep: false
             ).isEmpty)
+        check(
+            "a failed icon waits for the next sweep",
+            AppleShortcutIconFile.pending(live: listed, cached: cachedIcons, failed: [pdf], sweep: false)
+                == [recipes])
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) failed")
         if failures > 0 { exit(1) }

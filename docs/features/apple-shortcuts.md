@@ -1,8 +1,10 @@
 # Apple Shortcuts
 
 The shortcuts a user builds in Apple's Shortcuts app appear in the launcher as their own section,
-searchable by name and runnable with ↵, a favorite slot or a global shortcut. Pipcast lists and runs
-them and nothing else: creating, editing, permissions and the actions themselves stay with Shortcuts.
+searchable by name and runnable with ↵, a favorite slot or a global shortcut, each drawn with its own
+icon. Pipcast lists them, reads their icons and runs them, and nothing else: creating, editing, the
+shortcuts' own permissions and their actions stay with Shortcuts. Icons need an Automation grant of
+their own; see [Icons](#icons).
 
 The feature ships **off**. **Settings → Apple Shortcuts** carries the one switch, and lists the
 library only while it is on. Off is fully off: the `shortcuts` tool is never spawned, the launcher
@@ -75,21 +77,31 @@ be the uppercase spelling; Shortcuts answers a lowercase one with nothing. It is
 event rather than AppleScript, so every send can carry `kAEDoNotPromptForUserConsent`.
 
 Sending needs **Automation permission for Shortcuts Events**, granted in Privacy & Security ›
-Automation. `canRead(prompting:)` launches the helper hidden, since permission can only be determined
-against a running target, then asks `AEDeterminePermissionToAutomateTarget`. The Settings pane's read
-passes `prompting: true`, so opening the pane or turning the switch on raises the system prompt once.
-Every launcher read passes `false`: a refusal, or a prompt never answered, stops the launcher trying
-until the pane asks again. Running and listing shortcuts need no permission either way.
+Automation. `access(prompting:)` launches the helper hidden, since permission can only be determined
+against a running target, then asks `AEDeterminePermissionToAutomateTarget`. Only a denial (-1743) or
+a prompt never answered (-1744) counts as **refused**; anything else — the helper missing or not yet
+answering — is **unavailable** and simply tried again on the next read. The Settings pane queues a
+prompting sweep, so opening the pane or turning the switch on raises the system prompt once. Every
+launcher read is unprompted: once refused, the launcher stops asking until the pane asks again.
+Running and listing shortcuts need no permission either way.
+
+`AppleShortcutIconStore` owns the reads. **One runs at a time, and nothing asked meanwhile is
+dropped**: requests merge, sweep and prompt alike, and run once the current read ends. The pane's
+request is queued before the library is even read, so turning the switch on — whose own unprompted
+read is already in flight — still ends in the prompt.
 
 `AppleShortcutIconCache` keeps one 128-pixel PNG per shortcut in Caches, named
 `<uuid>-<digest>.png` from a hash of the TIFF, so a changed icon is a new path and `IconCache` never
 serves the old bitmap. Rows draw it as `.artwork` at `IconCache.appIconExtent`, the size of an app icon.
 Icons are read one shortcut at a time, so a large library never holds more than one full-size TIFF.
+A failed send ends the read, so a stalled Shortcuts Events costs one timeout, not one per shortcut.
 
 - **The first read after launch, and every read the pane makes, sweeps**: every icon is fetched again,
   since a new glyph or colour keeps the shortcut's identifier. Unchanged icons write nothing.
 - **Any other read fetches only shortcuts with no icon yet**, so an ordinary launcher open sends no
   Apple event at all. An icon edited while Pipcast runs updates on the next pane visit or launch.
+- **A shortcut whose icon couldn't be read waits for the next sweep**, so one that Shortcuts never
+  answers can't cost every launcher open an Apple event.
 - **The folder is scanned once per launch**, deleting files for shortcuts no longer listed. A replaced
   icon's file is deleted only after rows point at its successor. An empty or failed read scans nothing.
 

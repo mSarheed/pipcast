@@ -45,10 +45,10 @@ struct AppleShortcutIconFile: Hashable, Sendable {
         return (kept, fileNames.filter { !keptNames.contains($0) })
     }
 
-    /// A sweep re-reads every icon: a new glyph or colour keeps the shortcut's identifier.
+    /// A sweep re-reads every icon, a failed one too: a new glyph keeps the shortcut's identifier.
     static func pending(
-        live: [AppleShortcut], cached: [UUID: AppleShortcutIconFile], sweep: Bool
+        live: [AppleShortcut], cached: [UUID: AppleShortcutIconFile], failed: Set<UUID>, sweep: Bool
     ) -> [UUID] {
-        live.map(\.id).filter { sweep || cached[$0] == nil }
+        live.map(\.id).filter { sweep || (cached[$0] == nil && !failed.contains($0)) }
     }
 }

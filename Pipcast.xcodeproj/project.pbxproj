@@ -421,6 +421,7 @@
 		73833F1DCE2DDD028D59F597 /* ExtensionPickerList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B0657CF0A7360FCA6AECB9 /* ExtensionPickerList.swift */; };
 		743514454ABAF15802B30393 /* PaletteMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2547D9EE9EFFCF1507A11A3 /* PaletteMode.swift */; };
 		74465E61C712A703C5315216 /* RaycastImportError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9A4FD77571137538E98E47 /* RaycastImportError.swift */; };
+		7453C9F10FBFC17BE8167942 /* AppleShortcutIconStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64AAFDC8E936B6B04264248E /* AppleShortcutIconStore.swift */; };
 		7493150EC47A177C216CD580 /* CustomCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0AE7910614C78EE1C14001 /* CustomCommand.swift */; };
 		751A7D075DB8E58FB870DD66 /* ReleaseArchitecture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A63F9EF174FF79E874EB78 /* ReleaseArchitecture.swift */; };
 		756A31DDC87CD86B5DEF934C /* CameraButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40DA4C563E953C13FF98FC38 /* CameraButton.swift */; };
@@ -1266,6 +1267,7 @@
 		63CD769699E8BF2B4ECE289F /* QuickActionModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionModelPicker.swift; sourceTree = "<group>"; };
 		6425027AA8951C577F285495 /* SettingsFileKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsFileKey.swift; sourceTree = "<group>"; };
 		644645693919B3B45864850D /* ColorSwatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorSwatch.swift; sourceTree = "<group>"; };
+		64AAFDC8E936B6B04264248E /* AppleShortcutIconStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleShortcutIconStore.swift; sourceTree = "<group>"; };
 		6529B49EF78B006E813881C5 /* InProcessInjection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InProcessInjection.swift; sourceTree = "<group>"; };
 		652EB76E459240235C354FA6 /* AppleShortcutCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleShortcutCoordinator.swift; sourceTree = "<group>"; };
 		6629F62915AE3FA8D0F4F410 /* SettingsHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsHistory.swift; sourceTree = "<group>"; };
@@ -3795,6 +3797,7 @@
 			children = (
 				00682190642D55D692C86E4E /* AppleShortcutIconCache.swift */,
 				C25550AB61514310A5E0BA05 /* AppleShortcutIconProvider.swift */,
+				64AAFDC8E936B6B04264248E /* AppleShortcutIconStore.swift */,
 				3510720F129F86C7B40330E1 /* AppleShortcutRunner.swift */,
 			);
 			path = Service;
@@ -4120,6 +4123,7 @@
 				C48454CAE85E809AE6175FC3 /* AppleShortcutIconCache.swift in Sources */,
 				5A9A277A33498B6DB6C6D792 /* AppleShortcutIconFile.swift in Sources */,
 				13ABE54809637DC6AC753823 /* AppleShortcutIconProvider.swift in Sources */,
+				7453C9F10FBFC17BE8167942 /* AppleShortcutIconStore.swift in Sources */,
 				EAB3F7CE1DC7E5EB22479EDF /* AppleShortcutRunner.swift in Sources */,
 				B23E02B55FB7C55283EA02D0 /* AppleShortcutsSettingsView.swift in Sources */,
 				5971F61BB01121EE9D1600B5 /* ApplicationsSettingsView.swift in Sources */,

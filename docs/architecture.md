@@ -47,8 +47,9 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ SecureInputMonitor · RunningAppsMonitor ·                                  │
 │ CalendarStore · MeetingLauncher · MeetingClock · CameraSession ·           │
 │ SupportReminderStore · AXMenuAccess · WindowZOrder · WindowSwitchSweep ·   │
-│ AppleShortcut{Runner,IconProvider,IconCache} · SettingsFileRepository ·    │
-│ SettingsFileMonitor · WindowManagementSettingsFile · ChangelogStore        │
+│ AppleShortcut{Runner,IconProvider,IconCache,IconStore} ·                   │
+│ SettingsFileRepository · SettingsFileMonitor ·                             │
+│ WindowManagementSettingsFile · ChangelogStore                              │
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ published through
 ┌─ OBSERVABLE STATE ───────────────▼─────────────────────────────────────────┐

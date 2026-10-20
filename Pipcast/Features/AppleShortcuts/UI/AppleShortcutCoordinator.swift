@@ -21,15 +21,10 @@ final class AppleShortcutCoordinator {
     private let aliases: AliasStore
     private let paletteCoordinator: PaletteCoordinator
     private unowned let core: AppCore
-    private let iconCache = AppleShortcutIconCache()
+    private let icons = AppleShortcutIconStore()
     /// Nil until a read succeeds, so the first one after launch always sweeps.
     @ObservationIgnored private var shortcuts: [AppleShortcut]?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
-    /// Nil until this launch has scanned the icon folder.
-    @ObservationIgnored private var icons: [UUID: AppleShortcutIconFile]?
-    @ObservationIgnored private var iconTask: Task<Void, Never>?
-    /// Only the Settings pane may raise the Automation prompt, so the launcher stops at a refusal.
-    @ObservationIgnored private var iconReadRefused = false
 
     init(
         settings: AppSettings, appIndex: AppIndex, hotKeys: HotKeyManager,
@@ -45,6 +40,7 @@ final class AppleShortcutCoordinator {
         self.aliases = aliases
         self.paletteCoordinator = paletteCoordinator
         self.core = core
+        icons.onChange = { [weak self] in self?.publishEntries() }
     }
 
     func name(of id: UUID) -> String? {
@@ -56,7 +52,7 @@ final class AppleShortcutCoordinator {
     /// Off forgets the library but frees nothing: only a successful read may say what is gone.
     func applyPresence() {
         guard settings.appleShortcutsEnabled else {
-            iconTask?.cancel()
+            icons.cancel()
             shortcuts = nil
             entries = []
             appIndex.setAppleShortcuts([])
@@ -67,7 +63,9 @@ final class AppleShortcutCoordinator {
 
     /// Re-read on every launcher open; the tool answers in milliseconds, so overlaps just drop.
     func refresh(promptingForIcons prompting: Bool = false) {
-        guard settings.appleShortcutsEnabled, refreshTask == nil else { return }
+        guard settings.appleShortcutsEnabled else { return }
+        if prompting { icons.queue(.prompt) }
+        guard refreshTask == nil else { return }
         refreshTask = Task {
             let found = try? await AppleShortcutRunner.list()
             refreshTask = nil
@@ -79,7 +77,7 @@ final class AppleShortcutCoordinator {
                 publishEntries()
                 removeReferences(toShortcutsMissingFrom: found)
             }
-            refreshIcons(sweep: isFirstRead || prompting, prompting: prompting)
+            icons.read(found, AppleShortcutIconStore.Request(sweep: isFirstRead))
         }
     }
 
@@ -87,45 +85,9 @@ final class AppleShortcutCoordinator {
         entries = (shortcuts ?? []).map { shortcut in
             AppEntry(
                 shortcut, applicationURL: Self.applicationURL,
-                icon: icons?[shortcut.id].map(iconCache.url(of:)))
+                icon: icons.url(of: shortcut.id))
         }
         appIndex.setAppleShortcuts(entries)
-    }
-
-    // MARK: - Icons
-
-    /// A sweep re-reads every icon; otherwise only a shortcut with none yet costs an Apple event.
-    private func refreshIcons(sweep: Bool, prompting: Bool) {
-        guard let live = shortcuts, !live.isEmpty, iconTask == nil else { return }
-        if let icons, AppleShortcutIconFile.pending(live: live, cached: icons, sweep: sweep).isEmpty {
-            return
-        }
-        guard prompting || !iconReadRefused else { return }
-        iconTask = Task {
-            defer { iconTask = nil }
-            var scanned = icons ?? [:]
-            if icons == nil {
-                scanned = await iconCache.scan(live: live)
-                guard !Task.isCancelled else { return }
-                applyIcons(scanned)
-            }
-            let pending = AppleShortcutIconFile.pending(live: live, cached: scanned, sweep: sweep)
-            guard !pending.isEmpty else { return }
-            let canRead = await AppleShortcutIconProvider.canRead(prompting: prompting)
-            guard !Task.isCancelled else { return }
-            iconReadRefused = !canRead
-            guard canRead else { return }
-            let fetched = await iconCache.fetch(pending, cached: scanned)
-            guard !Task.isCancelled, !fetched.isEmpty else { return }
-            applyIcons((icons ?? [:]).merging(fetched) { $1 })
-            await iconCache.remove(fetched.keys.compactMap { scanned[$0] })
-        }
-    }
-
-    private func applyIcons(_ updated: [UUID: AppleShortcutIconFile]) {
-        guard updated != icons else { return }
-        icons = updated
-        publishEntries()
     }
 
     /// Frees what a deleted shortcut held, including one deleted while Pipcast wasn't running.

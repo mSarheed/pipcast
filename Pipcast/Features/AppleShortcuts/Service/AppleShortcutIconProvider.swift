@@ -3,14 +3,28 @@ import os
 
 /// Each shortcut's rendered icon, read from Shortcuts Events' public scripting dictionary.
 enum AppleShortcutIconProvider {
+    enum Access: Sendable {
+        case granted
+        /// Denied, or never asked: only the Settings pane may ask.
+        case refused
+        /// Shortcuts Events missing or not answering, which says nothing about permission.
+        case unavailable
+    }
+
+    enum Reply: Sendable {
+        case icon(Data)
+        case missing
+        /// The send itself failed, so every later send would fail the same way.
+        case unreachable
+    }
+
     private static let bundleID = "com.apple.shortcuts.events"
     private static let log = Logger(subsystem: "io.github.msarheed.pipcast", category: "AppleShortcuts")
     private static let replyTimeout: TimeInterval = 10
 
-    /// Unprompted, Automation that was never asked reads as refused, like an outright denial.
-    @concurrent static func canRead(prompting: Bool) async -> Bool {
+    @concurrent static func access(prompting: Bool) async -> Access {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-        else { return false }
+        else { return .unavailable }
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = false
         configuration.addsToRecentItems = false
@@ -19,33 +33,43 @@ enum AppleShortcutIconProvider {
             _ = try await NSWorkspace.shared.openApplication(at: url, configuration: configuration)
         } catch {
             log.error("Shortcuts Events did not launch: \(error.localizedDescription)")
-            return false
+            return .unavailable
         }
         let target = NSAppleEventDescriptor(bundleIdentifier: bundleID)
-        guard let address = target.aeDesc else { return false }
+        guard let address = target.aeDesc else { return .unavailable }
         let status = AEDeterminePermissionToAutomateTarget(
             address, AEEventClass(kAECoreSuite), AEEventID(kAEGetData), prompting)
         if status != noErr { log.info("Automation of Shortcuts Events answered \(status)") }
-        return status == noErr
+        switch Int(status) {
+        case Int(noErr): return .granted
+        case errAEEventNotPermitted, errAEEventWouldRequireUserConsent: return .refused
+        default: return .unavailable
+        }
     }
 
-    /// TIFF bytes, or nil when Shortcuts no longer knows the identifier.
-    @concurrent static func icon(of id: UUID) async -> Data? {
+    @concurrent static func icon(of id: UUID) async -> Reply {
         let event = NSAppleEventDescriptor.appleEvent(
             withEventClass: AEEventClass(kAECoreSuite), eventID: AEEventID(kAEGetData),
             targetDescriptor: NSAppleEventDescriptor(bundleIdentifier: bundleID),
             returnID: AEReturnID(kAutoGenerateReturnID),
             transactionID: AETransactionID(kAnyTransactionID))
         event.setParam(iconSpecifier(of: id), forKeyword: keyDirectObject)
-        // Consent is asked once, by `canRead`; a send never raises a prompt of its own.
+        // Consent is asked once, by `access`; a send never raises a prompt of its own.
         let options: NSAppleEventDescriptor.SendOptions = [
             .waitForReply, .init(rawValue: UInt(kAEDoNotPromptForUserConsent))
         ]
-        guard let reply = try? event.sendEvent(options: options, timeout: replyTimeout),
-            let icon = reply.paramDescriptor(forKeyword: keyDirectObject),
+        let reply: NSAppleEventDescriptor
+        do {
+            reply = try event.sendEvent(options: options, timeout: replyTimeout)
+        } catch {
+            log.error("Shortcuts Events did not answer: \(error.localizedDescription)")
+            return .unreachable
+        }
+        // Shortcuts answers an unknown identifier inside the reply, not as a failed send.
+        guard let icon = reply.paramDescriptor(forKeyword: keyDirectObject),
             icon.descriptorType == typeTIFF
-        else { return nil }
-        return icon.data
+        else { return .missing }
+        return .icon(icon.data)
     }
 
     /// `icon of shortcut id "…"`, which only answers to the identifier's uppercase spelling.

@@ -181,6 +181,9 @@ run launcher-settings-file-test \
                            Pipcast/Features/WindowManagement/Model/WindowCommand.swift \
                            Pipcast/Features/Snippets/Model/Snippet.swift
 run apple-shortcut-test    Pipcast/Features/AppleShortcuts/Model/*.swift
+run apple-shortcut-icon-test Pipcast/Features/AppleShortcuts/Model/*.swift \
+                           Pipcast/Features/AppleShortcuts/Service/AppleShortcutIcon*.swift \
+                           Pipcast/Platform/AppPaths.swift
 run calc-test              Pipcast/Features/Calculator/Model/*.swift
 run index calc-performance Pipcast/Features/Calculator/Model/*.swift
 run calendar-test          Pipcast/Features/Calendar/Model/*.swift \
