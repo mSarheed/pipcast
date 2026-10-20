@@ -864,6 +864,8 @@ Those ids already key shortcuts, aliases, favorites and ranking, so a link is as
 `SystemActionCatalog`; there is no list of linkable commands to keep. A command has a link exactly
 when a global shortcut can bind it, so Quit and the query-driven Open in Browser and Run Shell Command
 have none, and neither does anything the user made. `hotkey-test` round-trips every catalog entry.
+Raycast's own `raycast://confetti` and `raycast://extensions/raycast/raycast/confetti` also resolve,
+to Confetti, so a script written for Raycast keeps celebrating.
 
 Opening a link runs the command's `HotKeyAction` through `HotKeyManager.perform`: the same funnel,
 switches as its shortcut, which is what a tool like Leader Key stands in for. A switch that

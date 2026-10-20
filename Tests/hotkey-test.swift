@@ -412,6 +412,23 @@ struct DoubleTapDetectorTests {
             CommandDeepLink.action(for: URL(string: "pipcast://system-action/lock-screen")!)
                 == .systemAction(id: .lockScreen),
             "a system action's link resolves to its shortcut action")
+        for raycast in [
+            "raycast://confetti", "raycast://Confetti/", "com.raycast:/confetti",
+            "raycast://extensions/raycast/raycast/confetti",
+            "com.raycast:/extensions/raycast/raycast/confetti"
+        ] {
+            expect(
+                CommandDeepLink.action(for: URL(string: raycast)!) == .command(.confetti),
+                "\(raycast), Raycast's own link, fires confetti")
+        }
+        for notConfetti in [
+            "raycast://confetti/extra", "raycast://extensions/raycast/confetti",
+            "raycast://extensions/someone/raycast/confetti"
+        ] {
+            expect(
+                !CommandDeepLink.isRaycastConfetti(URL(string: notConfetti)!),
+                "\(notConfetti) is not Raycast's confetti link")
+        }
         for unrunnable in [CommandID.quit, .openInBrowser, .runShellCommand] {
             expect(
                 CommandDeepLink.url(entryID: unrunnable.rawValue, scheme: "pipcast") == nil

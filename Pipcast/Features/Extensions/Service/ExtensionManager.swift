@@ -972,6 +972,10 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         coordinator?.reopenPalette(hasRunningCommand: running != nil)
     }
 
+    func showConfetti() {
+        coordinator?.showConfetti()
+    }
+
     func popToRoot() {
         coordinator?.popExtensionToRoot()
     }

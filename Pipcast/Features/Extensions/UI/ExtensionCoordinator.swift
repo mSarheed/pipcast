@@ -275,6 +275,12 @@ final class ExtensionCoordinator {
             mode: hasRunningCommand ? .extensionCommand : .launcher, restoreAnyMode: true)
     }
 
+    /// Gated by the command's own switch, but the palette stays: the extension's view is in it.
+    func showConfetti() {
+        guard core.hotKeys.allowsAction?(.command(.confetti)) ?? true else { return }
+        core.confettiCoordinator.fire()
+    }
+
     func clearSearchBar() {
         palette.query = ""
     }

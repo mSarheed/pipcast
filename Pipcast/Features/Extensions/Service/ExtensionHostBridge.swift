@@ -17,6 +17,7 @@ protocol ExtensionHostContext: AnyObject {
     func closeMainWindow(clearRootSearch: Bool)
     /// Bring the palette back after a command hid it — what `raycast://` means to an extension.
     func reopenPalette()
+    func showConfetti()
     func popToRoot()
     func clearSearchBar()
     func openPreferences(scope: String)
@@ -548,6 +549,10 @@ final class ExtensionHostBridge: ExtensionHostAPI {
 
     /// A command URL runs it when installed; every other Raycast URL just brings the palette back.
     private func openRaycastURL(_ url: URL) {
+        if CommandDeepLink.isRaycastConfetti(url) {
+            context?.showConfetti()
+            return
+        }
         if let link = ExtensionDeepLink.parse(url: url), (try? context?.launch(link)) != nil {
             return
         }

@@ -30,6 +30,7 @@ final class ExtensionMenuBarHost: ExtensionHostContext {
     func enableInteraction() { isInteractive = true }
     func closeMainWindow(clearRootSearch: Bool) {}
     func reopenPalette() { coordinator?.reopenPalette(hasRunningCommand: false) }
+    func showConfetti() { coordinator?.showConfetti() }
     func popToRoot() {}
     func clearSearchBar() {}
     func openPreferences(scope: String) { coordinator?.showExtensionSettings(for: owner) }

@@ -13,3 +13,9 @@ corners, falling for a few seconds.
 `ConfettiPanel` owns the two `CAEmitterLayer` cannons; their speed and gravity scale with the display's
 height so the burst reaches most of the way up on any screen. `ConfettiCoordinator` stops the cannons
 after a fraction of a second and closes the sheet once the last piece has fallen.
+
+Besides its own `pipcast://command/confetti`, Raycast's `raycast://confetti` and
+`raycast://extensions/raycast/raycast/confetti` fire it, from a script or from an extension's
+`open(…)`, through `CommandDeepLink.isRaycastConfetti`. Turning Confetti off turns its links off
+too: an outside link goes through the command's shortcut funnel, and an extension's checks the same
+switch but leaves the palette, and the extension's view in it, open.

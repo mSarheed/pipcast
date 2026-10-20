@@ -630,7 +630,8 @@ as `<extension>/<command>`; three-segment command links keep running even with t
 An extension's own `open("raycast://…")` resolves through the same
 `ExtensionManager.resolve(_:)` instead of launching Raycast. It runs extension command links only:
 Pipcast's built-in command links ([launcher.md](launcher.md#deeplinks)) are for the outside, and an
-extension written for Raycast never names one.
+extension written for Raycast never names one. Raycast's own confetti links are the exception, since
+extensions do name them to celebrate: they fire [confetti](confetti.md).
 
 For view commands, nonempty `fallbackText` also prefills the search field: lists and grids filter
 locally or receive it through `onSearchTextChange` when their handler mounts. It remains available
@@ -693,8 +694,8 @@ interval floor instead of sixty.
 **`raycast://` URLs** — extensions address Raycast by scheme; the most common is a bare
 `open("raycast://")` to bring the window back after something stole focus (1Password's auth flow does
 this). `ExtensionHostBridge` keeps those inside Pipcast: `raycast://extensions/<author>/<extension>/<command>`
-runs that command when it's installed, anything else reopens the palette. Handing them to the workspace
-would launch Raycast itself.
+runs that command when it's installed, Raycast's confetti links fire [confetti](confetti.md), and
+anything else reopens the palette. Handing them to the workspace would launch Raycast itself.
 
 **`OAuth`** — `PKCEClient` builds the RFC 7636 request in JS, and `@raycast/utils`' `OAuthService`
 runs on top of it unchanged. The browser step is `ExtensionSignInSession`: providers have Raycast's
