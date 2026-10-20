@@ -1353,6 +1353,19 @@ struct ExtensionTests {
             search.searchTextRendered("", hasSearchHandler: true, query: "") == nil
                 && search.searchTextRendered("foo", hasSearchHandler: true, query: "") == "foo")
 
+        // The user types before SwiftUI reports the applied value, then another value renders.
+        search = ExtensionSearchState()
+        _ = search.searchTextRendered("", hasSearchHandler: true, query: "")
+        _ = search.searchTextRendered("X", hasSearchHandler: true, query: "")
+        check(
+            "a value cannot overwrite a keystroke not yet recorded",
+            search.searchTextRendered("Y", hasSearchHandler: true, query: "Z") == nil)
+        search.queryChanged(to: "Z")
+        check("that keystroke is then sent", search.forwardsSearchText("Z"))
+        check(
+            "and its reply settles the field",
+            search.searchTextRendered("Z", hasSearchHandler: true, query: "Z") == nil)
+
         // A throttled burst repeating its last text, then a value set before the timer fires.
         search = ExtensionSearchState()
         _ = search.searchTextRendered("", hasSearchHandler: true, query: "")

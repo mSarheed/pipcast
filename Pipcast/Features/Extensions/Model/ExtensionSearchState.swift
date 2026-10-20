@@ -90,6 +90,8 @@ struct ExtensionSearchState: Sendable {
     mutating func searchTextRendered(
         _ text: String?, hasSearchHandler: Bool, query: String
     ) -> String? {
+        // A keystroke landed before the last apply was recorded; it is sent first, then compared.
+        guard unrecorded == nil || unrecorded == query else { return nil }
         let mounts = hasSearchHandler && !self.hasSearchHandler && !query.isEmpty
         self.hasSearchHandler = hasSearchHandler
         // The field folds line breaks, so a clipboard's trailing newline must compare as settled.
