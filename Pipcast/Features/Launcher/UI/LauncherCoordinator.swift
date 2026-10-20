@@ -285,6 +285,34 @@ final class LauncherCoordinator {
         paletteCoordinator.hidePalette(restoreFocus: false)
     }
 
+    // MARK: - Recent searches
+
+    /// Called as root search runs a row, while the field still holds what was typed.
+    func rememberSearch(_ query: String) {
+        guard core.settings.launcherRemembersSearches else { return }
+        core.palette.queryHistory.record(query)
+    }
+
+    /// ↑ at the top of root search; true when an older search replaced the query.
+    func recallOlderSearch() -> Bool {
+        let palette = core.palette
+        guard core.settings.launcherRemembersSearches,
+            let text = palette.queryHistory.recallOlder(from: palette.query)
+        else { return false }
+        palette.rewriteQuery(text)
+        return true
+    }
+
+    func clearSearchHistory() {
+        core.palette.queryHistory.clear()
+    }
+
+    /// Switching recall off forgets what it kept, whether the pane or settings.json switched it.
+    func applySearchHistory() {
+        guard !core.settings.launcherRemembersSearches else { return }
+        clearSearchHistory()
+    }
+
     // MARK: - Row actions
 
     /// What Copy Deeplink copies; nil for an entry no link can run.

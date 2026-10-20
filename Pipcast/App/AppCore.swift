@@ -716,6 +716,9 @@ final class AppCore {
             { _ = $0.automaticallyCheckForUpdates },
             reproject: { $0.updateCoordinator.applyAutomaticChecking() })
         track(
+            { _ = $0.launcherRemembersSearches },
+            reproject: { $0.launcherCoordinator.applySearchHistory() })
+        track(
             {
                 _ = $0.windowManagementEnabled
                 _ = $0.windowManagementShowInLauncher

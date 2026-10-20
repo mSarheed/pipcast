@@ -16,6 +16,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │                                                                            │
 │ SearchRelevance · LauncherMatch · EntryNaming · ScriptRomanization ·       │
 │ LauncherOrder · LauncherSuggestions · LauncherRankingStore · SearchScopes · │
+│ LauncherQueryHistory ·                                                     │
 │ FileSearch{Query,Result,Scope} ·                                           │
 │ Calculator/* · EmojiCatalog · EmojiGridGeometry · SystemAction ·            │
 │ VolumeLevel ·                                                              │

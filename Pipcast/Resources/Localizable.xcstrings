@@ -67761,6 +67761,58 @@
         }
       }
     },
+    "Kept in memory only, and forgotten when Pipcast quits." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur im Arbeitsspeicher gehalten und beim Beenden von Pipcast vergessen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo se guardan en memoria y se olvidan al salir de Pipcast."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conservées uniquement en mémoire et oubliées à la fermeture de Pipcast."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモリ上にのみ保持され、Pipcast を終了すると消去されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메모리에만 보관되며 Pipcast를 종료하면 지워집니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantidas apenas na memória e esquecidas quando o Pipcast é encerrado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хранятся только в памяти и забываются при выходе из Pipcast."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅保存在内存中，退出 Pipcast 后即被清除。"
+          }
+        }
+      }
+    },
     "Key missing" : {
       "localizations" : {
         "de" : {
@@ -94245,6 +94297,58 @@
         }
       }
     },
+    "Press ↑ in the empty search field to bring back what you last ran." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücke ↑ im leeren Suchfeld, um zurückzuholen, was du zuletzt ausgeführt hast."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsa ↑ en el campo de búsqueda vacío para recuperar lo último que ejecutaste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur ↑ dans le champ de recherche vide pour retrouver ce que vous avez lancé en dernier."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空の検索フィールドで ↑ を押すと、最後に実行した検索が戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빈 검색 필드에서 ↑를 누르면 마지막으로 실행한 검색을 다시 불러옵니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressione ↑ no campo de pesquisa vazio para recuperar o que você executou por último."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите ↑ в пустом поле поиска, чтобы вернуть последний выполненный запрос."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在空白搜索栏中按 ↑，即可调出上次运行的内容。"
+          }
+        }
+      }
+    },
     "Pressure" : {
       "localizations" : {
         "de" : {
@@ -97908,6 +98012,58 @@
         }
       }
     },
+    "Recall recent searches" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Suchen abrufen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperar búsquedas recientes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappeler les recherches récentes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近の検索を呼び出す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최근 검색 불러오기"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperar pesquisas recentes"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вызывать недавние запросы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调出最近的搜索"
+          }
+        }
+      }
+    },
     "Recent" : {
       "comment" : "File Search section header: recently used files",
       "localizations" : {
@@ -98009,6 +98165,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近的对话"
+          }
+        }
+      }
+    },
+    "Recent searches" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Suchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Búsquedas recientes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherches récentes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近の検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최근 검색"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesquisas recentes"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недавние запросы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近的搜索"
           }
         }
       }

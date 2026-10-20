@@ -25,6 +25,7 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
     case calcNumberStyle = "calculator.numberStyle"
     case activateAliasesWithSpace = "search.activateAliasesWithSpace"
     case launcherShowsSuggestions = "search.showsSuggestions"
+    case launcherRemembersSearches = "search.remembersRecentSearches"
     case rootSearchSensitivity = "search.sensitivity"
     case applicationsEnabled = "applications.enabled"
     case searchScopes = "applications.searchScopes"

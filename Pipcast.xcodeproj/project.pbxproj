@@ -701,6 +701,7 @@
 		CBD40F1EA99A522B5665631F /* RoomPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81439B51CEE2EA2235A9861D /* RoomPreviewView.swift */; };
 		CC04CD33E8AB8152FBC5440A /* NotesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABABB4872D3B6500796A0C99 /* NotesSettingsView.swift */; };
 		CC5EC8BFB350F58BD7B0E61B /* AIStreamDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AEC616A7369FEFDD7445DF /* AIStreamDecoder.swift */; };
+		CC7276568A39B84B5850EB80 /* LauncherQueryHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4AFD0C03F6028A6F7A12D62 /* LauncherQueryHistory.swift */; };
 		CC83083DA9577257AFEF7452 /* CustomWindowSizesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29106E25D0EAB9CD2223F093 /* CustomWindowSizesSection.swift */; };
 		CCC974548CB8DF1093B404DB /* AIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A784A8650DE6BF7EC7D3FF4 /* AIRequest.swift */; };
 		CCDD23DA9677FE2C38E4938D /* QuicklinkLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CDFCCC7FCAAD81FEE03908 /* QuicklinkLauncher.swift */; };
@@ -1688,6 +1689,7 @@
 		E4228D36C6F8BCA302EEA28E /* MCPCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPCoordinator.swift; sourceTree = "<group>"; };
 		E43327A2E3696BEA0073749C /* NoteLayoutFragmentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteLayoutFragmentProvider.swift; sourceTree = "<group>"; };
 		E4A698F6F8EBB0C96356F582 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
+		E4AFD0C03F6028A6F7A12D62 /* LauncherQueryHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherQueryHistory.swift; sourceTree = "<group>"; };
 		E5085D8566DF844F55B416D9 /* CustomWindowSizeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWindowSizeStore.swift; sourceTree = "<group>"; };
 		E6224CCDC75180EAEE26D802 /* HyperKeyDiagnosticsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HyperKeyDiagnosticsSection.swift; sourceTree = "<group>"; };
 		E67C77D07F506BFF05470EE5 /* SettingsDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsDetailView.swift; sourceTree = "<group>"; };
@@ -2170,6 +2172,7 @@
 				BC8EA20850A02F9ACC507776 /* LauncherFileFormat.swift */,
 				FB854C1209800628DC04F3B9 /* LauncherMatch.swift */,
 				7DDF83C96FCDB2EF0F1DB8D9 /* LauncherOrder.swift */,
+				E4AFD0C03F6028A6F7A12D62 /* LauncherQueryHistory.swift */,
 				D33F1DB24030639994F68FB4 /* LauncherRankingStore.swift */,
 				0624D8741A2EC6335E119291 /* LauncherSuggestions.swift */,
 				5FFE88A5057CEBB35F6596B2 /* NumberSlots.swift */,
@@ -4488,6 +4491,7 @@
 				68B713A2AAB9B40C03A9DEC4 /* LauncherList.swift in Sources */,
 				9D8C057C7C34147689E791FE /* LauncherMatch.swift in Sources */,
 				B8AEA9F9FF2F2FBFF8BF7E76 /* LauncherOrder.swift in Sources */,
+				CC7276568A39B84B5850EB80 /* LauncherQueryHistory.swift in Sources */,
 				F719B5FF2D7C98B72CF9D243 /* LauncherRankingStore.swift in Sources */,
 				79611CB0024933973076884F /* LauncherScreen.swift in Sources */,
 				28D243ECE4C7A14EA480B2E5 /* LauncherSettingsFile.swift in Sources */,

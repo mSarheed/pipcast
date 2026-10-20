@@ -633,6 +633,10 @@ query with the caret after it, so the next step chains on. Only a `canChain` ans
 `CalcEngine` clears the flag on every `CalcDateTime` and `CalcTimeZone` answer, because a clock
 typed back reads as local time, and `CalcQuantity` clears it on a boolean.
 
+Running a card from root search also records its expression in the launcher's
+[recent searches](launcher.md#recent-searches), so ↑ in the empty field brings it back to edit and
+recalculate. The expression is kept, not the answer, which the card works out again.
+
 ## Number format
 
 General ▸ Calculator ▸ Number format is `System` by default, reading the decimal and grouping

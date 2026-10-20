@@ -46,6 +46,8 @@ final class PaletteState {
     var forceExpanded = false
     /// The paste target, mirrored on every show; `prepare` resets the screen, not this.
     var pasteTarget: PasteTarget?
+    /// Kept across every screen and summon, in memory only, so quitting is what forgets it.
+    var queryHistory = LauncherQueryHistory()
     /// Values typed into a row's inline argument fields, keyed by `argumentKey`.
     var commandArguments: [String: String] = [:]
     /// Set when the palette opens to fill one row's fields; the header focuses the first empty one.

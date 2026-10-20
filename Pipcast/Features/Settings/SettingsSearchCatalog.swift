@@ -188,6 +188,12 @@ enum SettingsSearchCatalog {
             .generalSearch, "Show suggestions",
             keywords: ["frequent", "recent", "recommended", "empty", "root search"]),
         .init(
+            .generalSearch, "Recall recent searches",
+            keywords: ["history", "up arrow", "previous", "query", "calculator", "root search"]),
+        .init(
+            .generalSearch, "Recent searches",
+            keywords: ["history", "clear", "forget", "privacy", "memory"]),
+        .init(
             .generalSearch, "Search sensitivity",
             keywords: ["fuzzy", "strict", "loose", "matching", "typo", "root search"]),
         .init(

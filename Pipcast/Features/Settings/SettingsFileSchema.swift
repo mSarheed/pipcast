@@ -53,6 +53,7 @@ enum SettingsFileSchema {
         case .calcNumberStyle: return bind(settings, \.calcNumberStyle)
         case .activateAliasesWithSpace: return bind(settings, \.activateAliasesWithSpace)
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
+        case .launcherRemembersSearches: return bind(settings, \.launcherRemembersSearches)
         case .rootSearchSensitivity: return bind(settings, \.rootSearchSensitivity)
         case .applicationsEnabled: return launcher.kindBinding(for: key, kind: .application)
         case .searchScopes: return bind(settings, \.searchScopes) { SearchScopes.normalize($0) }

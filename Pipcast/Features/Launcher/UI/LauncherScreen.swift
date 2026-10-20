@@ -290,6 +290,9 @@ struct LauncherScreen: PaletteScreen {
     }
 
     func activate(at selection: Int) {
+        if hasPrimaryAction(at: selection), row(at: selection) != nil {
+            core.launcherCoordinator.rememberSearch(vm.query)
+        }
         switch row(at: selection) {
         // Error cards no-op — copyCalculatorResult only acts on value payloads.
         case .calc(let result): core.calculatorCoordinator.copyCalculatorResult(result)
@@ -323,13 +326,18 @@ struct LauncherScreen: PaletteScreen {
             return MeetingActionsMenu.secondary(meeting: meeting, core: core)
         }
         if case .calc(let result) = row(at: selection) {
-            return core.calculatorCoordinator.putAnswerInSearchBar(result)
+            let query = vm.query
+            guard core.calculatorCoordinator.putAnswerInSearchBar(result) else { return false }
+            core.launcherCoordinator.rememberSearch(query)
+            return true
         }
         if let file = file(at: selection) {
+            core.launcherCoordinator.rememberSearch(vm.query)
             core.fileSearchCoordinator.showInFinder(file)
             return true
         }
         guard let app = entry(at: selection), app.canRevealInFinder else { return false }
+        core.launcherCoordinator.rememberSearch(vm.query)
         core.launcherCoordinator.showInFinder(app)
         return true
     }
@@ -383,6 +391,7 @@ struct LauncherScreen: PaletteScreen {
 
     private func copyCalculation(at selection: Int) -> Bool {
         guard case .calc(let result) = row(at: selection), result.isActionable else { return false }
+        core.launcherCoordinator.rememberSearch(vm.query)
         core.calculatorCoordinator.copyCalculationWithExpression(result)
         return true
     }
@@ -548,6 +557,7 @@ struct LauncherScreen: PaletteScreen {
                 openActions()
             },
             onActivate: {
+                core.launcherCoordinator.rememberSearch(vm.query)
                 core.launcherCoordinator.launch(
                     $0, searchQuery: vm.query, arguments: argumentValues(for: $0))
             },

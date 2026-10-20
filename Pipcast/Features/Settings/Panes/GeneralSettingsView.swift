@@ -124,6 +124,20 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalSearch, "Show suggestions")
                     Text("Shows your most-used items when the search field is empty.")
                 }
+                Toggle(isOn: $settings.launcherRemembersSearches) {
+                    SettingsRowTitle(.generalSearch, "Recall recent searches")
+                    Text("Press ↑ in the empty search field to bring back what you last ran.")
+                }
+                LabeledContent {
+                    Button("Clear History", role: .destructive) {
+                        core.launcherCoordinator.clearSearchHistory()
+                    }
+                    .disabled(core.palette.queryHistory.entries.isEmpty)
+                } label: {
+                    SettingsRowTitle(.generalSearch, "Recent searches")
+                    Text("Kept in memory only, and forgotten when Pipcast quits.")
+                }
+                .settingsEnabled(settings.launcherRemembersSearches)
                 Picker(selection: $settings.rootSearchSensitivity) {
                     ForEach(SearchSensitivity.allCases) { sensitivity in
                         Text(sensitivity.title).tag(sensitivity)

@@ -126,6 +126,13 @@ final class AppSettings {
         }
     }
 
+    /// Whether ↑ can recall recent root searches; the searches themselves never leave memory.
+    var launcherRemembersSearches: Bool {
+        didSet {
+            defaults.set(launcherRemembersSearches, forKey: Key.launcherRemembersSearches.rawValue)
+        }
+    }
+
     /// How loose a fuzzy root-search hit may be and still show.
     var rootSearchSensitivity: SearchSensitivity {
         didSet {
@@ -766,6 +773,9 @@ final class AppSettings {
         launcherShowsSuggestions =
             defaults.object(forKey: Key.launcherShowsSuggestions.rawValue) == nil
             || defaults.bool(forKey: Key.launcherShowsSuggestions.rawValue)
+        launcherRemembersSearches =
+            defaults.object(forKey: Key.launcherRemembersSearches.rawValue) == nil
+            || defaults.bool(forKey: Key.launcherRemembersSearches.rawValue)
         rootSearchSensitivity =
             defaults.string(forKey: Key.rootSearchSensitivity.rawValue)
             .flatMap(SearchSensitivity.init) ?? .default

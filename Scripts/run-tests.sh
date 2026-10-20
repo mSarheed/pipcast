@@ -140,6 +140,7 @@ run app-name-test          Pipcast/Platform/AppDisplayName.swift \
                            Pipcast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
 run favorites-test         $L/NumberSlots.swift
+run query-history-test     $L/LauncherQueryHistory.swift
 run app-installation-test  $L/SearchRelevance.swift $L/ScriptRomanization.swift \
                            $L/LauncherMatch.swift $L/EntryNaming.swift $L/LauncherOrder.swift \
                            $L/LauncherRankingStore.swift $L/LauncherSuggestions.swift $L/SearchScopes.swift \
@@ -197,6 +198,7 @@ run clipboard-coordinator-test Pipcast/Features/Clipboard/UI/ClipboardCoordinato
                            Pipcast/Platform/Images/ImageDerivative.swift \
                            Pipcast/Palette/PaletteState.swift Pipcast/Palette/PaletteMode.swift \
                            Pipcast/Palette/HoverArming.swift \
+                           Pipcast/Features/Launcher/Model/LauncherQueryHistory.swift \
                            Pipcast/Features/Emoji/Model/EmojiCatalog.swift \
                            Pipcast/Features/FileSearch/Model/FileSearchFilter.swift \
                            Pipcast/Features/Quicklinks/Model/Quicklink.swift \
@@ -306,6 +308,7 @@ run palette-escape-test    Pipcast/Palette/PaletteMode.swift \
 run palette-navigation-test Pipcast/Palette/PaletteState.swift \
                            Pipcast/Palette/PaletteMode.swift \
                            Pipcast/Palette/HoverArming.swift \
+                           Pipcast/Features/Launcher/Model/LauncherQueryHistory.swift \
                            Pipcast/Features/Emoji/Model/EmojiCatalog.swift \
                            Pipcast/Features/Clipboard/Model/ClipboardStore.swift \
                            Pipcast/Platform/Images/ImageDerivative.swift \

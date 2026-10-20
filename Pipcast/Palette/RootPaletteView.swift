@@ -589,6 +589,7 @@ struct RootPaletteView: View {
             .onKeyPress(keys: [.upArrow], phases: [.down, .repeat]) { press in
                 if let reorder = movePinnedOrFavorite(-1, modifiers: press.modifiers) { return reorder }
                 if vm.isControlListOpen { return .ignored }
+                if recallOlderSearch(modifiers: press.modifiers) { return .handled }
                 if isCollapsed { return .ignored }
                 if menuOpen {
                     moveMenu(-1)
@@ -1405,6 +1406,15 @@ struct RootPaletteView: View {
         vm.selection = next
         scroll = ScrollIntent(kind: .follow)
         return .handled
+    }
+
+    /// Only where ↑ would otherwise stop: the compact bar, or root search's top row.
+    private func recallOlderSearch(modifiers: SwiftUI.EventModifiers) -> Bool {
+        guard modifiers.isDisjoint(with: [.command, .option, .control, .shift]),
+            vm.mode == .launcher, !menuOpen, !vm.isComposing, searchFocused, argumentFocused == nil,
+            isCollapsed || selection(in: screen) == 0
+        else { return false }
+        return core.launcherCoordinator.recallOlderSearch()
     }
 
     /// ←/→: consumed only by a horizontally navigating screen, else the caret keeps them.
