@@ -124,7 +124,9 @@ final class ConfettiPanel: NSPanel {
         gravity.isRemovedOnCompletion = false
         for cell in cells {
             guard let name = cell.name else { continue }
-            emitter.add(gravity, forKey: "emitterCells.\(name).yAcceleration")
+            let keyPath = "emitterCells.\(name).yAcceleration"
+            gravity.keyPath = keyPath
+            emitter.add(gravity, forKey: keyPath)
         }
         return emitter
     }
