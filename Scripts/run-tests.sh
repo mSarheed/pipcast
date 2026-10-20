@@ -628,6 +628,14 @@ run hyper-key-test         Pipcast/Features/HotKeys/Model/HIDKeyMapping.swift \
                            Pipcast/Features/HotKeys/Model/HyperKeyConflictPolicy.swift \
                            Pipcast/Features/HotKeys/Service/KeyboardRemapper.swift \
                            Tests/hyper-key-fixtures.swift
+run hyper-key-tap-test     Pipcast/Features/HotKeys/Service/HyperKeyTap.swift \
+                           Pipcast/Features/HotKeys/Model/HyperKey.swift \
+                           Pipcast/Features/HotKeys/Model/HIDKeyMapping.swift \
+                           Pipcast/Features/HotKeys/Model/ModifierKey.swift \
+                           Pipcast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                           Pipcast/Features/HotKeys/Model/HotKeyBinding.swift \
+                           Pipcast/Features/HotKeys/Service/KeyShortcut.swift \
+                           Pipcast/Platform/ASCIIKeyboardLayout.swift
 run window-deeplink-test   Pipcast/Features/WindowManagement/Service/WindowTarget.swift \
                            Pipcast/Features/WindowManagement/UI/WindowCommandCoordinator.swift
 run hotkey-dispatch-test   Pipcast/Features/HotKeys/Model/DoubleTapModifier.swift \

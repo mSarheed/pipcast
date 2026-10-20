@@ -111,7 +111,7 @@ final class HyperKeyManager: HealthCheckable {
     }
 
     private func setRoute(_ route: HyperKeyRoute?) {
-        tap.route = route
+        tap.setRoute(route, includesShift: settings.hyperKeyIncludesShift)
         hotKeys.capture.hyperRoute = route
     }
 

@@ -190,6 +190,14 @@ into the ⌃⌥(⇧)⌘ chord system-wide. It owns the lifecycle and the policy;
 key at all. The rewritten flags flow onward into Carbon matching, so existing combo hotkeys fire from
 Hyper+key with no extra registration.
 
+Every keystroke in the session waits for that tap's answer, so **the tap is serviced on its own
+thread, never the main run loop**. On main, any stall there would freeze typing system-wide, and
+re-enabling after the system's timeout would re-arm the freeze on the next key. `HyperKeyTap` still
+creates the tap on main, so a refused install reports at once, then hands it to a worker thread; the
+route, Include Shift and the hold being tracked live behind that worker's lock. Teardown disables
+the tap immediately and the worker invalidates it as it exits, and a timeout notice arriving after
+teardown cannot re-enable it.
+
 Which key is chosen persists as a `HyperKeyPhysicalKey` raw value under `hyperKeyPhysicalKey` —
 renaming a case is a migration, and a removed case decodes to `.none`. **F-keys are deliberately not
 candidates:** the top-row media functions fire *below* the tap, and catching them earlier takes a
@@ -253,8 +261,9 @@ A hold dropped mid-press — by a Secure Input transition, a tap timeout or a pa
 rest of that press and can never invert the key. Toggling instead would let one dropped hold read
 every later release as a press, leaving the chord on every keystroke; querying `CGEventSource` key
 state **races the release**. Nothing toggles: Caps Lock is a press only once remapped, never as its
-raw latch. Work that posts events or touches IOKit is deferred to the next runloop turn rather than
-run inside the tap callback, where it would risk re-entrancy.
+raw latch. Work that posts events or touches IOKit — Quick Press and the Caps Lock repair — is
+queued onto the main actor rather than run inside the tap callback, where it would risk re-entrancy
+and make the callback wait on main. A tap torn down in the meantime drops it.
 
 The flags OR'd into every rewritten event are the generic ⌃⌥(⇧)⌘ masks **plus the left-side device
 bits** (`NX_DEVICE…KEYMASK`, from `IOLLEvent.h`). Some consumers distinguish sides, and generic-only
