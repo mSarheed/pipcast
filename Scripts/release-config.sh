@@ -13,6 +13,4 @@ case "$CHANNEL" in
     stable) ;;
     *) exit 1 ;;
 esac
-DEVELOPER_DIR="$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -n1)/Contents/Developer"
-test -d "$DEVELOPER_DIR"
-export DEVELOPER_DIR
+source Scripts/select-xcode.sh

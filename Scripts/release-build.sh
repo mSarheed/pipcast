@@ -7,7 +7,7 @@ case "${ARCHITECTURE:-}" in
 esac
 brew install xcodegen
 xcodegen generate
-xcodebuild -project Pipcast.xcodeproj -scheme Pipcast -configuration Release \
+xcodebuild -quiet -project Pipcast.xcodeproj -scheme Pipcast -configuration Release \
     -destination 'generic/platform=macOS' \
     -derivedDataPath "$RUNNER_TEMP/DerivedData" ARCHS="$ARCHITECTURE" ONLY_ACTIVE_ARCH=NO \
     CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM="$APPLE_TEAM_ID" PRODUCT_NAME="$DISPLAY_NAME" \

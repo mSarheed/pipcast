@@ -8,6 +8,8 @@ Only run this after signing and Homebrew credentials are configured.
 The first job writes the changelog, commits it to the dispatching branch, and every later job builds
 that commit. It stops before building when nothing has been merged since the previous release of
 the channel.
+CI reruns on that commit beside the build, and nothing is signed until it passes: the commit is
+new, and the push that creates it triggers no workflow of its own.
 
 The workflow compiles arm64 and x86_64 once each in parallel, then combines their main and helper
 executables into the universal app. Separate packaging jobs reuse the arm64 build, sign both apps

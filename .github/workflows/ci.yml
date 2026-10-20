@@ -1,25 +1,41 @@
 name: CI
 on:
   pull_request:
-    paths-ignore: ["**/*.md", "docs/**"]
+    # CHANGELOG.md ships in the app and changelog-test reads it, so it is code.
+    paths: ["**", "!**/*.md", "CHANGELOG.md", "!docs/**"]
   push:
     branches: [main]
-    paths-ignore: ["**/*.md", "docs/**"]
+    paths: ["**", "!**/*.md", "CHANGELOG.md", "!docs/**"]
+  # Release verifies the exact commit it signs, which nothing else has tested.
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  # `github` is the caller's context under workflow_call, so a release never queues behind main.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
-  check:
+  test:
+    name: Lint and harnesses
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - name: Select Xcode
+        run: |
+          source Scripts/select-xcode.sh
+          echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          xcodebuild -version
       - name: Install SwiftLint
         run: brew install swiftlint
-      - name: Harnesses
-        run: ./Scripts/run-tests.sh
+      # The fast checks lead, so a lint or translation slip fails in a minute, not after the suite.
       - name: Lint
         run: ./Scripts/lint.sh
       - name: Pure-layer purity
@@ -28,7 +44,35 @@ jobs:
             echo "::error::Features/*/Model/ may not import AppKit, SwiftUI or Cocoa"
             exit 1
           fi
-      - name: Debug build
+      - name: Release scripts
         run: |
-          xcodebuild build -project Pipcast.xcodeproj -scheme Pipcast -configuration Debug \
-            -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO
+          python3 Scripts/test-release-notes.py
+          python3 Scripts/test-release-merge.py
+      - name: Harnesses
+        run: ./Scripts/run-tests.sh
+  build:
+    name: ${{ matrix.configuration }} build
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # Release's -O WMO type-checks differently: #16 failed only there, and only at release time.
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - name: Select Xcode
+        run: |
+          source Scripts/select-xcode.sh
+          echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          xcodebuild -version
+      - name: Build
+        run: |
+          xcodebuild build -quiet -project Pipcast.xcodeproj -scheme Pipcast \
+            -configuration "$CONFIGURATION" -destination 'generic/platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}

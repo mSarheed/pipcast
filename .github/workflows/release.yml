@@ -78,8 +78,14 @@ jobs:
           path: build/release-artifacts/${{ matrix.architecture }}.tar
           if-no-files-found: error
           retention-days: 7
+  # Runs beside the build: nothing is signed or published from a commit CI has not passed.
+  verify:
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
   package:
-    needs: [prepare, build]
+    needs: [prepare, build, verify]
     runs-on: macos-26
     timeout-minutes: 90
     strategy:

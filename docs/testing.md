@@ -15,9 +15,10 @@ The mechanical bar, in one place so it cannot drift. All five pass before a chan
 | A clean build | `xcodebuild … -configuration Debug CODE_SIGNING_ALLOWED=NO`, zero **new** warnings |
 | Docs still true | any doc your change made wrong, fixed in the same commit |
 
-CI (`.github/workflows/ci.yml`) runs the first four on every code change, PR or push to `main`; run
-them locally first anyway. CodeRabbit reviews each PR on top. Each is expanded below; the manual
-sweep at the end of this file is the sixth, judged by what you touched.
+CI (`.github/workflows/ci.yml`) runs the first four on every code change, PR or push to `main`,
+building both Debug and Release, and the Release workflow reruns it on the commit it is about to
+sign. Run them locally first anyway. CodeRabbit reviews each PR on top. Each is expanded below;
+the manual sweep at the end of this file is the sixth, judged by what you touched.
 
 ## The harnesses
 
@@ -250,14 +251,14 @@ python3 Scripts/test-release-merge.py
 python3 Scripts/test-release-notes.py
 ```
 
-This compiles small real arm64 and x86_64 executables, combines the app and all helpers, checks
-bundle metadata rejection, and verifies signatures, executable permissions and symlinks through
-the tar handoff. The second checks how commits become changelog lines and the next version. It uses ad-hoc signatures; Developer ID signing and Apple notarization are checked
+CI runs both. The first compiles small real arm64 and x86_64 executables, combines the app and
+all helpers, checks bundle metadata rejection, and verifies signatures, executable permissions and
+symlinks through the tar handoff. The second checks how commits become changelog lines and the next version. It uses ad-hoc signatures; Developer ID signing and Apple notarization are checked
 by the release workflow with its configured credentials.
 
 ## Build and size checks
 
-A clean build is part of the bar. CI builds Debug only, so the Release build is on you.
+A clean build is part of the bar. CI builds both configurations unsigned; build them locally first.
 
 ```sh
 xcodegen generate                 # only after editing project.yml
