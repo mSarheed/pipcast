@@ -35,6 +35,8 @@ struct RootPaletteView: View {
     /// Sampled once by `openActions`, so the running-only rows can't appear while the menu is up.
     @State private var selectionIsRunning = false
     @State private var menuSelection = 0
+    /// True while the held ↑ began by recalling; a hold that began in the list never recalls.
+    @State private var upHoldRecalls = false
     /// The argument field whose choices are up, so `menuContent` can rebuild the same menu.
     @State private var argumentOptionsField: String?
     @State private var inputOptions: PopoverMenuContent?
@@ -589,7 +591,8 @@ struct RootPaletteView: View {
             .onKeyPress(keys: [.upArrow], phases: [.down, .repeat]) { press in
                 if let reorder = movePinnedOrFavorite(-1, modifiers: press.modifiers) { return reorder }
                 if vm.isControlListOpen { return .ignored }
-                if recallOlderSearch(press) { return .handled }
+                upHoldRecalls = (press.phase == .down || upHoldRecalls) && recallOlderSearch(press)
+                if upHoldRecalls { return .handled }
                 if isCollapsed { return .ignored }
                 if menuOpen {
                     moveMenu(-1)

@@ -536,8 +536,9 @@ the field is empty again. ↓ keeps moving the selection, and Escape clears the 
 - **Where ↑ recalls**: in root search with no menu open, no IME composition, no argument field
   focused and no modifier held, on the compact bar or with the top row selected. The query must be
   empty or still exactly the entry ↑ last put there. Anywhere else ↑ does what it always did.
-- **A held key never starts a walk.** Only a fresh press recalls from an empty field; key repeat
-  may only continue a walk already under way, so holding ↑ up the list stops at its top.
+- **A held key never starts a walk.** Only a fresh press recalls; key repeat continues only a
+  walk that same hold began by recalling, so holding ↑ up the list stops at its top even when the
+  field still holds a recalled search.
 
 The history lives on `PaletteState` for the app's lifetime and is never persisted, so quitting
 Pipcast forgets it. Settings › General › Search › **Recall recent searches**

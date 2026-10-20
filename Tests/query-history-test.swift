@@ -129,7 +129,7 @@ struct QueryHistoryTests {
         expect(held.recallOlder(from: ""), "notes", "a fresh press starts the walk")
         expect(
             held.recallOlder(from: "notes", startingWalk: false), "safari",
-            "and holding the key continues it")
+            "a hold that began by recalling continues it")
 
         let peek = history(["safari", "notes"])
         expect(peek.canRecallOlder(from: ""), true, "asking sees the newest")
