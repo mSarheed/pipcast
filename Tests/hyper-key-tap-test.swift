@@ -295,7 +295,7 @@ struct HyperKeyTapTests {
         _ = deliver(1, f18Down)
         expect(deliver(1, letter)?.flags == hyperFlags, "a reinstall starts from the current route")
         let gate = Gate()
-        let late = Mutex<Outcome?>(nil)
+        let late = Mutex<[Outcome?]>([])
         let completed = DispatchSemaphore(value: 0)
         let enablesBeforeClose = record(1).enables
         let readsBeforeClose = settings.quickPressReads
@@ -304,9 +304,9 @@ struct HyperKeyTapTests {
             _ = gate.resume.wait(timeout: .now() + 5)
             _ = invoke(record, KeyEvent(type: .tapDisabledByTimeout))
             _ = invoke(record, KeyEvent(type: .tapDisabledByUserInput))
-            let outcome = invoke(record, letter)
+            let outcomes = [invoke(record, letter), invoke(record, f18Down), invoke(record, letter)]
             _ = invoke(record, f18Up)
-            late.withLock { $0 = outcome }
+            late.withLock { $0 = outcomes }
             completed.signal()
         }
         expectSignal(gate.entered, "the late events are pending")
@@ -314,7 +314,13 @@ struct HyperKeyTapTests {
         gate.resume.signal()
         expectSignal(completed, "the late events complete")
         expect(record(1).enables == enablesBeforeClose, "late notifications cannot revive a closed tap")
-        expect(late.withLock { $0?.flags } == 0, "a closing tap stops rewriting")
+        let outcomes = late.withLock { $0 }
+        expect(outcomes.count == 3 && outcomes[0]?.flags == 0, "a closing tap stops rewriting")
+        let lateHyper = outcomes.count == 3 ? outcomes[1] : nil
+        expect(
+            lateHyper?.type == .keyDown && lateHyper?.keyCode == kVK_F18 && lateHyper?.flags == 0,
+            "a Hyper press queued behind teardown passes raw instead of starting a hold")
+        expect(outcomes.count == 3 && outcomes[2]?.flags == 0, "typing after it stays plain")
         await waitFor("the stopped worker exits", { isClosed(1) })
         try? await Task.sleep(for: .milliseconds(20))
         expect(settings.quickPressReads == readsBeforeClose, "a closed tap fires no quick press")
