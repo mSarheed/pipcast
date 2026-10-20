@@ -233,8 +233,10 @@ final class HyperKeyTap {
 
         var isActive: Bool { state.withLock { $0.isActive } }
 
+        /// Asked outside the lock, so the health tick never makes a keystroke wait on WindowServer.
         var isEnabled: Bool? {
-            state.withLock { $0.installation.map { CGEvent.tapIsEnabled(tap: $0.port) } }
+            let installation = state.withLock { $0.installation }
+            return installation.map { CGEvent.tapIsEnabled(tap: $0.port) }
         }
 
         var runLoopSourceIsValid: Bool? {
@@ -282,20 +284,22 @@ final class HyperKeyTap {
 
         /// Disables the tap at once, so input stops passing through it before the worker exits.
         func stop() {
-            state.withLock { state in
+            let installation = state.withLock { state -> Installation? in
                 state.isActive = false
                 state.chord.cancelHold()
-                guard let installation = state.installation else { return }
-                CGEvent.tapEnable(tap: installation.port, enable: false)
-                guard let runLoop = installation.runLoop else { return }
-                // A queued stop also covers closing before the worker enters its run loop.
-                CFRunLoopPerformBlock(runLoop, CFRunLoopMode.defaultMode.rawValue) {
-                    CFRunLoopStop(CFRunLoopGetCurrent())
-                }
-                CFRunLoopWakeUp(runLoop)
+                return state.installation
             }
+            guard let installation else { return }
+            CGEvent.tapEnable(tap: installation.port, enable: false)
+            guard let runLoop = installation.runLoop else { return }
+            // A queued stop also covers closing before the worker enters its run loop.
+            CFRunLoopPerformBlock(runLoop, CFRunLoopMode.defaultMode.rawValue) {
+                CFRunLoopStop(CFRunLoopGetCurrent())
+            }
+            CFRunLoopWakeUp(runLoop)
         }
 
+        /// Enabled under the lock, so a stopped worker can never be revived.
         func reenable() {
             state.withLock { state in
                 guard state.isActive, let port = state.installation?.port else { return }
@@ -360,7 +364,7 @@ final class HyperKeyTap {
 
         private static let quickPressWindow: Duration = .milliseconds(250)
 
-        /// F18 carries fn like any function key; a `flagsChanged` saying so reads as a real fn press.
+        /// F18 carries fn like every F-key; a `flagsChanged` with it reads as a real fn press.
         private static let functionKeyFlagRaw = CGEventFlags.maskSecondaryFn.rawValue
 
         init(route: HyperKeyRoute?, includesShift: Bool) {
@@ -433,7 +437,7 @@ final class HyperKeyTap {
                 return .pass
             }
             guard hyperActive else { return .pass }
-            // Any other key or modifier going down while Hyper is held makes this a combo, not a tap.
+            // Any other key or modifier going down under Hyper makes this a combo, not a tap.
             if type == .keyDown || type == .flagsChanged { otherKeyPressed = true }
             return .rewrite(flags: hyperized(flagsRaw))
         }

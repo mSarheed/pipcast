@@ -250,6 +250,36 @@ struct HyperKeyTapTests {
         _ = deliver(0, f18Up)
         expect(deliver(0, letter)?.flags == 0, "the release clears the shifted chord")
 
+        let fn = CGEventFlags.maskSecondaryFn.rawValue
+        tap.setRoute(capsLock, includesShift: false)
+        let fnDown = deliver(0, KeyEvent(keyCode: kVK_F18, flags: fn))
+        expect(fnDown?.flags == hyperFlags, "the Hyper press drops F18's fn bit")
+        let fnUp = deliver(0, KeyEvent(type: .keyUp, keyCode: kVK_F18, flags: fn))
+        expect(fnUp?.type == .flagsChanged && fnUp?.flags == 0, "the Hyper release drops F18's fn bit")
+
+        let rightControl: UInt64 = CGEventFlags.maskControl.rawValue | 0x2000
+        tap.setRoute(HyperKeyPhysicalKey.capsLock.route(secureInputCompatible: true), includesShift: false)
+        let held = deliver(0, KeyEvent(type: .flagsChanged, keyCode: kVK_RightControl, flags: rightControl))
+        expect(held?.flags == hyperFlags | 0x2000, "Right Control's device bit starts the chord")
+        expect(
+            deliver(0, KeyEvent(flags: rightControl))?.flags == hyperFlags | 0x2000,
+            "a key under compatible Hyper gets the chord")
+        let released = deliver(0, KeyEvent(type: .flagsChanged, keyCode: kVK_RightControl))
+        expect(released?.flags == 0, "Right Control's release ends the chord")
+        expect(deliver(0, letter)?.flags == 0, "typing after a modifier release is plain again")
+
+        let rightShift: UInt64 = CGEventFlags.maskShift.rawValue | 0x4
+        tap.setRoute(HyperKeyPhysicalKey.rightShift.route(secureInputCompatible: false), includesShift: false)
+        let shifted = deliver(0, KeyEvent(type: .flagsChanged, keyCode: kVK_RightShift, flags: rightShift))
+        expect(shifted?.flags == hyperFlags, "a modifier Hyper key scrubs its own flag")
+        expect(
+            deliver(0, KeyEvent(flags: rightShift))?.flags == hyperFlags,
+            "keys under a modifier Hyper key lose that modifier")
+        expect(
+            deliver(0, KeyEvent(type: .flagsChanged, keyCode: kVK_RightShift))?.flags == 0,
+            "the modifier's release ends the chord")
+        tap.setRoute(capsLock, includesShift: true)
+
         _ = deliver(0, KeyEvent(type: .flagsChanged, keyCode: kVK_CapsLock))
         tap.tearDown()
         expect(!tap.isInstalled, "teardown forgets the tap")
