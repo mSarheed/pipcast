@@ -13,7 +13,7 @@ final class MenuPanel: NSPanel {
             contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false)
         isFloatingPanel = true
-        animationBehavior = .none
+        animationBehavior = .documentWindow
         backgroundColor = .clear
         isOpaque = false
         hasShadow = true

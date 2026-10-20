@@ -752,6 +752,21 @@ export default async function Command() {
 }
 `;
 
+const httpTablesSource = `
+const http = require("http");
+const https = require("https");
+
+export default function Command() {
+  globalThis.__httpTables = {
+    codes: Object.keys(http.STATUS_CODES).length,
+    notFound: http.STATUS_CODES["404"],
+    shared: https.STATUS_CODES === http.STATUS_CODES,
+    methods: http.METHODS.length,
+    getAndPatch: http.METHODS.includes("GET") && http.METHODS.includes("PATCH"),
+  };
+}
+`;
+
 const cookieAgentSource = `
 import * as http from "node:http";
 import * as url from "node:url";
@@ -1365,6 +1380,15 @@ export async function runFixtures() {
     check("a refusal names the member that was called", result?.refusals?.[1]?.startsWith("vm.runInNewContext is not supported"), JSON.stringify(result?.refusals));
     check("AsyncResource runs the callback in place", JSON.stringify(result?.scope) === JSON.stringify([1, 2, "ab"]), JSON.stringify(result?.scope));
     check("AsyncResource keeps its type", result?.type === "tracked", String(result?.type));
+  });
+
+  await run("http carries Node's status and method tables", httpTablesSource, "no-view", async (harness) => {
+    const result = harness.call("globalThis.__httpTables");
+    check("STATUS_CODES holds every code", result?.codes === 63, JSON.stringify(result));
+    check("a code maps to its reason phrase", result?.notFound === "Not Found", JSON.stringify(result));
+    check("https shares the same table", result?.shared === true, JSON.stringify(result));
+    check("METHODS holds every method", result?.methods === 35, JSON.stringify(result));
+    check("METHODS lists GET and PATCH", result?.getAndPatch === true, JSON.stringify(result));
   });
 
   await run(

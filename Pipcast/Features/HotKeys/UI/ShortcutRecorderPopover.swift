@@ -72,9 +72,10 @@ struct ShortcutCaptureReadout: View {
             Text(state.label)
                 .font(Theme.Typography.compactKeyCap)
                 .foregroundStyle(state.tint ?? Theme.Colors.textSecondary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .truncationMode(.tail)
-                .frame(height: Theme.Size.shortcutPopoverLine)
+                .frame(height: Theme.Size.shortcutPopoverLine * 2)
         }
     }
 
@@ -87,17 +88,18 @@ struct ShortcutCaptureReadout: View {
             return .binding(
                 secondPress ? key.doubleBinding : key.singleBinding,
                 label: secondPress
-                    ? String(localized: "Release to record") : String(localized: "Tap again for double"))
+                    ? String(localized: "Release to record")
+                    : String(localized: "Press again for a double press"))
         }
         if let key = capture.heldModifier {
-            return .binding(key.singleBinding, label: String(localized: "Release or add a key"))
+            return .binding(key.singleBinding, label: String(localized: "Release or complete the shortcut"))
         }
         let flags =
             capture.heldGlobe
             ? capture.heldModifiers.union(.function) : capture.heldModifiers
         let held = KeyShortcut.collapsedModifierSymbols(
             from: flags, hyperChord: KeyShortcut.displayedHyperChord())
-        guard held.isEmpty else { return State(caps: held, label: String(localized: "Add a key")) }
+        guard held.isEmpty else { return State(caps: held, label: String(localized: "Press another key")) }
         return State(
             caps: [DoubleTapModifier.option.glyph, "A"], label: String(localized: "Type a shortcut"),
             isExample: true)

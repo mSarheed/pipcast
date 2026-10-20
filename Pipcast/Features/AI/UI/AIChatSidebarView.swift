@@ -25,7 +25,8 @@ struct AIChatSidebarView: View {
         for conversation in history.search(query).pinnedFirst {
             let title =
                 conversation.isPinned
-                ? String(localized: "Pinned") : buckets.bucket(for: conversation.updatedAt).title
+                ? String(localized: "ai-pinned-conversations", defaultValue: "Pinned")
+                : buckets.bucket(for: conversation.updatedAt).title
             if sections.last?.title == title {
                 sections[sections.count - 1].conversations.append(conversation)
             } else {

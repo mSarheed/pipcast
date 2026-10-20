@@ -9,6 +9,9 @@ struct UpdateCheckTests {
     static func main() async throws {
         try await stopsBeforeFirstCheck()
         try await cancelsAndRestarts()
+        try await manualCheckJoinsAutomaticCheck()
+        try await reportsWhyTheCheckFailed()
+        classifiesRateLimits()
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
     }
@@ -69,11 +72,11 @@ struct UpdateCheckTests {
         expect(offers == 1, "restarting never repeats an announcement already shown")
 
         store.stop()
-        let manual = Task { await store.check() }
+        let manual = Task { try await store.check() }
         await waitUntil { fixture.requests == 3 }
         store.stop()
         fixture.respond(feed(version: "1.3.0"))
-        let answered = await manual.value
+        let answered = (try? await manual.value) != nil
         expect(answered, "manual checking still works with automatic checking stopped")
         expect(!fixture.wasCancelled, "stopping the pump does not cancel a manual check")
         expect(store.update?.version == AppVersion("1.3.0"), "manual checking receives a newer release")
@@ -81,6 +84,71 @@ struct UpdateCheckTests {
 
         let reopened = makeStore(file: file, fixture: fixture)
         expect(reopened.latest == store.latest, "manual checking persists the release")
+    }
+
+    static func manualCheckJoinsAutomaticCheck() async throws {
+        let file = makeFile()
+        defer { try? FileManager.default.removeItem(at: file) }
+        let fixture = FetchFixture()
+        let store = makeStore(file: file, fixture: fixture)
+        store.onUpdateAvailable = { _ in true }
+        defer { store.stop() }
+
+        store.start(after: .zero)
+        await waitUntil { fixture.requests == 1 }
+        let manual = Task { try await store.check() }
+        await waitUntil { fixture.requests == 2 }
+        fixture.respond(feed(version: "1.2.0"), to: 1)
+        let answered = (try? await manual.value) != nil
+        expect(answered, "a manual check during the automatic one still answers")
+        expect(store.update?.version == AppVersion("1.2.0"), "the manual check adopts the release")
+        expect(store.isChecking, "the automatic check is still in flight")
+        fixture.respond(feed(version: "1.1.0"), to: 0)
+        await waitUntil { !store.isChecking }
+        expect(
+            store.update?.version == AppVersion("1.2.0"), "an older request answering last is discarded")
+        let reopened = makeStore(file: file, fixture: fixture)
+        expect(reopened.latest?.version == AppVersion("1.2.0"), "the stale answer is never persisted")
+    }
+
+    static func classifiesRateLimits() {
+        let limited = UpdateFailure.checkFailed("GitHub is limiting requests from this network.")
+        func failure(_ status: Int, _ headers: [String: String] = [:], body: String = "") -> UpdateFailure {
+            let response = HTTPURLResponse(
+                url: URL(string: "https://api.github.com")!, statusCode: status, httpVersion: nil,
+                headerFields: headers)
+            return UpdateCheckStore.failure(for: response, body: Data(body.utf8))
+        }
+        expect(failure(403, ["X-RateLimit-Remaining": "0"]) == limited, "an exhausted quota is a limit")
+        expect(failure(429) == limited, "429 is a limit")
+        expect(failure(403, ["Retry-After": "60"]) == limited, "Retry-After marks a secondary limit")
+        expect(
+            failure(403, body: #"{"message":"You have exceeded a secondary rate limit."}"#) == limited,
+            "the secondary-limit message marks a limit")
+        expect(
+            failure(403, ["X-RateLimit-Remaining": "12"]) == .checkFailed("The server answered 403."),
+            "an ordinary forbidden response is reported by status")
+        expect(failure(502) == .checkFailed("The server answered 502."), "a server error reports status")
+    }
+
+    static func reportsWhyTheCheckFailed() async throws {
+        let file = makeFile()
+        defer { try? FileManager.default.removeItem(at: file) }
+        try seedCache(at: file)
+        let fixture = FetchFixture()
+        let store = makeStore(file: file, fixture: fixture)
+
+        let manual = Task { try await store.check() }
+        await waitUntil { fixture.requests == 1 }
+        fixture.fail(UpdateFailure.checkFailed("offline"))
+        do {
+            try await manual.value
+            expect(false, "a failed check throws")
+        } catch {
+            expect(error as? UpdateFailure == .checkFailed("offline"), "the check reports its reason")
+        }
+        expect(!store.isChecking, "a failed check is no longer in flight")
+        expect(store.latest?.version == AppVersion("1.1.0"), "a failed check keeps the cached release")
     }
 
     static func seedCache(at file: URL) throws {
@@ -98,7 +166,7 @@ struct UpdateCheckTests {
     static func makeStore(file: URL, fixture: FetchFixture) -> UpdateCheckStore {
         UpdateCheckStore(
             channel: .stable, runningVersion: AppVersion("1.0.0"), fileURL: file,
-            fetch: { await fixture.fetch() })
+            fetch: { try await fixture.fetch() })
     }
 
     static func makeFile() -> URL {
@@ -137,19 +205,22 @@ struct UpdateCheckTests {
     final class FetchFixture {
         var requests = 0
         var wasCancelled = false
-        private var response: CheckedContinuation<Data?, Never>?
+        private var responses: [CheckedContinuation<Data, any Error>] = []
 
-        func fetch() async -> Data? {
+        func fetch() async throws -> Data {
             requests += 1
-            let data = await withCheckedContinuation { response = $0 }
-            wasCancelled = Task.isCancelled
-            return data
+            defer { wasCancelled = Task.isCancelled }
+            return try await withCheckedThrowingContinuation { responses.append($0) }
         }
 
-        func respond(_ data: Data) {
-            let pending = response
-            response = nil
-            pending?.resume(returning: data)
+        func respond(_ data: Data, to index: Int = 0) {
+            guard responses.indices.contains(index) else { return }
+            responses.remove(at: index).resume(returning: data)
+        }
+
+        func fail(_ error: any Error) {
+            guard !responses.isEmpty else { return }
+            responses.removeFirst().resume(throwing: error)
         }
     }
 }

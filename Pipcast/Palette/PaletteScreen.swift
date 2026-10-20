@@ -1,33 +1,8 @@
-import QuartzCore
 import SwiftUI
 
 enum PaletteAxis {
     case vertical
     case horizontal
-}
-
-/// Scale and timing supplied by content while the palette owns the window mechanics.
-@MainActor struct MenuPanelMotion {
-    let entryScale: CGFloat
-    let maximumScale: CGFloat
-    let exitScaleDelta: CGFloat
-    let expansionDuration: TimeInterval
-    let settleDuration: TimeInterval
-    let exitDuration: TimeInterval
-    let expansionTiming: CAMediaTimingFunction
-    let settleTiming: CAMediaTimingFunction
-    let exitTiming: CAMediaTimingFunction
-
-    static let palette = MenuPanelMotion(
-        entryScale: Theme.MenuMotion.entryScale,
-        maximumScale: Theme.MenuMotion.maximumScale,
-        exitScaleDelta: Theme.MenuMotion.exitScaleDelta,
-        expansionDuration: Theme.MenuMotion.expansionDuration,
-        settleDuration: Theme.MenuMotion.settleDuration,
-        exitDuration: Theme.MenuMotion.exitDuration,
-        expansionTiming: Theme.MenuMotion.expansionTiming,
-        settleTiming: Theme.MenuMotion.settleTiming,
-        exitTiming: Theme.MenuMotion.exitTiming)
 }
 
 typealias MenuPanelClipPath =
@@ -40,7 +15,6 @@ typealias MenuPanelClipPath =
     let preferredSelection: Int?
     let isSelectable: (Int) -> Bool
     let clipPath: MenuPanelClipPath
-    let motion: MenuPanelMotion
     /// Built on demand: `moveMenu` resolves the open menu on every arrow key.
     let view: (MenuPanelCorner) -> AnyView
     /// Bounds-checked by the caller against `rowCount`, so a row index is always one this menu has.
@@ -51,8 +25,7 @@ typealias MenuPanelClipPath =
         view: @escaping (MenuPanelCorner) -> AnyView,
         activate: @escaping (Int) -> Void,
         isSelectable: @escaping (Int) -> Bool = { _ in true },
-        clipPath: @escaping MenuPanelClipPath,
-        motion: MenuPanelMotion
+        clipPath: @escaping MenuPanelClipPath
     ) {
         self.rowCount = rowCount
         self.preferredSelection = preferredSelection
@@ -60,7 +33,6 @@ typealias MenuPanelClipPath =
         self.activate = activate
         self.isSelectable = isSelectable
         self.clipPath = clipPath
-        self.motion = motion
     }
 
     init(
@@ -81,15 +53,14 @@ typealias MenuPanelClipPath =
             },
             activate: { popover.items[$0].action() },
             isSelectable: { popover.items[$0].isSelectable },
-            clipPath: Self.popoverClipPath,
-            motion: .palette)
+            clipPath: Self.popoverClipPath)
     }
 
     /// A panel with no rows, worn in the popover's glass so it hangs where the menu did.
     init(surface: @escaping (PopoverMenu.Attachment) -> AnyView) {
         self.init(
             rowCount: 0, view: { surface($0.popoverAttachment) }, activate: { _ in },
-            clipPath: Self.popoverClipPath, motion: .palette)
+            clipPath: Self.popoverClipPath)
     }
 
     private static let popoverClipPath: MenuPanelClipPath = { bounds, metrics, corner in

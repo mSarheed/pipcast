@@ -1,360 +1,418 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "NSAppleEventsUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast verwendet Automation nur für Systemaktionen, die du ausdrücklich ausführst."
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSAppleEventsUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast verwendet Automation nur für Systemaktionen, die du ausdrücklich ausführst."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast uses automation to perform system actions you explicitly run."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast uses automation to perform system actions you explicitly run."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast usa la automatización para realizar las acciones del sistema que ejecutas expresamente."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast usa la automatización para realizar las acciones del sistema que ejecutas expresamente."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast utilise l’automatisation pour effectuer les actions système que vous lancez explicitement."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast utilise l’automatisation pour exécuter des actions dans d’autres apps."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcastは、あなたが明示的に実行するシステムアクションにオートメーションを使用します。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcastは、あなたが明示的に実行するシステムアクションにオートメーションを使用します。"
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast는 사용자가 직접 실행하는 시스템 동작을 수행할 때 자동화를 사용합니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast는 사용자가 직접 실행하는 시스템 동작을 수행할 때 자동화를 사용합니다."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Pipcast usa automação para realizar as ações do sistema que você executa explicitamente."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pipcast usa automação para realizar as ações do sistema que você executa explicitamente."
           }
         },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast использует автоматизацию для выполнения системных действий, которые вы запускаете явно."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast использует автоматизацию для выполнения системных действий, которые вы запускаете явно."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast 使用自动化来执行你主动运行的系统操作。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast 使用自动化来执行你主动运行的系统操作。"
           }
         }
       }
     },
-    "NSBluetoothAlwaysUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast greift nur auf Bluetooth zu, wenn du die Aktion „Bluetooth umschalten“ ausführst."
+    "NSBluetoothAlwaysUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast greift nur auf Bluetooth zu, wenn du die Aktion „Bluetooth umschalten“ ausführst."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast uses Bluetooth access only when you run the Toggle Bluetooth action."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast uses Bluetooth access only when you run the Toggle Bluetooth action."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast solo accede a Bluetooth cuando ejecutas la acción de activar o desactivar Bluetooth."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast solo accede a Bluetooth cuando ejecutas la acción de activar o desactivar Bluetooth."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast accède au Bluetooth uniquement lorsque vous lancez l’action d’activation ou de désactivation du Bluetooth."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast accède au Bluetooth uniquement lorsque vous lancez l’action d’activation ou de désactivation du Bluetooth."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcastは、Bluetoothの切り替えアクションを実行したときのみBluetoothにアクセスします。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcastは、Bluetoothの切り替えアクションを実行したときのみBluetoothにアクセスします。"
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast는 Bluetooth 전환 동작을 실행할 때에만 Bluetooth에 접근합니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast는 Bluetooth 전환 동작을 실행할 때에만 Bluetooth에 접근합니다."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Pipcast acessa o Bluetooth apenas quando você executa a ação de ativar ou desativar o Bluetooth."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pipcast acessa o Bluetooth apenas quando você executa a ação de ativar ou desativar o Bluetooth."
           }
         },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast обращается к Bluetooth только при запуске действия переключения Bluetooth."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast обращается к Bluetooth только при запуске действия переключения Bluetooth."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast 仅在你运行切换蓝牙操作时访问蓝牙。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast 仅在你运行切换蓝牙操作时访问蓝牙。"
           }
         }
       }
     },
-    "NSCalendarsFullAccessUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast liest die Termine von heute und morgen, damit du direkt aus dem Launcher an Besprechungen teilnehmen kannst."
+    "NSCalendarsFullAccessUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast greift auf deine Termine zu, damit du deinen Zeitplan ansehen und an Besprechungen teilnehmen kannst."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast reads today's and tomorrow's events so you can join a meeting from the palette."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast accesses your events to show your schedule and let you join meetings."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast lee los eventos de hoy y mañana para que puedas unirte a una reunión desde el lanzador."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast accede a tus eventos para mostrar tu agenda y permitirte unirte a reuniones."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast lit les événements d’aujourd’hui et de demain pour vous permettre de rejoindre une réunion depuis le lanceur."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast accède à vos calendriers pour afficher votre planning, créer des événements et rejoindre vos réunions."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcastは今日と明日のイベントを読み取り、ランチャーから会議に参加できるようにします。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcastはイベントにアクセスして予定を表示し、会議に参加できるようにします。"
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast는 런처에서 회의에 참여할 수 있도록 오늘과 내일의 이벤트를 읽습니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast는 일정을 표시하고 회의에 참여할 수 있도록 이벤트에 접근합니다."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Pipcast lê os eventos de hoje e de amanhã para você entrar em uma reunião pelo iniciador."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pipcast acessa seus eventos para mostrar sua agenda e permitir que você participe de reuniões."
           }
         },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast читает события на сегодня и завтра, чтобы вы могли присоединиться к встрече из лаунчера."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast получает доступ к вашим событиям, чтобы показывать расписание и подключать вас к встречам."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast 读取今天和明天的日程，方便你从启动器加入会议。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast 访问你的日程，以显示安排并让你加入会议。"
           }
         }
       }
     },
-    "NSCameraUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast zeigt eine Kameravorschau, damit du dein Bild prüfen und ein Foto in die Zwischenablage kopieren kannst."
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast zeigt eine Kameravorschau, damit du dein Bild prüfen und ein Foto in die Zwischenablage kopieren kannst."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast shows a camera preview so you can check yourself, and take a photo to the clipboard."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast shows a camera preview so you can check yourself, and take a photo to the clipboard."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast muestra una vista previa de la cámara para que puedas verte y copiar una foto al portapapeles."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast muestra una vista previa de la cámara para que puedas verte y copiar una foto al portapapeles."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast affiche un aperçu de la caméra pour vous permettre de vous voir et de copier une photo dans le presse-papiers."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast utilise la caméra pour afficher un aperçu vidéo et prendre des photos."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcastはカメラのプレビューで身だしなみを確認したり、写真を撮ってクリップボードにコピーしたりできます。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcastはカメラのプレビューで身だしなみを確認したり、写真を撮ってクリップボードにコピーしたりできます。"
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast는 자신의 모습을 확인하고 사진을 찍어 클립보드에 복사할 수 있도록 카메라 미리보기를 표시합니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast는 자신의 모습을 확인하고 사진을 찍어 클립보드에 복사할 수 있도록 카메라 미리보기를 표시합니다."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Pipcast mostra uma prévia da câmera para você conferir sua imagem e tirar uma foto para a área de transferência."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pipcast mostra uma prévia da câmera para você conferir sua imagem e tirar uma foto para a área de transferência."
           }
         },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast показывает изображение с камеры, чтобы вы могли проверить свой вид и скопировать снимок в буфер обмена."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast показывает изображение с камеры, чтобы вы могли проверить свой вид и скопировать снимок в буфер обмена."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast 显示相机预览，方便你查看自己的形象，并将拍摄的照片拷贝到剪贴板。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast 显示相机预览，方便你查看自己的形象，并将拍摄的照片拷贝到剪贴板。"
           }
         }
       }
     },
-    "NSMicrophoneUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast nimmt Audio nur auf, während du das Diktat verwendest, und wandelt es auf deinem Mac in Text um."
+    "NSMicrophoneUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast nimmt Audio nur auf, während du das Diktat verwendest, und wandelt es auf deinem Mac in Text um."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast records audio only while you use Dictation, to transcribe it on your Mac."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast records audio only while you use Dictation, to transcribe it on your Mac."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast solo graba audio mientras usas Dictado para transcribirlo en tu Mac."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast solo graba audio mientras usas Dictado para transcribirlo en tu Mac."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast enregistre l’audio uniquement lorsque vous utilisez la dictée, pour le transcrire sur votre Mac."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast enregistre l’audio uniquement lorsque vous utilisez la dictée, pour le transcrire sur votre Mac."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcastは音声入力の使用中のみ音声を録音し、Mac上で文字に起こします。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcastは音声入力の使用中のみ音声を録音し、Mac上で文字に起こします。"
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast는 받아쓰기를 사용하는 동안에만 오디오를 녹음하여 Mac에서 텍스트로 변환합니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast는 받아쓰기를 사용하는 동안에만 오디오를 녹음하여 Mac에서 텍스트로 변환합니다."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Pipcast grava áudio apenas enquanto você usa o Ditado, para transcrevê-lo no seu Mac."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pipcast grava áudio apenas enquanto você usa o Ditado, para transcrevê-lo no seu Mac."
           }
         },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast записывает звук только во время диктовки и преобразует его в текст на вашем Mac."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast записывает звук только во время диктовки и преобразует его в текст на вашем Mac."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast 仅在你使用听写时录制音频，并在你的 Mac 上将其转为文字。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast 仅在你使用听写时录制音频，并在你的 Mac 上将其转为文字。"
           }
         }
       }
     },
-    "NSRemindersFullAccessUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast erlaubt Erweiterungen, die du ausführst, deine Erinnerungen zu lesen und zu bearbeiten."
+    "NSRemindersFullAccessUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast erlaubt Erweiterungen, die du ausführst, deine Erinnerungen zu lesen und zu bearbeiten."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast lets extensions you run read and edit your reminders."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast lets extensions you run read and edit your reminders."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast permite que las extensiones que ejecutas lean y editen tus recordatorios."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast permite que las extensiones que ejecutas lean y editen tus recordatorios."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast permet aux extensions que vous lancez de lire et de modifier vos rappels."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast permet aux extensions que vous lancez de lire et de modifier vos rappels."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcastは、あなたが実行する拡張機能にリマインダーの読み取りと編集を許可します。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcastは、あなたが実行する拡張機能にリマインダーの読み取りと編集を許可します。"
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast는 사용자가 실행하는 확장 프로그램이 미리 알림을 읽고 편집할 수 있게 합니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast는 사용자가 실행하는 확장 프로그램이 미리 알림을 읽고 편집할 수 있게 합니다."
           }
         },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O Pipcast permite que as extensões que você executa leiam e editem seus lembretes."
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pipcast permite que as extensões que você executa leiam e editem seus lembretes."
           }
         },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast позволяет запускаемым вами расширениям читать и редактировать ваши напоминания."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast позволяет запускаемым вами расширениям читать и редактировать ваши напоминания."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pipcast 允许你运行的扩展读取和编辑你的提醒事项。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pipcast 允许你运行的扩展读取和编辑你的提醒事项。"
+          }
+        }
+      }
+    },
+    "Tinycast Backup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast-Backup"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast Backup"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia de seguridad de Tinycast"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarde Tinycast"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycastバックアップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast 백업"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup do Tinycast"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Резервная копия Tinycast"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast 备份"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

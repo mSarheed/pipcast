@@ -138,6 +138,11 @@ measured from `lastCheckedAt`, so relaunching never re-asks GitHub; the interval
 2 h after a failed attempt, and the first check waits 30 s so it never lands in the login rush. The
 request carries a `User-Agent`, which the GitHub API rejects requests without.
 
+Check for Updates runs even while the automatic check is in flight, and a failure says why — offline,
+rate-limited by the unauthenticated API's 60 requests an hour, or another status — under its own
+"Could not check for updates" title, never as a download that did not finish. A release the cache
+already holds is still offered when the check fails.
+
 Disabling automatic checks takes effect immediately and survives relaunch. Turning them back on
 resumes the same schedule, with the startup delay and cached check time respected. Check for Updates
 always works independently of this preference, including while automatic checking is disabled.

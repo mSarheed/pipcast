@@ -19,7 +19,9 @@ final class PaletteState {
     var selection: Int = 0
     /// True while an IME holds marked text, which leaves `query` empty. The panel publishes it.
     var isComposing = false
-    var clipboardFilter: ClipboardFilter = .all { didSet { restoredSelection = nil } }
+    var clipboardFilter: ClipboardFilter = .all {
+        didSet { if oldValue != clipboardFilter { restoredSelection = nil } }
+    }
     var fileSearchFilter: FileSearchFilter = .all
     var fileSearchFolder: String?
     var emojiCategoryFilter: EmojiCategoryFilter = .all
@@ -177,6 +179,10 @@ final class PaletteState {
     func rewriteQuery(_ text: String) {
         query = text
         queryRewriteToken = UUID()
+    }
+
+    func preserveSelection() {
+        restoredSelection = selection
     }
 
     func noteEmojiGridZoom(_ zoom: EmojiGridZoom) {

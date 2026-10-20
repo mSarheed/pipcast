@@ -192,6 +192,16 @@ run clipboard-test         Pipcast/Features/Clipboard/Model/ClipboardStore.swift
                            Pipcast/Features/Clipboard/Model/ColorValue.swift \
                            Pipcast/Features/Clipboard/Model/ColorFormat.swift \
                            Pipcast/Features/Clipboard/Model/ColorSpaces.swift
+run clipboard-coordinator-test Pipcast/Features/Clipboard/UI/ClipboardCoordinator.swift \
+                           Pipcast/Features/Clipboard/Model/*.swift \
+                           Pipcast/Platform/Images/ImageDerivative.swift \
+                           Pipcast/Palette/PaletteState.swift Pipcast/Palette/PaletteMode.swift \
+                           Pipcast/Palette/HoverArming.swift \
+                           Pipcast/Features/Emoji/Model/EmojiCatalog.swift \
+                           Pipcast/Features/FileSearch/Model/FileSearchFilter.swift \
+                           Pipcast/Features/Quicklinks/Model/Quicklink.swift \
+                           Pipcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Pipcast/Features/CustomCommands/Model/CustomCommand.swift
 run clipboard-thumbnail-test Pipcast/Features/Clipboard/Model/ClipboardStore.swift \
                            Pipcast/Platform/Images/ImageDerivative.swift \
                            Pipcast/Features/Clipboard/Model/ClipboardFilter.swift \
@@ -285,6 +295,7 @@ run form-input-test        Pipcast/Platform/Appearance.swift \
 run scroll-reveal-test     Pipcast/DesignSystem/Scrolling/SelectionReveal.swift
 run redaction-test         Pipcast/DesignSystem/RedactedPlaceholder.swift
 run keyboard-focus-test    Pipcast/DesignSystem/Interaction/KeyboardFocus.swift
+run command-escape-tap-test Pipcast/Palette/CommandEscapeTap.swift
 run palette-escape-test    Pipcast/Palette/PaletteMode.swift \
                            Pipcast/Palette/PaletteEscapeAction.swift \
                            Pipcast/Palette/CommandEscapeTap.swift \
@@ -552,6 +563,7 @@ run notes-editor-test      Pipcast/Platform/Signposts.swift \
                            Pipcast/Platform/NotificationToken.swift \
                            Pipcast/Features/TextInjection/Service/InjectableTextView.swift \
                            Pipcast/Features/Notes/Model/NoteDocument.swift \
+                           Pipcast/Features/Notes/Model/NoteTitle.swift \
                            Pipcast/Features/Notes/Model/NoteMarkdown.swift \
                            Pipcast/Features/Notes/Model/NoteMarkdownParser.swift \
                            Pipcast/Features/Notes/Model/NoteInlineScanner.swift \
@@ -578,6 +590,7 @@ run -O index notes-editor-performance \
                            Pipcast/Platform/NotificationToken.swift \
                            Pipcast/Features/TextInjection/Service/InjectableTextView.swift \
                            Pipcast/Features/Notes/Model/NoteDocument.swift \
+                           Pipcast/Features/Notes/Model/NoteTitle.swift \
                            Pipcast/Features/Notes/Model/NoteMarkdown.swift \
                            Pipcast/Features/Notes/Model/NoteMarkdownParser.swift \
                            Pipcast/Features/Notes/Model/NoteInlineScanner.swift \
@@ -724,6 +737,7 @@ run updates-test           Pipcast/Features/Updates/Model/*.swift \
                            Pipcast/Features/Updates/Service/BundleSignature.swift
 run update-check-test      Pipcast/Features/Updates/Model/*.swift \
                            Pipcast/Features/Updates/Service/UpdateCheckStore.swift \
+                           Pipcast/Features/Updates/Service/UpdateFailure.swift \
                            Pipcast/Platform/AppPaths.swift
 run support-test           Pipcast/Features/Support/Model/*.swift
 run changelog-test         Pipcast/Features/Updates/Model/*.swift \

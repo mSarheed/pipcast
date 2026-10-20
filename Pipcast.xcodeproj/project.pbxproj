@@ -367,6 +367,7 @@
 		671CB0FACCE3911043C24773 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E3A5FA966F51A009F3D7D34 /* AboutView.swift */; };
 		672EE0E9A7593649CCFE9E40 /* LauncherSuggestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0624D8741A2EC6335E119291 /* LauncherSuggestions.swift */; };
 		67DCC6D0B0509863BF23BE5A /* SettingsSearchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6F4FE41D54D88C59AC8BB3C /* SettingsSearchScreen.swift */; };
+		6822428D210AA9E2A3E46EA9 /* ClipboardEditField.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6037AA3E94799FBFD081F26 /* ClipboardEditField.swift */; };
 		684AD5893924D9B456605FD4 /* UpdateFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88BC6FC974F655E33D86B70B /* UpdateFailure.swift */; };
 		6852443824732252F6A6DF17 /* EmojiScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDBD93AB20B34B5F725D59B7 /* EmojiScreen.swift */; };
 		68B713A2AAB9B40C03A9DEC4 /* LauncherList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A44D65E0D7723EFE79DDD30 /* LauncherList.swift */; };
@@ -1574,6 +1575,7 @@
 		C3EAEC42B64C9B41E98CB0B1 /* RoomWindowSweep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomWindowSweep.swift; sourceTree = "<group>"; };
 		C45A396E801837EED1F9543A /* HotKeyCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyCenter.swift; sourceTree = "<group>"; };
 		C5B23F84F7DE959C824837FD /* CurrencyRateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyRateStore.swift; sourceTree = "<group>"; };
+		C6037AA3E94799FBFD081F26 /* ClipboardEditField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardEditField.swift; sourceTree = "<group>"; };
 		C677831065B7B07913CDE578 /* MCPOAuthChallenge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOAuthChallenge.swift; sourceTree = "<group>"; };
 		C748FE9F12EB1A05FE043CA7 /* DictionaryMarkup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryMarkup.swift; sourceTree = "<group>"; };
 		C7684017CED336F66B9FAA04 /* LauncherScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherScreen.swift; sourceTree = "<group>"; };
@@ -2373,6 +2375,7 @@
 			isa = PBXGroup;
 			children = (
 				4F99D39F62E3C1A90CD3A4BF /* ClipboardCoordinator.swift */,
+				C6037AA3E94799FBFD081F26 /* ClipboardEditField.swift */,
 				8D66D387DBF6DE1BFF11E85F /* ClipboardFilterButton.swift */,
 				2C81671F4D884D051512299B /* ClipboardScreen.swift */,
 				465E02C94869C65B6C34F481 /* ClipboardView.swift */,
@@ -4180,6 +4183,7 @@
 				DE9E14A5BC0BE05FF8C310E3 /* ClipDrag.swift in Sources */,
 				487BEB921CBB7A690121AEEC /* ClipDragPayload.swift in Sources */,
 				C28A90044904016831771E65 /* ClipboardCoordinator.swift in Sources */,
+				6822428D210AA9E2A3E46EA9 /* ClipboardEditField.swift in Sources */,
 				2DC1B9F0F2CC0DE4F5547D69 /* ClipboardFileKind.swift in Sources */,
 				0FF06239D3A1616CBB2FC819 /* ClipboardFilter.swift in Sources */,
 				FA6DDC55879D9C7603359029 /* ClipboardFilterButton.swift in Sources */,
@@ -5020,7 +5024,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
@@ -5117,7 +5121,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
