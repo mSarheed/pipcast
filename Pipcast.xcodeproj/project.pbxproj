@@ -257,6 +257,7 @@
 		456E60B46693C2524FBD3C6B /* EmojiGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93ADA349161F5F7C64939B0 /* EmojiGridView.swift */; };
 		45E145ADCE6BDB9B55F7727A /* KeyboardRemapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB15256A51036524919CE79 /* KeyboardRemapper.swift */; };
 		45EB8593D6042EC63ED2F6E0 /* MCPSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E12BE76DD249DE9152CAB15 /* MCPSettingsSection.swift */; };
+		46031CBD6F56A2CC057C5979 /* ConfettiCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC9DAA049F61401D4B5F8F /* ConfettiCoordinator.swift */; };
 		463E32BC6D77F01CDBC60AE3 /* CommandOutputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED70F08304041653AA9C33EE /* CommandOutputView.swift */; };
 		4683B176EAE5819929C8423C /* VisibilityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C47C90209549577395D737 /* VisibilityStore.swift */; };
 		47298601CE2F65CB45626F76 /* DictionaryEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21756E1E26AEC8D4726F91F4 /* DictionaryEntryView.swift */; };
@@ -607,6 +608,7 @@
 		ADAEFF899B1DCABA615506AC /* WindowLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448F32F66ADD2D07D9E6DB84 /* WindowLevel.swift */; };
 		AE35B4940EEEA52E5D9AC4EF /* ExtensionGridGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B86317EC2EE1B27B98F5709 /* ExtensionGridGeometry.swift */; };
 		AEC2E5A45340414C1AC9ED4C /* SystemActionFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F655829BDAC9846A8895ED6 /* SystemActionFailure.swift */; };
+		AF90DC7A42BD451A9C9BCEEF /* ConfettiPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02F9EE30457EDDFB3EB1C38 /* ConfettiPanel.swift */; };
 		AFCCE30821AFA05044BD434A /* SnippetsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52BF4280C7DEF289F9E47BD3 /* SnippetsSettingsView.swift */; };
 		B00F83B73ECB0B0DEAB37A73 /* BackupComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8326F4B22F757913556B949A /* BackupComposer.swift */; };
 		B0B8A1CE3EECF02FFAA6ECD4 /* DictationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D9AA459EAA635E8237FE9F /* DictationCoordinator.swift */; };
@@ -1107,6 +1109,7 @@
 		35A1E7BE4AA737B8371CF6E2 /* ExtensionFieldChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionFieldChrome.swift; sourceTree = "<group>"; };
 		35E9F78EE4B2B345CBAFE521 /* SelectionReveal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionReveal.swift; sourceTree = "<group>"; };
 		36B88396688269D54D136080 /* QuickActionPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPrompt.swift; sourceTree = "<group>"; };
+		36EC9DAA049F61401D4B5F8F /* ConfettiCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiCoordinator.swift; sourceTree = "<group>"; };
 		3791C4721565CC6C78455B6B /* CustomCommandEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCommandEditorScreen.swift; sourceTree = "<group>"; };
 		37A0A3B04F0BFAB4E1B18CFC /* MeetingEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingEvent.swift; sourceTree = "<group>"; };
 		37F57B138A8ACF8E2B3772E4 /* QuicklinkListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuicklinkListView.swift; sourceTree = "<group>"; };
@@ -1720,6 +1723,7 @@
 		EF1CC044EB36D1CA62E1D35F /* SyntaxGrammar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxGrammar.swift; sourceTree = "<group>"; };
 		EFD2AEDCFB7EC98473EF3EDF /* DictionaryResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryResult.swift; sourceTree = "<group>"; };
 		F013DDA9227E190CAA1CE55E /* HotKeyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyAction.swift; sourceTree = "<group>"; };
+		F02F9EE30457EDDFB3EB1C38 /* ConfettiPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiPanel.swift; sourceTree = "<group>"; };
 		F08AB08FE510A903C5C20C55 /* QuickActionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionCoordinator.swift; sourceTree = "<group>"; };
 		F0F159B1934C0BCA54E2810B /* ExtensionMenuBarHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionMenuBarHost.swift; sourceTree = "<group>"; };
 		F10EEFE4AC8446FD3503020B /* ChatHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatHistoryScreen.swift; sourceTree = "<group>"; };
@@ -1911,6 +1915,7 @@
 				1E3413DA949C9099FA9B6386 /* Calendar */,
 				E6C105E5AF9C164D79F93A85 /* Camera */,
 				E642FA1EE154808BB6499CCF /* Clipboard */,
+				A7D6D25B20F14AFCE1299B9E /* Confetti */,
 				22A177C8FC18EEB0AA0F7B2F /* CustomCommands */,
 				E1C56A548746955FED6E40B8 /* Dictation */,
 				3726EDEB9946FFE8F86451E0 /* Dictionary */,
@@ -3136,6 +3141,15 @@
 			path = Model;
 			sourceTree = "<group>";
 		};
+		A7D6D25B20F14AFCE1299B9E /* Confetti */ = {
+			isa = PBXGroup;
+			children = (
+				36EC9DAA049F61401D4B5F8F /* ConfettiCoordinator.swift */,
+				F02F9EE30457EDDFB3EB1C38 /* ConfettiPanel.swift */,
+			);
+			path = Confetti;
+			sourceTree = "<group>";
+		};
 		A83F67F3E734E48D1F737906 /* UI */ = {
 			isa = PBXGroup;
 			children = (
@@ -4224,6 +4238,8 @@
 				463E32BC6D77F01CDBC60AE3 /* CommandOutputView.swift in Sources */,
 				CAE202116D5E47DD0E74BD10 /* CommandsSettingsView.swift in Sources */,
 				D7A95848D39BA8266E35DC2A /* CompactFavoritesRow.swift in Sources */,
+				46031CBD6F56A2CC057C5979 /* ConfettiCoordinator.swift in Sources */,
+				AF90DC7A42BD451A9C9BCEEF /* ConfettiPanel.swift in Sources */,
 				57147D6312FC823351A6171A /* CountryZoneData.generated.swift in Sources */,
 				199073DC00540056B65B75CC /* CurrencyData.generated.swift in Sources */,
 				D4667AE7AC08D6B179077FF7 /* CurrencyFeed.swift in Sources */,

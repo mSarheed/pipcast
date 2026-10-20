@@ -211,6 +211,9 @@ final class LauncherCoordinator {
             calendarCoordinator.openNextMeetingInCalendar()
         case .createEvent:
             calendarCoordinator.createEvent()
+        case .confetti:
+            dismissPalette()
+            core.confettiCoordinator.fire()
         case .showNotes:
             dismissPalette()
             notesCoordinator.toggle()

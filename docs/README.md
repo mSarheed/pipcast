@@ -30,6 +30,7 @@ open with an `## Invariants` section; read it before changing anything in that a
 [calculator](features/calculator.md) ·
 [calendar](features/calendar.md) ·
 [camera](features/camera.md) ·
+[confetti](features/confetti.md) ·
 [emoji](features/emoji.md) ·
 [dictionary](features/dictionary.md) ·
 [file search](features/file-search.md) ·

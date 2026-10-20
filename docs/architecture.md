@@ -172,6 +172,9 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   join and doubles as auto join's confirmation; `CameraCoordinator`, owned by `AppCore`, is the
   standalone `Open Camera` command. See [features/camera.md](features/camera.md) and
   [features/calendar.md](features/calendar.md).
+- **Confetti** — a borderless, non-activating, click-through `ConfettiPanel` at `.statusBar` over the
+  display under the pointer, one at a time, owned by `ConfettiCoordinator` on `AppCore`. See
+  [features/confetti.md](features/confetti.md).
 - **HUDs** are separate, because a dialog asks and a HUD reports: `MessageHUDController` (the pill) and
   `VolumeHUDController` (the level box), both over a shared `HUDPresenter` that owns the
   one-at-a-time, auto-dismiss and fade policy. See [ui.md](ui.md#dialogs--hud).
