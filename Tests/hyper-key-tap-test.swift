@@ -258,7 +258,9 @@ struct HyperKeyTapTests {
         expect(fnUp?.type == .flagsChanged && fnUp?.flags == 0, "the Hyper release drops F18's fn bit")
 
         let rightControl: UInt64 = CGEventFlags.maskControl.rawValue | 0x2000
+        _ = deliver(0, f18Down)
         tap.setRoute(HyperKeyPhysicalKey.capsLock.route(secureInputCompatible: true), includesShift: false)
+        expect(deliver(0, letter)?.flags == 0, "a route change drops the held chord")
         let held = deliver(0, KeyEvent(type: .flagsChanged, keyCode: kVK_RightControl, flags: rightControl))
         expect(held?.flags == hyperFlags | 0x2000, "Right Control's device bit starts the chord")
         expect(
