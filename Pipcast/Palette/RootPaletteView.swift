@@ -589,7 +589,7 @@ struct RootPaletteView: View {
             .onKeyPress(keys: [.upArrow], phases: [.down, .repeat]) { press in
                 if let reorder = movePinnedOrFavorite(-1, modifiers: press.modifiers) { return reorder }
                 if vm.isControlListOpen { return .ignored }
-                if recallOlderSearch(modifiers: press.modifiers) { return .handled }
+                if recallOlderSearch(press) { return .handled }
                 if isCollapsed { return .ignored }
                 if menuOpen {
                     moveMenu(-1)
@@ -1409,12 +1409,16 @@ struct RootPaletteView: View {
     }
 
     /// Only where ↑ would otherwise stop: the compact bar, or root search's top row.
-    private func recallOlderSearch(modifiers: SwiftUI.EventModifiers) -> Bool {
-        guard modifiers.isDisjoint(with: [.command, .option, .control, .shift]),
+    private func recallOlderSearch(_ press: KeyPress) -> Bool {
+        // Holding ↑ up the list must stop at the top, not run on into the history.
+        let startingWalk = press.phase == .down
+        let launcher = core.launcherCoordinator
+        guard press.modifiers.isDisjoint(with: [.command, .option, .control, .shift]),
             vm.mode == .launcher, !menuOpen, !vm.isComposing, searchFocused, argumentFocused == nil,
+            launcher.canRecallOlderSearch(startingWalk: startingWalk),
             isCollapsed || selection(in: screen) == 0
         else { return false }
-        return core.launcherCoordinator.recallOlderSearch()
+        return launcher.recallOlderSearch(startingWalk: startingWalk)
     }
 
     /// ←/→: consumed only by a horizontally navigating screen, else the caret keeps them.

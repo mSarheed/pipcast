@@ -522,18 +522,22 @@ the field is empty again. ↓ keeps moving the selection, and Escape clears the 
 - **Recorded when a row runs**, never while typing. `LauncherScreen` hands the query to
   `LauncherCoordinator.rememberSearch` from ↵, a click, a ⌘-digit, ⌘↵ and ⇧⌘↵, before the action can
   rewrite or clear the field. An error card runs nothing and records nothing; ⌘K rows and chords
-  aimed at a row are not runs.
+  aimed at a row are not runs. Neither is a field a shortcut seeded with its row's name to ask
+  for arguments (`argumentEntryID`): nobody typed it.
 - **Only root search.** A screen with its own field — an extension, the clipboard, snippets,
   Calculator History, settings search after `?` — never records, and ↑ there is untouched.
 - **What is kept** is the trimmed query: the newest 50, an exact repeat moved to the front rather
   than stored twice. A calculator query is kept as its expression, so its answer is worked out again
   on recall with today's rates; the answers themselves are Calculator History's.
 - **What is skipped**: anything over 200 characters or holding a line break, which is pasted
-  content, and an unbroken run of 32 or more characters that mixes upper and lower case with digits
-  and is not a `://` address — the shape of an API key or token.
+  content, and an unbroken run of 32 or more characters that is either hex with letters and digits
+  or mixes upper and lower case with digits — the shapes of an API key, token or hash. A `://`
+  address and a path starting `/` or `~` are kept whatever their shape.
 - **Where ↑ recalls**: in root search with no menu open, no IME composition, no argument field
   focused and no modifier held, on the compact bar or with the top row selected. The query must be
   empty or still exactly the entry ↑ last put there. Anywhere else ↑ does what it always did.
+- **A held key never starts a walk.** Only a fresh press recalls from an empty field; key repeat
+  may only continue a walk already under way, so holding ↑ up the list stops at its top.
 
 The history lives on `PaletteState` for the app's lifetime and is never persisted, so quitting
 Pipcast forgets it. Settings › General › Search › **Recall recent searches**

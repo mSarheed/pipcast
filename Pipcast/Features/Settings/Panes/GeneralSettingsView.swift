@@ -132,7 +132,7 @@ struct GeneralSettingsView: View {
                     Button("Clear History", role: .destructive) {
                         core.launcherCoordinator.clearSearchHistory()
                     }
-                    .disabled(core.palette.queryHistory.entries.isEmpty)
+                    .disabled(!core.launcherCoordinator.hasSearchHistory)
                 } label: {
                     SettingsRowTitle(.generalSearch, "Recent searches")
                     Text("Kept in memory only, and forgotten when Pipcast quits.")

@@ -73,8 +73,18 @@ struct QueryHistoryTests {
         expect(
             history([String(token.dropLast())]).entries, [String(token.dropLast())],
             "one character short of the limit is not judged")
-        let lower = token.lowercased()
-        expect(history([lower]).entries, [lower], "a single case is a hash or word, not a key")
+        let lower = "sk9fq2lmzx7rty4pwv8nbc3djh6ksa1e"
+        expect(history([lower]).entries, [lower], "one case of letters beyond hex is not judged")
+        let hexKey = "b6907d289e10d714a6e88b30761fae22"
+        expect(history([hexKey]).entries, [], "a long hex run is a key or a hash")
+        let upperHex = hexKey.uppercased()
+        expect(history([upperHex]).entries, [], "in either case")
+        let digits = String(repeating: "1234567890", count: 4)
+        expect(history([digits]).entries, [digits], "a long number is a calculation, not a key")
+        let path = "/Users/Ann/Documents/Taxes2026Final"
+        expect(history([path]).entries, [path], "a typed path is worth recalling")
+        let home = "~/Developer/PipcastApp/Build2026Release"
+        expect(history([home]).entries, [home], "and so is one under home")
         let spaced = "Sk9Fq2LmZx7RtY4p Wv8NbC3dJh6KsA1e"
         expect(history([spaced]).entries, [spaced], "a space makes it a phrase, not a token")
         let url = "https://example.com/Docs/Release2026/Notes"
@@ -112,6 +122,19 @@ struct QueryHistoryTests {
         expect(rerun.recalledIndex, nil, "running a search ends the walk")
         expect(rerun.entries, ["12 * 4", "notes", "safari"], "and the recalled search moves up")
         expect(rerun.recallOlder(from: ""), "12 * 4", "the next walk starts from the newest")
+
+        var held = history(["safari", "notes"])
+        expect(held.canRecallOlder(from: "", startingWalk: false), false, "a held key starts nothing")
+        expect(held.recallOlder(from: "", startingWalk: false), nil, "so ↑ held up the list stops")
+        expect(held.recallOlder(from: ""), "notes", "a fresh press starts the walk")
+        expect(
+            held.recallOlder(from: "notes", startingWalk: false), "safari",
+            "and holding the key continues it")
+
+        let peek = history(["safari", "notes"])
+        expect(peek.canRecallOlder(from: ""), true, "asking sees the newest")
+        expect(peek.recalledIndex, nil, "without moving the walk")
+        expect(peek.canRecallOlder(from: "saf"), false, "nor offering to replace typing")
 
         var refused = history(["safari"])
         _ = refused.recallOlder(from: "")
