@@ -80,15 +80,17 @@ Sending needs **Automation permission for Shortcuts Events**, granted in Privacy
 Automation. `access(prompting:)` launches the helper hidden, since permission can only be determined
 against a running target, then asks `AEDeterminePermissionToAutomateTarget`. Only a denial (-1743) or
 a prompt never answered (-1744) counts as **refused**; anything else — the helper missing or not yet
-answering — is **unavailable** and simply tried again on the next read. The Settings pane queues a
+answering — is **unavailable** and simply tried again on the next read. The Settings pane asks for a
 prompting sweep, so opening the pane or turning the switch on raises the system prompt once. Every
 launcher read is unprompted: once refused, the launcher stops asking until the pane asks again.
 Running and listing shortcuts need no permission either way.
 
 `AppleShortcutIconStore` owns the reads. **One runs at a time, and nothing asked meanwhile is
-dropped**: requests merge, sweep and prompt alike, and run once the current read ends. The pane's
-request is queued before the library is even read, so turning the switch on — whose own unprompted
-read is already in flight — still ends in the prompt.
+dropped**: requests merge, sweep and prompt alike, and run once the current read ends. The
+coordinator holds the pane's prompt across a list read already in flight, so turning the switch on —
+whose own unprompted read is already running — still ends in the prompt. **A prompt never outlives
+its read**: the list read spends it whatever it returns, and an empty library drops every queued
+request, so a prompt can't wait for a later launcher open and land over the palette.
 
 `AppleShortcutIconCache` keeps one 128-pixel PNG per shortcut in Caches, named
 `<uuid>-<digest>.png` from a hash of the TIFF, so a changed icon is a new path and `IconCache` never

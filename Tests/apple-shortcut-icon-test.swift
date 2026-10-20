@@ -98,6 +98,7 @@ struct AppleShortcutIconTest {
     static func main() async {
         await launchWithoutPermission()
         await promptQueuedMidRead()
+        await promptDiesWithEmptyLibrary()
         await failedIconsWaitForSweep()
         await unavailableIsNotRefusal()
         await cancelPublishesNothing()
@@ -121,8 +122,7 @@ struct AppleShortcutIconTest {
         await settle(store)
         check("a launcher read after a refusal doesn't ask again", fake.accessAsks == [false])
         fake.access = .granted
-        store.queue(.prompt)
-        store.read(library, .init())
+        store.read(library, .init(sweep: true, prompting: true))
         await settle(store)
         check("the pane's read prompts", fake.accessAsks == [false, true])
         check("an allowed prompt reads every icon", store.files == fake.icons)
@@ -134,10 +134,19 @@ struct AppleShortcutIconTest {
         let store = make(fake)
         // The switch's own read is in flight when the pane asks to prompt.
         store.read(library, .init(sweep: true))
-        store.queue(.prompt)
+        store.read(library, .init(sweep: true, prompting: true))
         store.read(library, .init())
         await settle(store)
         check("a prompt asked for mid-read still prompts", fake.accessAsks == [false, true])
+    }
+
+    @MainActor static func promptDiesWithEmptyLibrary() async {
+        let fake = FakeIcons()
+        let store = make(fake)
+        store.read([], .init(sweep: true, prompting: true))
+        store.read(library, .init())
+        await settle(store)
+        check("a prompt asked over an empty library never prompts a later read", fake.accessAsks == [false])
     }
 
     @MainActor static func failedIconsWaitForSweep() async {

@@ -8,8 +8,6 @@ final class AppleShortcutIconStore {
         /// Only the Settings pane sets it, so the Automation prompt never lands over the palette.
         var prompting = false
 
-        static let prompt = Request(sweep: true, prompting: true)
-
         func merged(_ other: Request) -> Request {
             Request(sweep: sweep || other.sweep, prompting: prompting || other.prompting)
         }
@@ -54,14 +52,14 @@ final class AppleShortcutIconStore {
         files?[id].map(cache.url(of:))
     }
 
-    /// Held until the next `read`, so a request made while the library is still loading survives.
-    func queue(_ request: Request) {
-        queued = queued?.merged(request) ?? request
-    }
-
+    /// An empty library drops whatever was asked, so a prompt can't outlive the read it was for.
     func read(_ live: [AppleShortcut], _ request: Request) {
         self.live = live
-        queue(request)
+        guard !live.isEmpty else {
+            queued = nil
+            return
+        }
+        queued = queued?.merged(request) ?? request
         start()
     }
 
@@ -74,7 +72,7 @@ final class AppleShortcutIconStore {
 
     /// One read at a time; whatever was asked meanwhile runs, merged, once it ends.
     private func start() {
-        guard task == nil, let request = queued, !live.isEmpty else { return }
+        guard task == nil, let request = queued else { return }
         queued = nil
         let live = live
         if let files,

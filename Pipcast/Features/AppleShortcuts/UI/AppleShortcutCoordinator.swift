@@ -25,6 +25,8 @@ final class AppleShortcutCoordinator {
     /// Nil until a read succeeds, so the first one after launch always sweeps.
     @ObservationIgnored private var shortcuts: [AppleShortcut]?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    /// The pane's prompt, held for the list read in flight and spent by it whatever it returns.
+    @ObservationIgnored private var promptsForIcons = false
 
     init(
         settings: AppSettings, appIndex: AppIndex, hotKeys: HotKeyManager,
@@ -64,11 +66,13 @@ final class AppleShortcutCoordinator {
     /// Re-read on every launcher open; the tool answers in milliseconds, so overlaps just drop.
     func refresh(promptingForIcons prompting: Bool = false) {
         guard settings.appleShortcutsEnabled else { return }
-        if prompting { icons.queue(.prompt) }
+        if prompting { promptsForIcons = true }
         guard refreshTask == nil else { return }
         refreshTask = Task {
             let found = try? await AppleShortcutRunner.list()
             refreshTask = nil
+            let prompting = promptsForIcons
+            promptsForIcons = false
             // A failed read keeps the last good library, and with it every alias and binding.
             guard let found, settings.appleShortcutsEnabled else { return }
             let isFirstRead = shortcuts == nil
@@ -77,7 +81,9 @@ final class AppleShortcutCoordinator {
                 publishEntries()
                 removeReferences(toShortcutsMissingFrom: found)
             }
-            icons.read(found, AppleShortcutIconStore.Request(sweep: isFirstRead))
+            icons.read(
+                found,
+                AppleShortcutIconStore.Request(sweep: isFirstRead || prompting, prompting: prompting))
         }
     }
 
