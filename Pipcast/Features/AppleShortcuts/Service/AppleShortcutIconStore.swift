@@ -113,7 +113,7 @@ final class AppleShortcutIconStore {
         failed = request.sweep ? fetch.failed : failed.union(fetch.failed)
         guard !fetch.files.isEmpty else { return }
         apply((files ?? [:]).merging(fetch.files) { $1 })
-        await effects.remove(fetch.files.keys.compactMap { cached[$0] })
+        await effects.remove(fetch.files.compactMap { id, file in cached[id].flatMap { $0 == file ? nil : $0 } })
     }
 
     private func apply(_ updated: [UUID: AppleShortcutIconFile]) {

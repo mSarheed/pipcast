@@ -100,7 +100,8 @@ Icons are read one shortcut at a time, so a large library never holds more than 
 A failed send ends the read, so a stalled Shortcuts Events costs one timeout, not one per shortcut.
 
 - **The first read after launch, and every read the pane makes, sweeps**: every icon is fetched again,
-  since a new glyph or colour keeps the shortcut's identifier. Unchanged icons write nothing.
+  since a new glyph or colour keeps the shortcut's identifier. Unchanged icons write nothing, unless
+  macOS purged the file from Caches meanwhile; then it is written again under the same name.
 - **Any other read fetches only shortcuts with no icon yet**, so an ordinary launcher open sends no
   Apple event at all. An icon edited while Pipcast runs updates on the next pane visit or launch.
 - **A shortcut whose icon couldn't be read waits for the next sweep**, so one that Shortcuts never

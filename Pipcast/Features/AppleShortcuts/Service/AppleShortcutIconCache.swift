@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 /// Shortcut icons as small PNGs in Caches. docs/features/apple-shortcuts.md#icons
 struct AppleShortcutIconCache: Sendable {
     struct Fetch: Equatable, Sendable {
-        /// Only icons that changed; one already cached under the same digest is left out.
+        /// Only icons written; one still on disk under the same digest is left out.
         var files: [UUID: AppleShortcutIconFile] = [:]
         var failed: Set<UUID> = []
     }
@@ -43,7 +43,9 @@ struct AppleShortcutIconCache: Sendable {
             switch await AppleShortcutIconProvider.icon(of: id) {
             case .icon(let tiff):
                 let file = AppleShortcutIconFile(id: id, digest: Self.digest(of: tiff))
-                guard file != cached[id] else { continue }
+                // Caches can be purged under a running app, so an unchanged icon may still be gone.
+                let isOnDisk = FileManager.default.fileExists(atPath: url(of: file).path)
+                guard file != cached[id] || !isOnDisk else { continue }
                 if write(tiff, to: url(of: file)) { fetch.files[id] = file } else { fetch.failed.insert(id) }
             case .missing:
                 fetch.failed.insert(id)

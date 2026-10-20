@@ -7,6 +7,8 @@ final class FakeIcons {
     var access: AppleShortcutIconProvider.Access = .granted
     var icons: [UUID: AppleShortcutIconFile] = [:]
     var failing: Set<UUID> = []
+    /// Purged by macOS behind the store's back, so the same file is written again.
+    var purged: Set<UUID> = []
     var scans = 0
     var accessAsks: [Bool] = []
     var fetches: [[UUID]] = []
@@ -32,7 +34,7 @@ final class FakeIcons {
         for id in ids {
             if failing.contains(id) {
                 fetch.failed.insert(id)
-            } else if let icon = icons[id], icon != cached[id] {
+            } else if let icon = icons[id], icon != cached[id] || purged.contains(id) {
                 fetch.files[id] = icon
             }
         }
@@ -104,6 +106,7 @@ struct AppleShortcutIconTest {
         await cancelPublishesNothing()
         await supersededRemovedAfterPublish()
         await cachedLibraryCostsNothing()
+        await purgedIconIsRewrittenAndKept()
         let failed = await MainActor.run { failures }
         print(failed == 0 ? "\nALL PASSED" : "\n\(failed) failed")
         if failed > 0 { exit(1) }
@@ -218,6 +221,18 @@ struct AppleShortcutIconTest {
         check(
             "it is removed only once rows point at its successor",
             fake.publishedAtRemoval.first??[a] == file(a, "3"))
+    }
+
+    @MainActor static func purgedIconIsRewrittenAndKept() async {
+        let fake = FakeIcons()
+        fake.onDisk = [a: file(a, "1"), b: file(b, "2")]
+        fake.icons = fake.onDisk
+        fake.purged = [a]
+        let store = make(fake)
+        store.read(library, .init(sweep: true))
+        await settle(store)
+        check("a purged icon rewritten under the same name is never removed", fake.removed.isEmpty)
+        check("its row keeps pointing at it", store.files?[a] == file(a, "1"))
     }
 
     @MainActor static func cachedLibraryCostsNothing() async {
