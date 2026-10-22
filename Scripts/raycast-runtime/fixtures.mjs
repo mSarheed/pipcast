@@ -4,6 +4,7 @@
 //   node fixtures.mjs
 
 import { createHarness, bootConfig, describeTree } from "./test.mjs";
+import { createServer } from "node:net";
 import { transformSync } from "esbuild";
 import { runOAuthFixtures } from "./oauth-fixtures.mjs";
 import { runModuleFixtures } from "./modules-fixtures.mjs";
@@ -745,12 +746,121 @@ export default async function Command() {
   globalThis.__namespaceImport = {
     kinds: [typeof net.Socket, typeof Socket, typeof vm.Script, typeof AsyncResource],
     keys: Object.keys(net).filter((key) => key !== "default"),
-    refusals: [refusal(() => new net.Socket()), refusal(() => vm.runInNewContext("1"))],
+    refusals: [refusal(() => net.createServer()), refusal(() => vm.runInNewContext("1"))],
     scope: [tracked.record("a"), tracked.record("b"), tracked.seen.join("")],
     type: tracked.type,
   };
 }
 `;
+
+const netAddrsSource = `
+import { isIP, isIPv4, isIPv6, SocketAddress, BlockList } from "net";
+
+export default function Command() {
+  const block = new BlockList();
+  block.addAddress("127.0.0.1");
+  block.addSubnet("10.0.0.0", 8, "ipv4");
+  block.addRange("192.168.0.1", "192.168.0.10", "ipv4");
+  block.addAddress("::1", "ipv6");
+  let addr, addrError;
+  try {
+    const parsed = new SocketAddress({ address: "127.0.0.1", port: 80 });
+    addr = parsed.address + "/" + parsed.family + "/" + parsed.port;
+  } catch (error) {
+    addrError = error.code;
+  }
+  try {
+    new SocketAddress({ address: "::1" });
+  } catch (error) {
+    addrError = error.code;
+  }
+  globalThis.__netAddrs = {
+    v4: [isIPv4("127.0.0.1"), isIPv4("01.2.3.4"), isIPv4("1.2.3"), isIPv4("256.1.1.1")],
+    v6: [isIPv6("::1"), isIPv6("1::2::3"), isIPv6("fe80::1%eth0"), isIPv6("::ffff:1.2.3.256")],
+    ip: [isIP("127.0.0.1"), isIP("::1"), isIP("bogus")],
+    addr,
+    addrError,
+    blocked: [block.check("127.0.0.1"), block.check("10.9.8.7"), block.check("192.168.0.5"), block.check("8.8.8.8")],
+  };
+}
+`;
+
+/// Hermes' port probe, against a loopback echo server: connect, refused, echo round-trip.
+async function runNetSocketFixtures(run, check) {
+  const server = createServer((peer) => {
+    peer.on("data", (chunk) => peer.end(chunk));
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  try {
+    const source = `
+import { Socket, createConnection } from "net";
+
+function checkPort(host, target) {
+  return new Promise((resolve) => {
+    const socket = new Socket();
+    socket.setTimeout(2000);
+    socket.on("connect", () => {
+      socket.end();
+      resolve({ ok: true, remote: socket.remoteAddress + ":" + socket.remotePort });
+    });
+    socket.on("error", (error) => resolve({ ok: false, code: error.code }));
+    socket.on("timeout", () => {
+      socket.destroy();
+      resolve({ ok: false, code: "TIMEOUT" });
+    });
+    socket.connect(target, host);
+  });
+}
+
+export default async function Command() {
+  const open = await checkPort("127.0.0.1", ${port});
+  const refused = await checkPort("127.0.0.1", 1);
+  const redundant = await new Promise((resolve) => {
+    const socket = new Socket();
+    socket.on("error", (error) => resolve(error.code));
+    socket.on("close", () => resolve("closed"));
+    socket.connect(${port}, "127.0.0.1");
+    socket.connect(${port}, "127.0.0.1");
+  });
+  const relink = await new Promise((resolve, reject) => {
+    const socket = new Socket();
+    socket.on("error", reject);
+    socket.connect(${port}, "127.0.0.1", () => {
+      socket.once("close", () => {
+        socket.connect(${port}, "127.0.0.1", () => {
+          socket.end();
+          resolve("reconnected");
+        });
+      });
+      socket.end();
+    });
+  });
+  const message = await new Promise((resolve, reject) => {
+    const socket = createConnection({ host: "127.0.0.1", port: ${port} }, () => {
+      socket.write("ping");
+    });
+    socket.on("data", (chunk) => {
+      socket.end();
+      resolve(chunk.toString());
+    });
+    socket.on("error", reject);
+  });
+  globalThis.__netSocket = { open, refused, redundant, relink, message };
+}
+`;
+    await run("net connects, refuses and echoes over TCP", source, "no-view", async (harness) => {
+      const result = harness.call("globalThis.__netSocket");
+      check("an open port connects and reports its peer", result?.open?.ok === true && result?.open?.remote === `127.0.0.1:${port}`, JSON.stringify(result?.open));
+      check("a closed port refuses with its code", result?.refused?.ok === false && result?.refused?.code === "ECONNREFUSED", JSON.stringify(result?.refused));
+      check("a redundant connect fails fast", result?.redundant === "EALREADY", JSON.stringify(result?.redundant));
+      check("a closed socket reconnects", result?.relink === "reconnected", JSON.stringify(result?.relink));
+      check("an echo round-trips through the socket", result?.message === "ping", JSON.stringify(result?.message));
+    }, { settle: 1500 });
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
 
 const httpTablesSource = `
 const http = require("http");
@@ -1376,11 +1486,22 @@ export async function runFixtures() {
     const kinds = JSON.stringify(result?.kinds);
     check("every member survives the own-key snapshot", kinds === JSON.stringify(["function", "function", "function", "function"]), kinds);
     check("net enumerates its exports", result?.keys?.includes("Socket") && result.keys.includes("createConnection"), JSON.stringify(result?.keys));
-    check("an unsupported member still refuses by name", result?.refusals?.[0]?.startsWith("net.Socket is not supported"), JSON.stringify(result?.refusals));
+    check("an unsupported member still refuses by name", result?.refusals?.[0]?.startsWith("net.createServer is not supported"), JSON.stringify(result?.refusals));
     check("a refusal names the member that was called", result?.refusals?.[1]?.startsWith("vm.runInNewContext is not supported"), JSON.stringify(result?.refusals));
     check("AsyncResource runs the callback in place", JSON.stringify(result?.scope) === JSON.stringify([1, 2, "ab"]), JSON.stringify(result?.scope));
     check("AsyncResource keeps its type", result?.type === "tracked", String(result?.type));
   });
+
+  await run("net answers address queries without the network", netAddrsSource, "no-view", async (harness) => {
+    const result = harness.call("globalThis.__netAddrs");
+    check("isIPv4 takes dotted decimals only", JSON.stringify(result?.v4) === JSON.stringify([true, false, false, false]), JSON.stringify(result?.v4));
+    check("isIPv6 takes compressed groups and zones", JSON.stringify(result?.v6) === JSON.stringify([true, false, true, false]), JSON.stringify(result?.v6));
+    check("isIP reports the family", JSON.stringify(result?.ip) === JSON.stringify([4, 6, 0]), JSON.stringify(result?.ip));
+    check("SocketAddress validates like Node", result?.addr === "127.0.0.1/ipv4/80" && result?.addrError === "ERR_INVALID_ADDRESS", JSON.stringify(result));
+    check("BlockList matches addresses, subnets and ranges", JSON.stringify(result?.blocked) === JSON.stringify([true, true, true, false]), JSON.stringify(result?.blocked));
+  });
+
+  await runNetSocketFixtures(run, check);
 
   await run("http carries Node's status and method tables", httpTablesSource, "no-view", async (harness) => {
     const result = harness.call("globalThis.__httpTables");

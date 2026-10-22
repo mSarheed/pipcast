@@ -24,6 +24,7 @@ import { fileURLToPath, pathToFileURL, URL, URLSearchParams } from "./url.js";
 import { punycode } from "./punycode.js";
 import { upgradeToWebSocket } from "./websocket.js";
 import { dgram } from "./dgram.js";
+import { netModule } from "./net.js";
 
 // ─── Unsupported-module exports ─────────────────────────────────────
 
@@ -1838,7 +1839,8 @@ export const nodeModules = {
   http: httpLike("http"),
   https: httpLike("https"),
   dgram,
-  net: unsupportedModule("net"),
+  // Client sockets and address helpers are real; serving (`createServer`) still refuses.
+  net: unsupportedModule("net", netModule),
   tls: unsupportedModule("tls", { TLSSocket }),
   dns: unsupportedModule("dns"),
   stream: streamModule,

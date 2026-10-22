@@ -23,6 +23,7 @@ import {
 import { cpus, freemem, homedir, loadavg, tmpdir, uptime } from "node:os";
 import { lookup } from "node:dns/promises";
 import * as fs from "node:fs";
+import * as net from "node:net";
 import * as zlib from "node:zlib";
 
 const runtimePath = [
@@ -304,6 +305,8 @@ function syncHostCall(api, method, args) {
 const runningChildren = new Map();
 const openSockets = new Map();
 let nextSocketId = 1;
+const openRawSockets = new Map();
+let nextRawSocketId = 1;
 
 async function stubHostCall(api, method, args) {
   switch (`${api}.${method}`) {
@@ -371,6 +374,30 @@ async function stubHostCall(api, method, args) {
     }
     case "websocket.ping":
       return null;
+    // Node's own TCP stands in for `NWConnection`: same one-chunk-at-a-time read.
+    case "socket.open":
+      return openRawSocket(args[0]);
+    case "socket.receive": {
+      const entry = openRawSockets.get(args[0]);
+      if (!entry) throw new Error("harness: no raw socket");
+      return entry.queue.length
+        ? entry.queue.shift()
+        : new Promise((resolve) => entry.waiters.push(resolve));
+    }
+    case "socket.send": {
+      const entry = openRawSockets.get(args[0].id);
+      if (!entry) throw new Error("harness: no raw socket");
+      const data = Buffer.from(args[0].base64, "base64");
+      if (args[0].end) entry.socket.end(data);
+      else entry.socket.write(data);
+      return null;
+    }
+    case "socket.close": {
+      const entry = openRawSockets.get(args[0].id);
+      openRawSockets.delete(args[0].id);
+      entry?.socket.destroy();
+      return null;
+    }
     default:
       if (["window", "feedback", "cache", "storage", "clipboard", "system"].includes(api)) return null;
       throw new Error(`harness: no async stub for ${api}.${method}`);
@@ -399,6 +426,42 @@ async function openSocket(spec) {
   const id = nextSocketId++;
   openSockets.set(id, entry);
   return { id, protocol: socket.protocol ?? "" };
+}
+
+function openRawSocket(spec) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    const id = nextRawSocketId++;
+    const deliver = (event) => {
+      const entry = openRawSockets.get(id);
+      if (!entry) return;
+      if (entry.waiters.length) entry.waiters.shift()(event);
+      else entry.queue.push(event);
+    };
+    socket.once("connect", () => {
+      openRawSockets.set(id, { socket, queue: [], waiters: [] });
+      socket.on("data", (chunk) =>
+        deliver({ type: "data", base64: chunk.toString("base64"), end: false }),
+      );
+      socket.on("end", () => deliver({ type: "data", base64: "", end: true }));
+      socket.on("error", (error) =>
+        deliver({ type: "close", error: error.message, code: error.code ?? "EIO" }),
+      );
+      socket.on("close", (hadError) => {
+        if (!hadError) deliver({ type: "close" });
+      });
+      resolve({
+        id,
+        address: socket.remoteAddress,
+        family: socket.remoteFamily,
+        port: socket.remotePort,
+      });
+    });
+    socket.once("error", (error) => {
+      resolve({ error: error.message, code: error.code ?? "ECONNREFUSED", syscall: "connect" });
+    });
+    socket.connect(spec.port, spec.host);
+  });
 }
 
 export function bootConfig(overrides = {}) {

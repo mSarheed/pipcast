@@ -26,6 +26,7 @@ struct ExtensionTests {
         var huds: [String] = []
         private let fetcher = ExtensionFetcher()
         private let sockets = ExtensionWebSocketBridge()
+        private let rawSockets = ExtensionSocketBridge()
 
         func perform(api: String, method: String, arguments: [RenderValue]) async throws -> String {
             calls.append("\(api).\(method)")
@@ -42,6 +43,10 @@ struct ExtensionTests {
             if api == "websocket" {
                 return ExtensionRuntime.jsonString(
                     from: try await sockets.perform(method: method, arguments: arguments))
+            }
+            if api == "socket" {
+                return ExtensionRuntime.jsonString(
+                    from: try await rawSockets.perform(method: method, arguments: arguments))
             }
             if api == "dns" {
                 return ExtensionRuntime.jsonString(from: await ExtensionNameResolver.resolve(arguments.first))
@@ -203,6 +208,7 @@ struct ExtensionTests {
         await menuBarRuntimeChecks()
         await menuBarHostChecks()
         await ExtensionFetchTests.runChecks()
+        await ExtensionSocketTests.runChecks()
 
         print("\n\(passes) passed, \(failures) failed")
         exit(failures == 0 ? 0 : 1)

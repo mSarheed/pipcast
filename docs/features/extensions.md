@@ -100,6 +100,7 @@ same arrangement as `EmojiData.generated.swift`: building Pipcast never needs No
 | `src/node-shims.js`                              | `path`, `fs`, `os`, `child_process`, `crypto`, `zlib`, `util`, `events`, `buffer`, `punycode`, …                       |
 | `src/websocket.js`                               | the `WebSocket` global, and the raw socket a bundled `ws` attaches to                                                  |
 | `src/dgram.js`                                   | a UDP socket that answers one thing: an mDNS lookup of a `.local` name                                                 |
+| `src/net.js`                                     | a TCP client socket (`Socket`, `createConnection`) plus the pure address helpers                                       |
 | `src/url.js`, `src/punycode.js`, `src/buffer.js` | web/Node primitives JavaScriptCore lacks                                                                               |
 
 Two host-call flavours:
@@ -123,6 +124,7 @@ Two host-call flavours:
 | `Service/ExtensionNodeShims.swift`            | the synchronous `fs` / `os` / `child_process` / `crypto` / `zlib` services                                 |
 | `Service/ExtensionFetcher.swift`              | HTTP over `URLSession` or a Unix socket, plus async `exec` collection and the shared PATH resolver         |
 | `Service/ExtensionWebSocketBridge.swift`      | `URLSessionWebSocketTask` connections, opened and read from JS                                             |
+| `Service/ExtensionSocketBridge.swift`         | raw TCP client sockets over `NWConnection`, opened and read from JS                                        |
 | `Service/ExtensionNameResolver.swift`         | `getaddrinfo`, which is how a `.local` name resolves                                                       |
 | `Service/ExtensionStorage.swift`              | per-extension `LocalStorage`, `Cache` and preference values (one JSON file each)                           |
 | `Service/ExtensionCommandMetadataStore.swift` | every command's subtitle override, refresh bookkeeping and menu-bar state, in one small file               |
@@ -832,6 +834,8 @@ decodes the query, asks the system resolver, and emits an answer packet back. No
 multicast group, so no multicast entitlement and no Local Network prompt of our own. It answers an
 address question and nothing else: a service enumeration, or anything sent to another port, throws.
 
+**TCP clients** — `net.Socket` and `net.createConnection` open raw TCP through an `NWConnection` owned by Swift: DNS, connect, reads, writes and half-close, with Node's events (`connect`, `lookup`, `data`, `timeout`, `end`, `error`, `close`) and error codes (`ECONNREFUSED`, `ENOTFOUND`, …). The pure helpers (`isIP`, `isIPv4`, `isIPv6`, `SocketAddress`, `BlockList`) match Node bit for bit. Hermes' dashboard probe is the reference case: it checks a local port with `new Socket()` before opening the browser.
+
 **Bundled helpers** — compiled Mach-O files and shebang scripts live in `assets/`. GitHub's raw-file
 downloads and some store zips lose their executable mode, so installation preserves Git tree mode
 `100755`; discovery also repairs known executable payloads already installed as `644`. That covers
@@ -862,7 +866,7 @@ extensions / 114 of 147 view commands** boot and render. `Scripts/raycast-runtim
 | **A WebSocket to a host with a certificate macOS distrusts** | `ws`'s `rejectUnauthorized: false` is ignored — URLSession validates the chain either way.                                                                                                                                                                                                                                                   |
 | **Aborting a `fetch` already in flight**                     | `AbortSignal` is complete — `timeout`, `abort` and `any` included — and `fetch` checks it on both sides of the host call, so a caller gets its `AbortError`. The request itself still runs to completion: the signal isn't carried across the bridge, so nothing cancels the `URLSessionTask`. A timeout bounds the caller, not the network. |
 | **Interactive `spawn` stdin**                                | stdout and stderr stream, but stdin is sent once as the child starts: whatever was written in the same tick. A later `stdin.write` is dropped.                                                                                                                                                                                               |
-| **`net` / `tls`**                                            | Resolve but throw on use. Nothing bridges a raw socket; a bundled `ws` reaches the network through the WebSocket bridge instead. `tls.TLSSocket` is the one exception: `http2-wrapper`, inside `got`, derives a class from one at import time, so it constructs as an inert duplex.                                                          |
+| **`net` servers / `tls`**                                   | `createServer` still refuses: extensions open TCP clients, they never listen. `tls` resolves but throws on use, except the inert `TLSSocket` that `http2-wrapper`, inside `got`, derives a class from at import time. A bundled `ws` reaches the network through the WebSocket bridge instead.                                                                                           |
 | **Streaming HTTP**                                           | The bridge answers a request with the whole body at once, so `http.request` delivers one chunk and `Response.body` replays bytes that already arrived. Server-sent events, network-level progress and backpressure onto the socket are all out of reach; `stream` itself is real enough to carry them the day the bridge is.                 |
 | **Tool/AI-extension entry points (`tools/`)**                | Not surfaced.                                                                                                                                                                                                                                                                                                                                |
 
