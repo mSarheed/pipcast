@@ -560,7 +560,8 @@ enum NoteMarkdownEditing {
                 range: NSRange(start..<end), replacement: replacement, selection: fixes.selection)
         }
 
-        /// Each level counts up from its first number; a shallower line restarts deeper counters.
+        /// The run keeps its first number, so a note can start at e.g. 5; every nested group
+        /// restarts at 1 under its parent, and a shallower line restarts deeper counters.
         private func renumbering(around range: NSRange) -> [Edit] {
             let lines = markdown.lines
             let touched = markdown.lineIndexes(intersecting: range)
@@ -571,15 +572,19 @@ enum NoteMarkdownEditing {
 
             var nextNumber: [Int: Int] = [:]
             var edits: [Edit] = []
+            var seenListLine = false
             for line in lines[first...last] {
                 switch line.kind {
                 case .blank:
                     continue
                 case .bullet, .task:
+                    seenListLine = true
                     nextNumber = nextNumber.filter { $0.key < line.level }
                 case .ordered(let number):
                     nextNumber = nextNumber.filter { $0.key <= line.level }
-                    let expected = nextNumber[line.level] ?? number
+                    // A fresh counter keeps a top-level start but restarts nested groups at 1.
+                    let expected = nextNumber[line.level] ?? (seenListLine && line.level > 0 ? 1 : number)
+                    seenListLine = true
                     nextNumber[line.level] = expected + 1
                     guard expected != number else { continue }
                     let first = indentEnd(of: line)

@@ -921,12 +921,12 @@ struct NotesTests {
             edit(.newline, "1. a|\n2. b\n3. c") == "1. a\n2. |\n3. b\n4. c")
         check("a run keeps its first number", edit(.newline, "5. a|\n6. b") == "5. a\n6. |\n7. b")
         check(
-            "nesting an item renumbers the run it leaves",
-            edit(.indent, "1. a\n2. b\n3. c|\n4. d") == "1. a\n2. b\n    3. c|\n3. d")
+            "nesting an item restarts it at 1 and renumbers the run it leaves",
+            edit(.indent, "1. a\n2. b\n3. c|\n4. d") == "1. a\n2. b\n    1. c|\n3. d")
         check(
-            "nested runs restart from their own first number under a shallower item",
+            "nested runs restart at 1 under each shallower item",
             edit(.newline, "1. a|\n    1. x\n    2. y\n2. b\n    5. z\n    9. w")
-                == "1. a\n2. |\n    1. x\n    2. y\n3. b\n    5. z\n    6. w")
+                == "1. a\n2. |\n    1. x\n    2. y\n3. b\n    1. z\n    2. w")
         check(
             "a paragraph ends a run",
             edit(.newline, "1. a|\npara\n7. b") == "1. a\n2. |\npara\n7. b")
